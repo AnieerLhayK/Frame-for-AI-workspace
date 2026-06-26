@@ -1,0 +1,49 @@
+{
+  "mcpServers": {
+    "wps-agent": {
+      "command": "D:\\AI\\workspace\\mcp\\servers\\wps-agent\\.venv\\Scripts\\python.exe",
+      "args": [
+        "D:\\AI\\workspace\\mcp\\servers\\wps-agent\\mcp_server.py"
+      ],
+      "cwd": "D:\\AI\\workspace\\mcp\\servers\\wps-agent",
+      "env": {
+        "PYTHONUTF8": "1"
+      }
+    },
+    "filesystem": {
+      "command": "D:\\AI\\workspace\\mcp\\servers\\filesystem\\node_modules\\.bin\\mcp-server-filesystem.cmd",
+      "args": [
+        "D:\\AI",
+        "D:\\Dev"
+      ]
+    },
+    "memory": {
+      "command": "D:\\AI\\workspace\\mcp\\servers\\memory\\node_modules\\.bin\\mcp-server-memory.cmd"
+    },
+    "sequential-thinking": {
+      "command": "D:\\AI\\workspace\\mcp\\servers\\sequential-thinking\\node_modules\\.bin\\mcp-server-sequential-thinking.cmd"
+    },
+    "playwright": {
+      "command": "D:\\AI\\workspace\\mcp\\servers\\playwright-mcp\\node_modules\\.bin\\playwright-mcp.cmd",
+      "args": [
+        "--browser",
+        "msedge",
+        "--output-dir",
+        "D:\\AI\\data\\playwright-mcp\\default"
+      ],
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "D:\\AI\\data\\playwright-browsers"
+      }
+    },
+    "context7": {
+      "command": "D:\\AI\\workspace\\mcp\\servers\\context7\\node_modules\\.bin\\context7-mcp.cmd"
+    },
+    "hermes": {
+      "command": "D:\\AI\\data\\hermes\\hermes-agent\\venv\\Scripts\\hermes.exe",
+      "args": [
+        "mcp",
+        "serve"
+      ]
+    }
+  }
+}

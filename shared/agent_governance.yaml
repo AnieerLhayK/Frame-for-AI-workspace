@@ -1,0 +1,162 @@
+schema_version: "0.1"
+purpose: "Separate skill consumption, durable record production, source maintenance, and workspace structural governance by agent identity."
+
+roles:
+  structural_maintainer:
+    capabilities:
+      - read
+      - invoke
+      - proposal_write
+      - record_write
+      - report_write
+      - source_write
+      - structural_write
+      - platform_write
+  record_producer:
+    capabilities:
+      - read
+      - invoke
+      - proposal_write
+      - record_write
+  consumer:
+    capabilities:
+      - read
+      - invoke
+      - proposal_write
+
+unregistered_agent:
+  role: consumer
+  registration_changes: proposal_only
+  path_scopes:
+    - reports/agent-requests/**
+
+registration_policy:
+  testing_max_duration_hours: 168
+  experimental_max_duration_hours: 720
+  high_risk_capabilities:
+    - report_write
+    - source_write
+    - structural_write
+    - platform_write
+  inactive_statuses:
+    - proposed
+    - suspended
+    - retired
+
+surface_classes:
+  - id: platform_projection
+    required_capability: platform_write
+    path_patterns:
+      - .claude/skills/**
+  - id: proposal_record
+    required_capability: proposal_write
+    path_patterns:
+      - reports/agent-requests/**
+  - id: runtime_record
+    required_capability: record_write
+    path_patterns:
+      - packages/character-system/reports/runtime-loop/diagnoses/**
+      - packages/character-system/reports/runtime-loop/handoffs/**
+      - packages/character-system/reports/runtime-loop/patches/**
+      - packages/character-system/reports/runtime-loop/validations/**
+      - packages/character-system/reports/runtime-loop/generalization_backlog/**
+      - reports/hermes/**
+      - reports/opencode/**
+      - reports/reasonix/**
+  - id: agent_experiment_record
+    required_capability: record_write
+    path_patterns:
+      - reports/agent-experiments/**
+  - id: generated_snapshot
+    required_capability: report_write
+    path_patterns:
+      - reports/**
+  - id: skill_source
+    required_capability: source_write
+    path_patterns:
+      - skills/**
+      - packages/**
+  - id: governance_structure
+    required_capability: structural_write
+    path_patterns:
+      - workspace_manifest.yaml
+      - AGENTS.md
+      - CLAUDE.md
+      - ARCHITECTURE.md
+      - README.md
+      - .gitignore
+      - .gitattributes
+      - .github/**
+      - .claude/**
+      - PROJECT_CONTEXT/**
+      - shared/**
+      - scripts/**
+      - USAGE_GUIDES/**
+  - id: workspace_other
+    required_capability: structural_write
+    path_patterns:
+      - "**"
+
+change_risk_policy:
+  elevated_path_patterns:
+    - AGENTS.md
+    - CLAUDE.md
+  high_surfaces:
+    - platform_projection
+  high_path_patterns:
+    - workspace_manifest.yaml
+    - shared/**
+    - PROJECT_CONTEXT/task_registry.yaml
+    - PROJECT_CONTEXT/context_budget.md
+    - PROJECT_CONTEXT/change_surface_policy.md
+    - .claude/**
+    - scripts/agent_governance.py
+    - scripts/resolve_task_context.py
+    - scripts/plan_change_surface.py
+    - scripts/verify_change_scope.py
+    - scripts/workflow_check.py
+    - scripts/hermes_workspace_guard.py
+    - scripts/check_links.ps1
+    - scripts/setup_links.ps1
+    - scripts/session_continuity.py
+    - scripts/migration_dry_run.py
+  confirmation_required_operations:
+    - platform_projection_change
+    - skill_delete_or_move
+    - large_move_or_rename
+    - session_cache_or_external_data_migration
+    - git_history_rewrite
+    - bulk_cleanup
+  worktree_recommended_operations:
+    - temporary_structural_lease
+    - platform_projection_change
+    - skill_delete_or_move
+    - large_move_or_rename
+    - concurrent_development
+    - high_risk_experiment
+
+lease_policy:
+  trusted_issuers:
+    - user
+    - codex
+    - claude
+  external_store: "${DATA_ROOT}/workspace-governance/leases"
+  allowed_capabilities:
+    - record_write
+    - source_write
+    - structural_write
+    - platform_write
+  structural_isolation_modes:
+    - worktree
+  require_expiry: true
+  maximum_duration_hours: 24
+
+request_policy:
+  workspace_path: reports/agent-requests
+  allowed_modes:
+    - review_only
+    - temporary_lease
+    - worktree
+  structural_reviewers:
+    - codex
+    - claude

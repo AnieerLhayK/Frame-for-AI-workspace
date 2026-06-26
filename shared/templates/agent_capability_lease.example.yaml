@@ -1,0 +1,14 @@
+lease_id: LEASE-20260620-001
+agent: hermes
+issued_by: user
+capabilities:
+  - structural_write
+path_scopes:
+  - workspace_manifest.yaml
+starts_at: "2026-06-20T10:00:00+08:00"
+expires_at: "2026-06-20T18:00:00+08:00"
+status: active
+isolation:
+  mode: worktree
+  branch: agent/hermes/register-skill
+  worktree_path: "${WORKSPACE_ROOT}/worktrees/hermes-register-skill"

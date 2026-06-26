@@ -1,0 +1,112 @@
+[agent]
+system_prompt = """
+You are Reasonix operating inside the governed D:\\AI\\workspace repository.
+Your workspace role is record_producer, not source maintainer. Read and invoke
+registered skills, but write only scoped diagnosis, handoff, Reasonix report,
+or agent-request records. A user request does not expand authority: never
+offer, request permission for, or attempt direct edits to skill source,
+governance, manifests, projections, or runtime character files. Character
+drift routes through style-doctor, then diagnosis/handoff, then
+character-maintainer. When structural work is needed, create an agent request
+for Codex or Claude. These rules apply only while this project config is active.
+"""
+
+[skills]
+paths = [
+  "packages/character-system/engineering/diagnosis/style-doctor",
+  "packages/character-system/runtime/characters/zyc",
+]
+
+[permissions]
+mode = "deny"
+allow = [
+  "write_file(packages/character-system/reports/runtime-loop/diagnoses/*)",
+  "write_file(packages/character-system/reports/runtime-loop/handoffs/*)",
+  "write_file(reports/reasonix/*)",
+  "write_file(reports/agent-requests/*)",
+  "edit_file(packages/character-system/reports/runtime-loop/diagnoses/*)",
+  "edit_file(packages/character-system/reports/runtime-loop/handoffs/*)",
+  "edit_file(reports/reasonix/*)",
+  "edit_file(reports/agent-requests/*)",
+  "multi_edit(packages/character-system/reports/runtime-loop/diagnoses/*)",
+  "multi_edit(packages/character-system/reports/runtime-loop/handoffs/*)",
+  "multi_edit(reports/reasonix/*)",
+  "multi_edit(reports/agent-requests/*)",
+]
+deny = [
+  "write_file(workspace_manifest.yaml)",
+  "write_file(AGENTS.md)",
+  "write_file(CLAUDE.md)",
+  "write_file(README.md)",
+  "write_file(PROJECT_CONTEXT/*)",
+  "write_file(shared/*)",
+  "write_file(scripts/*)",
+  "write_file(.claude/*)",
+  "write_file(.opencode/*)",
+  "write_file(packages/character-system/runtime/*)",
+  "write_file(packages/character-system/runtime/**)",
+  "write_file(packages/character-system/engineering/*)",
+  "write_file(packages/character-system/engineering/**)",
+  "write_file(packages/character-system/shared/*)",
+  "write_file(packages/character-system/shared/**)",
+  "edit_file(workspace_manifest.yaml)",
+  "edit_file(AGENTS.md)",
+  "edit_file(CLAUDE.md)",
+  "edit_file(README.md)",
+  "edit_file(PROJECT_CONTEXT/*)",
+  "edit_file(shared/*)",
+  "edit_file(scripts/*)",
+  "edit_file(.claude/*)",
+  "edit_file(.opencode/*)",
+  "edit_file(packages/character-system/runtime/*)",
+  "edit_file(packages/character-system/runtime/**)",
+  "edit_file(packages/character-system/engineering/*)",
+  "edit_file(packages/character-system/engineering/**)",
+  "edit_file(packages/character-system/shared/*)",
+  "edit_file(packages/character-system/shared/**)",
+  "multi_edit(workspace_manifest.yaml)",
+  "multi_edit(AGENTS.md)",
+  "multi_edit(CLAUDE.md)",
+  "multi_edit(README.md)",
+  "multi_edit(PROJECT_CONTEXT/*)",
+  "multi_edit(shared/*)",
+  "multi_edit(scripts/*)",
+  "multi_edit(.claude/*)",
+  "multi_edit(.opencode/*)",
+  "multi_edit(packages/character-system/runtime/*)",
+  "multi_edit(packages/character-system/runtime/**)",
+  "multi_edit(packages/character-system/engineering/*)",
+  "multi_edit(packages/character-system/engineering/**)",
+  "multi_edit(packages/character-system/shared/*)",
+  "multi_edit(packages/character-system/shared/**)",
+  "mcp__filesystem__write_file(*)",
+  "mcp__filesystem__edit_file(*)",
+  "mcp__filesystem__create_directory(*)",
+  "mcp__filesystem__move_file(*)",
+  "bash(*)",
+  "bash(git commit*)",
+  "bash(git push*)",
+  "bash(git reset*)",
+  "bash(git checkout*)",
+  "bash(git clean*)",
+  "bash(rm *)",
+  "bash(del *)",
+  "bash(remove-item *)",
+  "skill_manage(*)",
+]
+
+[sandbox]
+workspace_root = "D:\\AI\\workspace"
+allow_write = ["D:\\AI\\data\\reasonix\\cache\\staging"]
+bash = "enforce"
+network = true
+
+[[plugins]]
+name = "filesystem"
+command = "D:\\AI\\workspace\\mcp\\servers\\filesystem\\node_modules\\.bin\\mcp-server-filesystem.cmd"
+args = [
+  "D:\\AI\\data\\reasonix",
+  "D:\\AI\\out",
+  "D:\\AI\\workspace\\packages\\character-system\\shared",
+  "D:\\AI\\workspace\\packages\\character-system\\reports\\runtime-loop",
+]

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol_manifest.schema.json",
+  "title": "Shared Protocol Manifest",
+  "type": "object",
+  "required": [
+    "protocol_manifest_version",
+    "shared_protocols",
+    "runtime_loop_templates",
+    "runtime_loop_ledgers",
+    "core_skills"
+  ],
+  "properties": {
+    "protocol_manifest_version": { "type": "string" },
+    "shared_protocols": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pathRegistryEntryWithUsers" }
+    },
+    "runtime_loop_templates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pathRegistryEntry" }
+    },
+    "runtime_loop_ledgers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pathRegistryEntry" }
+    },
+    "core_skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "path", "required_shared_protocols"],
+        "properties": {
+          "id": { "type": "string" },
+          "path": { "type": "string" },
+          "required_shared_protocols": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "pathRegistryEntry": {
+      "type": "object",
+      "required": ["id", "path", "required"],
+      "properties": {
+        "id": { "type": "string" },
+        "path": { "type": "string" },
+        "required": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "pathRegistryEntryWithUsers": {
+      "type": "object",
+      "required": ["id", "path", "required", "used_by"],
+      "properties": {
+        "id": { "type": "string" },
+        "path": { "type": "string" },
+        "required": { "type": "boolean" },
+        "used_by": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "plugin": [
+    "./.opencode/plugins/workspace-governance.js"
+  ],
+  "permission": {
+    "edit": {
+      "*": "deny",
+      "packages/character-system/reports/runtime-loop/diagnoses/**": "allow",
+      "packages/character-system/reports/runtime-loop/handoffs/**": "allow",
+      "reports/opencode/**": "allow",
+      "reports/agent-requests/**": "allow"
+    },
+    "bash": {
+      "*": "deny",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git show*": "allow",
+      "git branch --show-current*": "allow",
+      "rg *": "allow",
+      "python scripts/workspace_cli.py agent request*": "allow"
+    },
+    "external_directory": {
+      "*": "deny"
+    }
+  }
+}

@@ -1,0 +1,265 @@
+schema_version: "0.1"
+purpose: "Concrete agent identity, lifecycle, scope, platform, and storage registrations."
+
+allowed_statuses:
+  - proposed
+  - testing
+  - active
+  - suspended
+  - retired
+allowed_registration_types:
+  - permanent
+  - experimental
+  - temporary
+  - candidate
+allowed_trust_sources:
+  - user_approved
+  - workspace_migration
+  - observed_local_config
+  - unconfirmed
+
+agents:
+  codex:
+    id: codex
+    display_name: Codex
+    aliases:
+      - codex-desktop
+      - codex-cli
+    identity_kind: agent
+    host:
+      id: codex
+      kind: desktop_and_cli
+    status: active
+    registration_type: permanent
+    role: structural_maintainer
+    trust_source: user_approved
+    capabilities:
+      inherit_role: true
+      allow: []
+    path_scopes:
+      - "**"
+    platforms:
+      - id: codex
+        manifest_ref: platform_roots.codex
+    skill_access:
+      mode: manifest_exposures
+      platforms:
+        - codex
+    storage:
+      boundary: external
+      data_root: "${DATA_ROOT}/codex"
+      cache_root: "${DATA_ROOT}/codex/cache"
+    session_store:
+      mode: platform_managed
+      boundary: external
+    lifecycle:
+      owner: user
+      reviewed_at: "2026-06-20T18:30:00+08:00"
+      expires_at: null
+    active_lease_refs: []
+
+  claude:
+    id: claude
+    display_name: Claude Code
+    aliases:
+      - claude-code
+      - claude_code
+    identity_kind: agent
+    host:
+      id: claude-code
+      kind: cli_and_ide_extension
+    status: active
+    registration_type: permanent
+    role: structural_maintainer
+    trust_source: user_approved
+    capabilities:
+      inherit_role: true
+      allow: []
+    path_scopes:
+      - "**"
+    platforms:
+      - id: claude
+        manifest_ref: platform_roots.claude
+    skill_access:
+      mode: manifest_exposures
+      platforms:
+        - claude
+    storage:
+      boundary: external
+      data_root: "${DATA_ROOT}/claude"
+      cache_root: "${DATA_ROOT}/claude/cache"
+    session_store:
+      mode: manifest_ref
+      manifest_ref: session_stores.claude
+      boundary: external
+    lifecycle:
+      owner: user
+      reviewed_at: "2026-06-20T18:30:00+08:00"
+      expires_at: null
+    active_lease_refs: []
+
+  opencode:
+    id: opencode
+    display_name: OpenCode
+    aliases: []
+    identity_kind: agent
+    host:
+      id: opencode
+      kind: cli
+    status: active
+    registration_type: permanent
+    role: record_producer
+    trust_source: workspace_migration
+    capabilities:
+      inherit_role: true
+      allow: []
+    path_scopes:
+      - packages/character-system/reports/runtime-loop/diagnoses/**
+      - packages/character-system/reports/runtime-loop/handoffs/**
+      - reports/opencode/**
+      - reports/agent-requests/**
+    platforms:
+      - id: opencode
+        manifest_ref: platform_roots.opencode
+    skill_access:
+      mode: manifest_exposures
+      platforms:
+        - opencode
+    storage:
+      boundary: external
+      data_root: "${DATA_ROOT}/opencode"
+      cache_root: "${DATA_ROOT}/opencode/cache"
+    session_store:
+      mode: manifest_ref
+      manifest_ref: session_stores.opencode
+      boundary: external
+    lifecycle:
+      owner: user
+      reviewed_at: "2026-06-20T18:30:00+08:00"
+      expires_at: null
+    active_lease_refs: []
+
+  hermes:
+    id: hermes
+    display_name: Hermes
+    aliases:
+      - hermes-agent
+    identity_kind: agent
+    host:
+      id: hermes
+      kind: messaging_agent
+    status: active
+    registration_type: permanent
+    role: record_producer
+    trust_source: workspace_migration
+    capabilities:
+      inherit_role: true
+      allow: []
+    path_scopes:
+      - packages/character-system/reports/runtime-loop/diagnoses/**
+      - packages/character-system/reports/runtime-loop/handoffs/**
+      - reports/hermes/**
+      - reports/agent-requests/**
+    platforms:
+      - id: hermes
+        manifest_ref: platform_roots.hermes
+    skill_access:
+      mode: manifest_exposures
+      platforms:
+        - hermes
+    storage:
+      boundary: external
+      data_root: "${DATA_ROOT}/hermes"
+      cache_root: "${DATA_ROOT}/hermes/cache"
+    session_store:
+      mode: platform_managed
+      boundary: external
+    lifecycle:
+      owner: user
+      reviewed_at: "2026-06-20T18:30:00+08:00"
+      expires_at: null
+    active_lease_refs: []
+
+  cursor:
+    id: cursor
+    display_name: Cursor
+    aliases:
+      - cursor-ide
+    identity_kind: agent_host
+    host:
+      id: cursor
+      kind: ide
+    status: proposed
+    registration_type: experimental
+    role: consumer
+    trust_source: observed_local_config
+    capabilities:
+      inherit_role: true
+      allow: []
+    path_scopes:
+      - reports/agent-requests/**
+    platforms: []
+    skill_access:
+      mode: none
+      platforms: []
+    storage:
+      boundary: external
+      data_root: unconfirmed
+      cache_root: unconfirmed
+    session_store:
+      mode: unconfirmed
+      boundary: external
+    lifecycle:
+      owner: user
+      reviewed_at: null
+      expires_at: "2026-07-20T23:59:59+08:00"
+    evidence:
+      - mcp/README.md
+    unresolved:
+      - Whether Cursor should identify an agent or only host another agent.
+      - Whether a workspace-specific session boundary is available.
+      - No workspace runtime enforcement adapter is installed; keep proposed
+        Consumer authority and do not grant write capabilities.
+    active_lease_refs: []
+
+  reasonix:
+    id: reasonix
+    display_name: Reasonix
+    aliases: []
+    identity_kind: agent
+    host:
+      id: reasonix
+      kind: cli
+    status: active
+    registration_type: permanent
+    role: record_producer
+    trust_source: user_approved
+    capabilities:
+      inherit_role: true
+      allow: []
+    path_scopes:
+      - packages/character-system/reports/runtime-loop/diagnoses/**
+      - packages/character-system/reports/runtime-loop/handoffs/**
+      - reports/reasonix/**
+      - reports/agent-requests/**
+    platforms: []
+    skill_access:
+      mode: explicit_paths
+      paths:
+        - packages/character-system/engineering/diagnosis/style-doctor
+        - packages/character-system/runtime/characters/zyc
+    storage:
+      boundary: external
+      data_root: "${DATA_ROOT}/reasonix-roaming"
+      cache_root: "${DATA_ROOT}/reasonix/cache"
+    session_store:
+      mode: platform_managed
+      boundary: external
+    lifecycle:
+      owner: user
+      reviewed_at: "2026-06-22T13:45:00+08:00"
+      expires_at: null
+    evidence:
+      - reasonix.toml
+      - mcp/README.md
+    active_lease_refs: []

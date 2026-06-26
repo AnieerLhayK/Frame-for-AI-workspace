@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "generalization_note.schema.json",
+  "title": "Generalization Note",
+  "type": "object",
+  "required": [
+    "generalization_id",
+    "linked_patch_id",
+    "source_character",
+    "lesson",
+    "generalizable",
+    "reason",
+    "recommended_generator_change",
+    "should_update_shared_protocol",
+    "risk_if_generalized",
+    "decision"
+  ],
+  "properties": {
+    "generalization_id": { "type": "string", "pattern": "^GEN-[0-9]{8}-[0-9]{3}$" },
+    "linked_patch_id": { "type": "string", "pattern": "^PATCH-[0-9]{8}-[0-9]{3}$" },
+    "source_character": { "type": "string" },
+    "lesson": { "type": "string" },
+    "generalizable": { "type": "string" },
+    "reason": { "type": "string" },
+    "recommended_generator_change": { "type": "string" },
+    "should_update_shared_protocol": { "type": "boolean" },
+    "risk_if_generalized": { "type": "string" },
+    "decision": {
+      "type": "object",
+      "required": ["backlog", "accepted", "rejected", "deferred"],
+      "properties": {
+        "backlog": { "type": "boolean" },
+        "accepted": { "type": "boolean" },
+        "rejected": { "type": "boolean" },
+        "deferred": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "patch_note.schema.json",
+  "title": "Patch Note",
+  "type": "object",
+  "required": [
+    "patch_id",
+    "linked_diagnosis_id",
+    "linked_handoff_id",
+    "character_id",
+    "maintainer_decision",
+    "files_changed",
+    "change_summary",
+    "reason",
+    "expected_effect",
+    "risk_assessment",
+    "rollback_plan",
+    "should_generalize_to_generator",
+    "generalization_note_id"
+  ],
+  "properties": {
+    "patch_id": { "type": "string", "pattern": "^PATCH-[0-9]{8}-[0-9]{3}$" },
+    "linked_diagnosis_id": { "type": "string" },
+    "linked_handoff_id": { "type": "string" },
+    "character_id": { "type": "string" },
+    "maintainer_decision": {
+      "type": "object",
+      "required": ["accepted", "rejected", "deferred"],
+      "properties": {
+        "accepted": { "type": "boolean" },
+        "rejected": { "type": "boolean" },
+        "deferred": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "files_changed": { "type": "array", "items": { "type": "string" } },
+    "change_summary": { "type": "string" },
+    "reason": { "type": "string" },
+    "expected_effect": { "type": "string" },
+    "risk_assessment": { "type": "string" },
+    "rollback_plan": { "type": "string" },
+    "should_generalize_to_generator": { "type": "boolean" },
+    "generalization_note_id": { "type": "string" }
+  },
+  "additionalProperties": false
+}

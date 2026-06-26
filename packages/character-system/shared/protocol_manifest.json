@@ -1,0 +1,183 @@
+{
+  "protocol_manifest_version": "1.0.0",
+  "shared_protocols": [
+    {
+      "id": "character_skill_spec",
+      "path": "packages/character-system/shared/character_skill_spec.md",
+      "required": true,
+      "used_by": ["character-generator", "character-maintainer", "zyc"]
+    },
+    {
+      "id": "drift_taxonomy",
+      "path": "packages/character-system/shared/drift_taxonomy.md",
+      "required": true,
+      "used_by": ["character-maintainer", "style-doctor", "zyc"]
+    },
+    {
+      "id": "handoff_format",
+      "path": "packages/character-system/shared/handoff_format.md",
+      "required": true,
+      "used_by": ["character-maintainer", "style-doctor"]
+    },
+    {
+      "id": "patch_protocol",
+      "path": "packages/character-system/shared/patch_protocol.md",
+      "required": true,
+      "used_by": ["character-maintainer", "style-doctor", "zyc"]
+    },
+    {
+      "id": "versioning_policy",
+      "path": "packages/character-system/shared/versioning_policy.md",
+      "required": true,
+      "used_by": ["character-generator", "character-maintainer", "zyc"]
+    },
+    {
+      "id": "workspace_policy",
+      "path": "shared/workspace_policy.md",
+      "required": true,
+      "used_by": ["character-generator", "character-maintainer", "style-doctor", "zyc"]
+    },
+    {
+      "id": "discovery_rules",
+      "path": "shared/discovery_rules.md",
+      "required": true,
+      "used_by": ["workspace"]
+    },
+    {
+      "id": "failure_policy",
+      "path": "shared/failure_policy.md",
+      "required": true,
+      "used_by": ["workspace"]
+    },
+    {
+      "id": "workspace_path_policy",
+      "path": "shared/workspace_path_policy.md",
+      "required": true,
+      "used_by": ["workspace"]
+    },
+    {
+      "id": "reporting_policy",
+      "path": "shared/reporting_policy.md",
+      "required": true,
+      "used_by": ["character-generator", "character-maintainer", "style-doctor", "zyc", "workspace"]
+    },
+    {
+      "id": "future_drift_policy",
+      "path": "packages/character-system/shared/future_drift_policy.md",
+      "required": true,
+      "used_by": ["character-generator", "character-maintainer", "style-doctor", "zyc", "workspace"]
+    },
+    {
+      "id": "runtime_loop_policy",
+      "path": "packages/character-system/shared/runtime_loop_policy.md",
+      "required": true,
+      "used_by": ["character-generator", "character-maintainer", "style-doctor", "zyc"]
+    },
+    {
+      "id": "manifest_portability_policy",
+      "path": "shared/manifest_portability_policy.md",
+      "required": true,
+      "used_by": ["workspace"]
+    }
+  ],
+  "runtime_loop_templates": [
+    {
+      "id": "diagnosis_packet",
+      "path": "packages/character-system/shared/templates/diagnosis_packet.template.md",
+      "required": true
+    },
+    {
+      "id": "handoff_packet",
+      "path": "packages/character-system/shared/templates/handoff_packet.template.md",
+      "required": true
+    },
+    {
+      "id": "patch_note",
+      "path": "packages/character-system/shared/templates/patch_note.template.md",
+      "required": true
+    },
+    {
+      "id": "validation_note",
+      "path": "packages/character-system/shared/templates/validation_note.template.md",
+      "required": true
+    },
+    {
+      "id": "generalization_note",
+      "path": "packages/character-system/shared/templates/generalization_note.template.md",
+      "required": true
+    }
+  ],
+  "runtime_loop_ledgers": [
+    {
+      "id": "diagnosis_ledger",
+      "path": "packages/character-system/reports/runtime-loop/ledgers/diagnosis_ledger.md",
+      "required": true
+    },
+    {
+      "id": "patch_ledger",
+      "path": "packages/character-system/reports/runtime-loop/ledgers/patch_ledger.md",
+      "required": true
+    },
+    {
+      "id": "generalization_ledger",
+      "path": "packages/character-system/reports/runtime-loop/ledgers/generalization_ledger.md",
+      "required": true
+    }
+  ],
+  "core_skills": [
+    {
+      "id": "character-generator",
+      "path": "packages/character-system/engineering/generation/character-generator",
+      "required_shared_protocols": [
+        "packages/character-system/shared/character_skill_spec.md",
+        "packages/character-system/shared/runtime_loop_policy.md",
+        "packages/character-system/shared/versioning_policy.md",
+        "shared/workspace_policy.md",
+        "shared/reporting_policy.md",
+        "packages/character-system/shared/future_drift_policy.md"
+      ]
+    },
+    {
+      "id": "character-maintainer",
+      "path": "packages/character-system/engineering/maintenance/character-maintainer",
+      "required_shared_protocols": [
+        "packages/character-system/shared/character_skill_spec.md",
+        "packages/character-system/shared/drift_taxonomy.md",
+        "packages/character-system/shared/patch_protocol.md",
+        "packages/character-system/shared/handoff_format.md",
+        "packages/character-system/shared/runtime_loop_policy.md",
+        "packages/character-system/shared/versioning_policy.md",
+        "shared/workspace_policy.md",
+        "shared/reporting_policy.md",
+        "packages/character-system/shared/future_drift_policy.md"
+      ]
+    },
+    {
+      "id": "style-doctor",
+      "path": "packages/character-system/engineering/diagnosis/style-doctor",
+      "required_shared_protocols": [
+        "packages/character-system/shared/drift_taxonomy.md",
+        "packages/character-system/shared/patch_protocol.md",
+        "packages/character-system/shared/handoff_format.md",
+        "packages/character-system/shared/runtime_loop_policy.md",
+        "shared/workspace_policy.md",
+        "shared/reporting_policy.md",
+        "packages/character-system/shared/future_drift_policy.md"
+      ]
+    },
+    {
+      "id": "zyc",
+      "path": "packages/character-system/runtime/characters/zyc",
+      "required_shared_protocols": [
+        "packages/character-system/shared/character_skill_spec.md",
+        "packages/character-system/shared/drift_taxonomy.md",
+        "packages/character-system/shared/patch_protocol.md",
+        "packages/character-system/shared/runtime_loop_policy.md",
+        "packages/character-system/shared/versioning_policy.md",
+        "shared/workspace_policy.md",
+        "shared/reporting_policy.md",
+        "packages/character-system/shared/future_drift_policy.md"
+      ]
+    }
+  ]
+}

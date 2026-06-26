@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "wps-agent": {
+      "command": "D:\\AI\\workspace\\mcp\\servers\\wps-agent\\.venv\\Scripts\\python.exe",
+      "args": [
+        "D:\\AI\\workspace\\mcp\\servers\\wps-agent\\mcp_server.py"
+      ],
+      "cwd": "D:\\AI\\workspace\\mcp\\servers\\wps-agent",
+      "env": {
+        "PYTHONUTF8": "1"
+      }
+    }
+  }
+}

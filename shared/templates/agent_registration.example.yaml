@@ -1,0 +1,38 @@
+id: example-agent
+display_name: Example Agent
+aliases:
+  - example-cli
+identity_kind: agent
+host:
+  id: example-host
+  kind: cli
+status: testing
+registration_type: experimental
+role: record_producer
+trust_source: user_approved
+capabilities:
+  inherit_role: false
+  allow:
+    - read
+    - invoke
+    - proposal_write
+    - record_write
+path_scopes:
+  - reports/example-agent/**
+  - reports/agent-requests/**
+platforms: []
+skill_access:
+  mode: none
+  platforms: []
+storage:
+  boundary: external
+  data_root: "${DATA_ROOT}/example-agent"
+  cache_root: "${DATA_ROOT}/example-agent/cache"
+session_store:
+  mode: platform_managed
+  boundary: external
+lifecycle:
+  owner: user
+  reviewed_at: "2026-06-20T12:00:00+08:00"
+  expires_at: "2026-06-21T12:00:00+08:00"
+active_lease_refs: []

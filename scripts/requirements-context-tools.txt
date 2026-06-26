@@ -1,0 +1,2 @@
+PyYAML>=6.0,<7
+tiktoken>=0.7,<1

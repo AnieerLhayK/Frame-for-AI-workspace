@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "handoff_packet.schema.json",
+  "title": "Handoff Packet",
+  "type": "object",
+  "required": [
+    "handoff_id",
+    "diagnosis_id",
+    "from",
+    "to",
+    "character_id",
+    "reason_for_handoff",
+    "recommended_files_to_inspect",
+    "recommended_patch_type",
+    "risk_level",
+    "acceptance_criteria",
+    "deferred_questions"
+  ],
+  "properties": {
+    "handoff_id": { "type": "string", "pattern": "^HANDOFF-[0-9]{8}-[0-9]{3}$" },
+    "record_path": { "type": "string" },
+    "diagnosis_id": { "type": "string", "pattern": "^DIAG-[0-9]{8}-[0-9]{3}$" },
+    "diagnosis_record_path": { "type": "string" },
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "character_id": { "type": "string" },
+    "reason_for_handoff": { "type": "string" },
+    "recommended_files_to_inspect": { "type": "array", "items": { "type": "string" } },
+    "recommended_patch_type": { "type": "string" },
+    "risk_level": { "type": "string" },
+    "acceptance_criteria": { "type": "array", "items": { "type": "string" } },
+    "deferred_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

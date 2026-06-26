@@ -1,0 +1,286 @@
+schema_version: "0.1"
+purpose: "Map task prompt ids to reusable prompt guidance and existing copy-ready prompt templates."
+
+source_boundaries:
+  source_of_truth:
+    - "workspace_manifest.yaml"
+    - "PROJECT_CONTEXT/task_registry.yaml"
+    - "shared/"
+  this_registry_is:
+    - "a prompt selection index"
+    - "a reusable meta-prompt memory layer"
+    - "a bridge between task ids and copy-ready prompt templates"
+  this_registry_is_not:
+    - "a replacement for task routing"
+    - "a replacement for protocol contracts"
+    - "a generated report"
+
+default_rules:
+  resolve_order:
+    - "Classify the task in PROJECT_CONTEXT/task_registry.yaml."
+    - "Read only the prompt ids listed by that task."
+    - "Use this registry to select the smallest matching prompt frame or template path."
+    - "Open full prompt templates only when the user is preparing to run or edit that prompt."
+  prompt_budget:
+    prefer_prompt_id_over_regenerating_meta_prompt: true
+    do_not_inline_large_templates_by_default: true
+    keep_task_specific_constraints_in_the_final_prompt: true
+    preserve_source_projection_boundaries: true
+    treat_platform_as_exposure_not_ownership: true
+
+prompts:
+  skill_architecture:
+    type: maintenance_meta
+    purpose: "Change role, authority, execution-mode, or multi-platform exposure contracts without copying skill source."
+    use_when:
+      - "A skill needs another platform exposure."
+      - "Platform ownership assumptions need to be removed."
+      - "Manifest compatibility fields or projection-aware validators need to change."
+    read:
+      - "workspace_manifest.yaml"
+      - "shared/workspace_policy.md"
+      - "shared/workspace_path_policy.md"
+      - "affected skill SKILL.md files"
+      - "manifest-aware scripts"
+    ignore:
+      - "private corpus material"
+      - "unrelated historical reports"
+      - "unrelated tool configuration"
+    prompt_frame:
+      - "Keep role, authority, execution mode, and exposure independent."
+      - "Use one source path with multiple projections instead of source copies."
+      - "Preserve legacy manifest fields as compatibility aliases until consumers migrate."
+      - "Validate both manifest contracts and actual platform discovery."
+
+  task_routing:
+    type: maintenance_meta
+    purpose: "Route a workspace maintenance task before broad discovery."
+    use_when:
+      - "The task changes registry, budget, ledger, prompt routing, or startup workflow."
+    read:
+      - "AGENTS.md"
+      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "PROJECT_CONTEXT/context_budget.md"
+      - "PROJECT_CONTEXT/task_ledger.md latest 5 entries"
+    ignore:
+      - "reports/"
+      - "platform loading surfaces unless explicitly named"
+      - "skill implementation folders unless the task owns them"
+    prompt_frame:
+      - "Classify the user request against PROJECT_CONTEXT/task_registry.yaml."
+      - "Apply PROJECT_CONTEXT/context_budget.md before optional reads."
+      - "Name required, optional, ignored, writable, and validation surfaces."
+      - "Make the smallest source-truth-preserving edit."
+
+  minimal_edit:
+    type: maintenance_meta
+    purpose: "Make a narrow metadata or text fix without touching behavior."
+    use_when:
+      - "A task only needs discovery metadata, frontmatter, wording, or a bounded documentation correction."
+    read:
+      - "target file"
+      - "nearest owning README or shared protocol only if needed"
+    ignore:
+      - "reports/"
+      - "unrelated skills"
+      - "large references"
+    prompt_frame:
+      - "Change only the named surface."
+      - "Preserve runtime behavior and existing examples."
+      - "Run focused diff and whitespace validation."
+
+  platform_exposure:
+    type: maintenance_meta
+    purpose: "Fix or audit platform loading exposure without treating projections as source."
+    use_when:
+      - "Skills are not visible in their platform loading surface."
+      - "A local tool path or junction needs review."
+    read:
+      - "workspace_manifest.yaml"
+      - "PROJECT_CONTEXT/current_status.md"
+      - "USAGE_GUIDES/QUICK_START/codex.md"
+      - "USAGE_GUIDES/QUICK_START/opencode.md"
+      - "actual platform debug output"
+    ignore:
+      - "old projection roots unless explicitly approved"
+      - "skill internals beyond discovery metadata"
+    prompt_frame:
+      - "Treat workspace_manifest.yaml -> workspace.source_of_truth as source of truth."
+      - "Verify actual platform loading roots from debug output."
+      - "Prefer minimal exposure fixes over migration."
+      - "Do not delete or rewrite legacy paths without explicit approval."
+
+  drift_repair:
+    type: maintenance_meta
+    purpose: "Diagnose and repair runtime character drift through the runtime loop."
+    use_when:
+      - "A character output drifts from expected style or behavior."
+    read:
+      - "packages/character-system/shared/runtime_loop_policy.md"
+      - "packages/character-system/shared/drift_taxonomy.md"
+      - "packages/character-system/shared/patch_protocol.md"
+      - "packages/character-system/engineering/diagnosis/style-doctor/SKILL.md"
+      - "target character SKILL.md"
+    ignore:
+      - "generator templates unless a generalization task is explicitly opened"
+      - "unrelated character references"
+    prompt_frame:
+      - "Diagnose first, patch second, validate third."
+      - "Keep character-local fixes local unless repeated evidence justifies generalization."
+      - "Record runtime-loop evidence in the proper runtime report layer."
+
+  usage_guide_edit:
+    type: maintenance_meta
+    purpose: "Update user-facing usage guides and prompt templates."
+    use_when:
+      - "A copied prompt, quick start, or usage workflow changes."
+    read:
+      - "USAGE_GUIDES/README.md"
+      - "USAGE_GUIDES/START_HERE.md"
+      - "USAGE_GUIDES/PROMPT_TEMPLATES/README.md"
+      - "USAGE_GUIDES/prompt_registry.yaml"
+    ignore:
+      - "skill internals unless the guide references them incorrectly"
+      - "reports/"
+    prompt_frame:
+      - "Keep instructions copy-ready and name current exposures without implying ownership."
+      - "Reference source-of-truth files instead of duplicating volatile path facts."
+      - "Update the prompt registry when adding or renaming prompt ids."
+
+  report_refresh:
+    type: maintenance_meta
+    purpose: "Regenerate or update a report snapshot from source evidence."
+    use_when:
+      - "A report is stale after source, manifest, protocol, or link changes."
+    read:
+      - "source files named by the report"
+      - "the matching report generator or validator"
+    ignore:
+      - "unrelated historical reports"
+      - "archives"
+    prompt_frame:
+      - "Regenerate from source rather than manually editing generated conclusions."
+      - "Check report headers and validation outputs."
+      - "Do not treat old snapshots as stronger than current source."
+
+  cleanup_migration:
+    type: maintenance_meta
+    purpose: "Plan and execute approved cleanup or migration with explicit path safety."
+    use_when:
+      - "The user approves deleting, moving, importing, or retiring local directories."
+    read:
+      - "workspace_manifest.yaml"
+      - "shared/manifest_portability_policy.md"
+      - "shared/workspace_path_policy.md"
+      - "explicitly named target paths"
+    ignore:
+      - "whole-drive search"
+      - "unbounded parent traversal"
+      - "legacy paths not named by the user"
+    prompt_frame:
+      - "Confirm every destructive path is explicitly approved."
+      - "Verify resolved absolute paths before destructive operations."
+      - "Update manifest and PROJECT_CONTEXT only when source facts change."
+
+  source_truth_dedup:
+    type: maintenance_meta
+    purpose: "Remove duplicated volatile path facts from docs while preserving manifest as the canonical registry."
+    use_when:
+      - "Docs repeat source roots, platform roots, projection paths, or retired local paths."
+      - "A maintenance pass should reduce drift between manifest, PROJECT_CONTEXT, USAGE_GUIDES, and shared policies."
+    read:
+      - "workspace_manifest.yaml"
+      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "PROJECT_CONTEXT/context_budget.md"
+      - "PROJECT_CONTEXT/task_ledger.md latest 5 entries"
+      - "target docs that duplicate path facts"
+    ignore:
+      - "reports/ unless the task is report regeneration"
+      - "platform loading surfaces"
+      - "skill runtime behavior files"
+    prompt_frame:
+      - "Keep canonical local path facts in workspace_manifest.yaml."
+      - "Replace duplicated current path facts in docs with manifest field references."
+      - "Use placeholders such as <workspace-root> in copy-ready examples."
+      - "Leave historical report snapshots intact unless explicitly regenerating them."
+      - "Run a narrow path-duplication search and focused validation."
+
+  character_generator:
+    type: copy_ready_template
+    platform: codex
+    platform_field_meaning: "current/default exposure, not ownership"
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/engineering/generation/character-generator.md"
+    purpose: "Generate or update a character skill from authorized source material."
+
+  character_maintainer:
+    type: copy_ready_template
+    platform: codex
+    platform_field_meaning: "current/default exposure, not ownership"
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/engineering/maintenance/character-maintainer.md"
+    purpose: "Patch or maintain an existing character skill without rewriting its identity."
+
+  style_doctor:
+    type: copy_ready_template
+    platform: opencode
+    platform_field_meaning: "current/default exposure, not ownership"
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/engineering/diagnosis/style-doctor.md"
+    purpose: "Diagnose writing-style drift and produce repair evidence."
+
+  style_doctor_text_only:
+    type: copy_ready_template
+    platform: opencode
+    platform_field_meaning: "current/default exposure, not ownership"
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/engineering/diagnosis/style-doctor.md#safe-text-only-diagnosis"
+    purpose: "Diagnose runtime drift without allowing any file or ledger writes."
+
+  zyc:
+    type: copy_ready_template
+    platform: opencode
+    exposures:
+      - opencode
+      - codex
+    platform_field_meaning: "legacy/default exposure, not ownership"
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/runtime/zyc.md"
+    purpose: "Use the ZYC character/style skill safely."
+
+  zyc_natural_discussion:
+    type: copy_ready_template
+    platform: opencode
+    exposures:
+      - opencode
+      - codex
+    platform_field_meaning: "legacy/default exposure, not ownership"
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/runtime/zyc.md#natural-discussion"
+    purpose: "Ask ZYC to enter natural discussion directly without a task-selection menu."
+
+  maintainer_quick_patch:
+    type: copy_ready_template
+    platform: codex
+    platform_field_meaning: "current/default exposure, not ownership"
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/engineering/maintenance/character-maintainer.md#quick-patch-from-diagnosis"
+    purpose: "Review a diagnosis and apply only an explicitly accepted narrow patch."
+
+  generate_character_workflow:
+    type: workflow_template
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workflows/generate_character.md"
+    purpose: "End-to-end workflow for creating a character skill."
+
+  diagnose_runtime_drift_workflow:
+    type: workflow_template
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workflows/diagnose_runtime_drift.md"
+    purpose: "Cross-platform runtime drift diagnosis workflow."
+
+  patch_existing_character_workflow:
+    type: workflow_template
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workflows/patch_existing_character.md"
+    purpose: "Patch an existing character after diagnosis."
+
+  validate_patch_workflow:
+    type: workflow_template
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workflows/validate_patch.md"
+    purpose: "Validate a patch against expected style and protocol constraints."
+
+  generator_generalization_workflow:
+    type: workflow_template
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workflows/generator_generalization.md"
+    purpose: "Generalize repeated local lessons back into generator behavior only when justified."
