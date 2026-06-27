@@ -1,12 +1,12 @@
 ﻿---
 report_name: workspace_setup_report
-generated_at: 2026-06-27 19:40:43 +08:00
+generated_at: 2026-06-27 19:48:59 +08:00
 generated_by: scripts/sync_report.ps1
 source_root: ${WORKSPACE_ROOT}
 manifest_path: ${WORKSPACE_ROOT}\workspace_manifest.yaml
 manifest_version: 1.3.0
 manifest_last_modified: 2026-06-20 18:27:28 +08:00
-source_commit: 57f7a3f
+source_commit: 7eda155
 report_scope: workspace setup, skill registry, and projection status
 report_is_snapshot: true
 truth_source:
@@ -20,7 +20,7 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 
 # Workspace Setup Report
 
-Generated: 2026-06-27 19:40:43 +08:00
+Generated: 2026-06-27 19:48:59 +08:00
 
 ## Workspace
 

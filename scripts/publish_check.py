@@ -215,6 +215,13 @@ def run_tests(root: Path) -> list[str]:
     """Run pytest in the staging directory."""
     issues: list[str] = []
     cwd = os.getcwd()
+    routing_events = root / ".claude" / "routing_events.ndjson"
+    had_routing_events = routing_events.exists()
+    original_routing_events = (
+        routing_events.read_text(encoding="utf-8")
+        if had_routing_events
+        else None
+    )
     try:
         os.chdir(root)
         result = subprocess.run(
@@ -263,6 +270,10 @@ def run_tests(root: Path) -> list[str]:
         issues.append(f"  pytest not found: {exc}")
     finally:
         os.chdir(cwd)
+        if had_routing_events and original_routing_events is not None:
+            routing_events.write_text(original_routing_events, encoding="utf-8")
+        elif routing_events.exists():
+            routing_events.unlink()
     return issues
 
 

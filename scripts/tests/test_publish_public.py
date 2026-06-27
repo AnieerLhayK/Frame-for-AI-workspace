@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.publish_check import check_forbidden_paths, run_functional_checks
+from scripts.publish_check import check_forbidden_paths, run_functional_checks, run_tests
 from scripts.publish_public import SCRUB_FILES, scrub_content
 
 
@@ -61,6 +61,24 @@ class PublicPublishTests(unittest.TestCase):
 
             run_functional_checks(root)
 
+            self.assertFalse((root / ".claude" / "routing_events.ndjson").exists())
+
+    def test_pytest_checks_do_not_leave_routing_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".claude").mkdir()
+            tests = root / "scripts" / "tests"
+            tests.mkdir(parents=True)
+            (tests / "test_event.py").write_text(
+                "from pathlib import Path\n\n"
+                "def test_event_write():\n"
+                "    Path('.claude/routing_events.ndjson').write_text('event\\n')\n",
+                encoding="utf-8",
+            )
+
+            issues = run_tests(root)
+
+            self.assertEqual(issues, [])
             self.assertFalse((root / ".claude" / "routing_events.ndjson").exists())
 
 
