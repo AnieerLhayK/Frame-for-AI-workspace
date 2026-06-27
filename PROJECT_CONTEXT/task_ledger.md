@@ -46,6 +46,28 @@ Do not add entries for every command, read, or tiny edit. The entry should captu
 
 ## Recent Entries
 
+### TASK-20260627-001 - Repair public workspace publishing scrub checks
+
+- Date: 2026-06-27
+- Status: completed
+- Task type: skill_release_packaging, task_registry_update
+- Branch: main
+- Commit: pending
+- Modified:
+  - Tightened public workspace path scrubbing for JSON-escaped Windows paths.
+  - Added `reasonix.toml` to public skeleton scrub coverage.
+  - Added a publish-tool regression test for escaped path detection.
+  - Expanded `skill_release_packaging` routing to include public skeleton
+    publish, verify, and sync tooling.
+- Decision:
+  - Treat `scripts/publish_public.py`, `scripts/publish_check.py`, and
+    `scripts/sync_public_repo.py` as release-packaging surfaces when they
+    govern the public workspace skeleton.
+- Validation:
+  - Pending final commit validation.
+- Next:
+  - Sync the regenerated skeleton to `Frame-for-AI-workspace`.
+
 ### TASK-20260624-001 - Evaluate external RAG / knowledge base planning
 
 - Date: 2026-06-24

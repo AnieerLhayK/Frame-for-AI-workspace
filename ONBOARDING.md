@@ -1,4 +1,4 @@
-# ONBOARDING — Getting Started with Frame-for-AI-workspace
+# ONBOARDING — Getting Started with governed-skill-workspace-template
 
 This template provides a complete governed-skill-workspace architecture.
 Follow these steps to set it up in your local environment.
@@ -13,7 +13,7 @@ Follow these steps to set it up in your local environment.
 
 ```bash
 git clone <your-fork-url>
-cd Frame-for-AI-workspace
+cd governed-skill-workspace-template
 ```
 
 ## Step 2: Configure Template Variables

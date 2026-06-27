@@ -35,8 +35,12 @@ SUBSTITUTIONS: list[tuple[re.Pattern[str], str]] = [
      "${DATA_ROOT}/claude"),
     (re.escape(r"D:\AI\data\opencode"),
      "${DATA_ROOT}/opencode"),
+    (re.escape(r"D:\AI\data\reasonix"),
+     "${DATA_ROOT}/reasonix"),
     (re.escape(r"D:\AI\out\workspace"),
      "${DATA_ROOT}/out/workspace"),
+    (re.escape(r"D:\AI\out"),
+     "${DATA_ROOT}/out"),
     (re.escape(r"D:\AI\data\playwright-mcp"),
      "${DATA_ROOT}/playwright-mcp"),
     (re.escape(r"D:\AI\data\playwright-browsers"),
@@ -146,6 +150,7 @@ SCRUB_FILES: set[str] = {
     "scripts/tests/test_workspace_health.py",
     "scripts/tests/test_agent_governance.py",
     ".claude/rules/workspace-boundary.md",
+    "reasonix.toml",
     "mcp/README.md",
     "scripts/sync_public_repo.py",
     "WORKSPACE_ENGINEERING/PUBLISH.md",
@@ -245,8 +250,21 @@ protocols available to character-system skills.
 
 
 def _compile_substitutions() -> list[tuple[re.Pattern[str], str]]:
-    """Pre-compile substitution list; longer-backslash paths first."""
-    return [(re.compile(pattern_str), repl) for pattern_str, repl in SUBSTITUTIONS]
+    """Compile substitutions for literal and JSON-escaped Windows paths."""
+    compiled: list[tuple[re.Pattern[str], str]] = []
+    seen: set[tuple[str, str]] = set()
+    for pattern_str, repl in SUBSTITUTIONS:
+        variants = [pattern_str]
+        flexible_slashes = pattern_str.replace(r"\\", r"[\\/]+")
+        if flexible_slashes != pattern_str:
+            variants.append(flexible_slashes)
+        for variant in variants:
+            key = (variant, repl)
+            if key in seen:
+                continue
+            compiled.append((re.compile(variant), repl))
+            seen.add(key)
+    return compiled
 
 
 def scrub_content(text: str) -> str:

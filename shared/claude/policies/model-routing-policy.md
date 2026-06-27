@@ -1,5 +1,13 @@
 # Model Routing Policy
 
+## 执行时机（强制）
+
+每次收到新任务时，在开始工作前先执行复杂度评估：
+
+1. 判断任务是否符合 §Use Flash 或 §Recommend Pro 的条件
+2. 如果符合 Pro 条件，在第一次回复中使用 `>` 引用块输出切换建议，确保视觉上可见
+3. 然后才开始工作
+
 ## Purpose
 
 This policy defines when a Claude Code task should stay on the default model
@@ -95,8 +103,7 @@ low impact if the first attempt is wrong.
 
 Use a concise message in this form:
 
-> This task should use `deepseek-v4-pro` because <specific complexity or risk>.
-> I will continue working normally unless you choose to switch models.
+> ⚠ 建议切换模型：此任务符合 `deepseek-v4-pro` 的使用条件，因为 <具体原因>。我继续使用当前模型工作，由你决定是否切换。
 
 Do not describe an upgrade as mandatory when it is only a recommendation. If
 the current session is already using Pro, state that the task meets the Pro

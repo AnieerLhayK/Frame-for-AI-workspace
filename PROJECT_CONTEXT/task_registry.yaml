@@ -489,6 +489,7 @@ tasks:
     use_when:
       - "Packaging one or more workspace skills as a versioned external product bundle or preparing a GitHub Release."
       - "Changing release-local installation, verification, beginner guidance, checksums, or standalone compatibility overlays."
+      - "Changing the scrubbed public workspace skeleton publishing, verification, or sync tooling."
     use_when_zh:
       - "将一个或多个工作区 skill 打包为版本化外部产品包或准备 GitHub Release"
     required:
@@ -503,6 +504,9 @@ tasks:
       - "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/runtime/zyc.md"
       - "USAGE_GUIDES/PROMPT_TEMPLATES/character-system/engineering/diagnosis/style-doctor.md"
       - "scripts/skill_lifecycle.py"
+      - "scripts/publish_public.py"
+      - "scripts/publish_check.py"
+      - "scripts/sync_public_repo.py"
     ignore:
       - "private corpus material"
       - "packages/character-system/reports/runtime-loop/"
@@ -524,6 +528,10 @@ tasks:
       - "packages/character-system/runtime/characters/zyc/README.md"
       - "packages/character-system/engineering/diagnosis/style-doctor/SKILL.md"
       - "packages/character-system/engineering/diagnosis/style-doctor/README.md"
+      - "scripts/publish_public.py"
+      - "scripts/publish_check.py"
+      - "scripts/sync_public_repo.py"
+      - "scripts/tests/test_publish_public.py"
     validation:
       - "python scripts/resolve_task_context.py skill_release_packaging"
       - "python scripts/skill_lifecycle.py validate zyc"
@@ -532,6 +540,9 @@ tasks:
       - "isolated OpenCode junction, copy, discovery, and smoke checks"
       - "python scripts/validate_manifest.py"
       - "python scripts/validate_protocols.py"
+      - "python -m pytest -q scripts/tests/test_publish_public.py"
+      - "publish_public.py explicit staging-dir smoke check under the tool staging directory"
+      - "publish_check.py verification against the generated staging directory"
       - "python scripts/workspace_cli.py changes verify skill_release_packaging --strict"
       - "python scripts/workspace_cli.py workflow check skill_release_packaging"
       - "git diff --check"

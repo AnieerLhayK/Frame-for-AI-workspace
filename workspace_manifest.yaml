@@ -2,31 +2,31 @@
   "workspace": {
     "workspace_name": "agent-ecosystem-workspace",
     "workspace_version": "1.3.0",
-    "source_of_truth": "D:\\AI\\workspace",
+    "source_of_truth": "${WORKSPACE_ROOT}",
     "manifest_format": "json-compatible-yaml",
     "manifest_path": "workspace_manifest.yaml",
     "description": "Manifest-driven source registry for skill packages, contracts, shared protocols, and platform projections."
   },
   "platform_roots": {
-    "codex": "D:\\AI\\data\\codex\\skills",
-    "claude": "D:\\AI\\workspace\\.claude\\skills",
-    "opencode": "C:\\Users\\Z1377\\.config\\opencode\\skills",
-    "hermes": "D:\\AI\\data\\hermes\\skills"
+    "codex": "${DATA_ROOT}/codex\\skills",
+    "claude": "${WORKSPACE_ROOT}\\.claude\\skills",
+    "opencode": "${USER_HOME}/.config/opencode/skills",
+    "hermes": "${DATA_ROOT}/hermes\\skills"
   },
   "session_stores": {
     "claude": {
-      "data_root": "D:\\AI\\data\\claude",
+      "data_root": "${DATA_ROOT}/claude",
       "projects_path": "projects",
       "project_identity": "workspace-root"
     },
     "opencode": {
-      "data_root": "D:\\AI\\data\\opencode\\current-share",
+      "data_root": "${DATA_ROOT}/opencode\\current-share",
       "database_path": "opencode.db",
       "project_identity": "git-worktree"
     }
   },
   "output_roots": {
-    "workspace": "D:\\AI\\out\\workspace"
+    "workspace": "${DATA_ROOT}/out/workspace"
   },
   "shared": {
     "id": "shared",
@@ -64,7 +64,7 @@
       },
       "platform": "codex",
       "source_path": "skills/disk-scan-reporter",
-      "projection_path": "D:\\AI\\data\\codex\\skills\\disk-scan-reporter",
+      "projection_path": "${DATA_ROOT}/codex\\skills\\disk-scan-reporter",
       "exposures": [
         {
           "platform": "codex",
@@ -110,7 +110,7 @@
       },
       "platform": "codex",
       "source_path": "skills/windows-ai-storage-governor",
-      "projection_path": "D:\\AI\\data\\codex\\skills\\windows-ai-storage-governor",
+      "projection_path": "${DATA_ROOT}/codex\\skills\\windows-ai-storage-governor",
       "exposures": [
         {
           "platform": "codex",
@@ -159,7 +159,7 @@
       },
       "platform": "codex",
       "source_path": "packages/character-system/engineering/generation/character-generator",
-      "projection_path": "D:\\AI\\data\\codex\\skills\\character-generator",
+      "projection_path": "${DATA_ROOT}/codex\\skills\\character-generator",
       "exposures": [
         {
           "platform": "codex",
@@ -212,7 +212,7 @@
       },
       "platform": "codex",
       "source_path": "packages/character-system/engineering/maintenance/character-maintainer",
-      "projection_path": "D:\\AI\\data\\codex\\skills\\character-maintainer",
+      "projection_path": "${DATA_ROOT}/codex\\skills\\character-maintainer",
       "exposures": [
         {
           "platform": "codex",
@@ -268,7 +268,7 @@
       },
       "platform": "opencode",
       "source_path": "packages/character-system/engineering/diagnosis/style-doctor",
-      "projection_path": "C:\\Users\\Z1377\\.config\\opencode\\skills\\style-doctor",
+      "projection_path": "${USER_HOME}/.config/opencode/skills\\style-doctor",
       "exposures": [
         {
           "platform": "opencode",
@@ -328,7 +328,7 @@
       },
       "platform": "opencode",
       "source_path": "packages/character-system/runtime/characters/zyc",
-      "projection_path": "C:\\Users\\Z1377\\.config\\opencode\\skills\\zyc",
+      "projection_path": "${USER_HOME}/.config/opencode/skills\\zyc",
       "exposures": [
         {
           "platform": "opencode",
@@ -379,7 +379,7 @@
       "id": "codex.disk-scan-reporter",
       "name": "codex disk-scan-reporter",
       "platform": "codex",
-      "link_path": "D:\\AI\\data\\codex\\skills\\disk-scan-reporter",
+      "link_path": "${DATA_ROOT}/codex\\skills\\disk-scan-reporter",
       "target_path": "skills/disk-scan-reporter",
       "required": true
     },
@@ -387,7 +387,7 @@
       "id": "codex.windows-ai-storage-governor",
       "name": "codex windows-ai-storage-governor",
       "platform": "codex",
-      "link_path": "D:\\AI\\data\\codex\\skills\\windows-ai-storage-governor",
+      "link_path": "${DATA_ROOT}/codex\\skills\\windows-ai-storage-governor",
       "target_path": "skills/windows-ai-storage-governor",
       "required": true
     },
@@ -395,7 +395,7 @@
       "id": "claude.windows-ai-storage-governor",
       "name": "claude windows-ai-storage-governor",
       "platform": "claude",
-      "link_path": "D:\\AI\\workspace\\.claude\\skills\\windows-ai-storage-governor",
+      "link_path": "${WORKSPACE_ROOT}\\.claude\\skills\\windows-ai-storage-governor",
       "target_path": "skills/windows-ai-storage-governor",
       "required": true
     },
@@ -403,7 +403,7 @@
       "id": "codex.character-generator",
       "name": "codex character-generator",
       "platform": "codex",
-      "link_path": "D:\\AI\\data\\codex\\skills\\character-generator",
+      "link_path": "${DATA_ROOT}/codex\\skills\\character-generator",
       "target_path": "packages/character-system/engineering/generation/character-generator",
       "required": true
     },
@@ -411,7 +411,7 @@
       "id": "claude.character-generator",
       "name": "claude character-generator",
       "platform": "claude",
-      "link_path": "D:\\AI\\workspace\\.claude\\skills\\character-generator",
+      "link_path": "${WORKSPACE_ROOT}\\.claude\\skills\\character-generator",
       "target_path": "packages/character-system/engineering/generation/character-generator",
       "required": true
     },
@@ -419,7 +419,7 @@
       "id": "codex.character-maintainer",
       "name": "codex character-maintainer",
       "platform": "codex",
-      "link_path": "D:\\AI\\data\\codex\\skills\\character-maintainer",
+      "link_path": "${DATA_ROOT}/codex\\skills\\character-maintainer",
       "target_path": "packages/character-system/engineering/maintenance/character-maintainer",
       "required": true
     },
@@ -427,7 +427,7 @@
       "id": "claude.character-maintainer",
       "name": "claude character-maintainer",
       "platform": "claude",
-      "link_path": "D:\\AI\\workspace\\.claude\\skills\\character-maintainer",
+      "link_path": "${WORKSPACE_ROOT}\\.claude\\skills\\character-maintainer",
       "target_path": "packages/character-system/engineering/maintenance/character-maintainer",
       "required": true
     },
@@ -435,7 +435,7 @@
       "id": "opencode.style-doctor",
       "name": "opencode style-doctor",
       "platform": "opencode",
-      "link_path": "C:\\Users\\Z1377\\.config\\opencode\\skills\\style-doctor",
+      "link_path": "${USER_HOME}/.config/opencode/skills\\style-doctor",
       "target_path": "packages/character-system/engineering/diagnosis/style-doctor",
       "required": true
     },
@@ -443,7 +443,7 @@
       "id": "codex.style-doctor",
       "name": "codex style-doctor",
       "platform": "codex",
-      "link_path": "D:\\AI\\data\\codex\\skills\\style-doctor",
+      "link_path": "${DATA_ROOT}/codex\\skills\\style-doctor",
       "target_path": "packages/character-system/engineering/diagnosis/style-doctor",
       "required": true
     },
@@ -451,7 +451,7 @@
       "id": "claude.style-doctor",
       "name": "claude style-doctor",
       "platform": "claude",
-      "link_path": "D:\\AI\\workspace\\.claude\\skills\\style-doctor",
+      "link_path": "${WORKSPACE_ROOT}\\.claude\\skills\\style-doctor",
       "target_path": "packages/character-system/engineering/diagnosis/style-doctor",
       "required": true
     },
@@ -459,7 +459,7 @@
       "id": "hermes.style-doctor",
       "name": "hermes style-doctor",
       "platform": "hermes",
-      "link_path": "D:\\AI\\data\\hermes\\skills\\style-doctor",
+      "link_path": "${DATA_ROOT}/hermes\\skills\\style-doctor",
       "target_path": "packages/character-system/engineering/diagnosis/style-doctor",
       "required": true
     },
@@ -467,7 +467,7 @@
       "id": "opencode.zyc",
       "name": "opencode zyc",
       "platform": "opencode",
-      "link_path": "C:\\Users\\Z1377\\.config\\opencode\\skills\\zyc",
+      "link_path": "${USER_HOME}/.config/opencode/skills\\zyc",
       "target_path": "packages/character-system/runtime/characters/zyc",
       "required": true
     },
@@ -475,7 +475,7 @@
       "id": "codex.zyc",
       "name": "codex zyc",
       "platform": "codex",
-      "link_path": "D:\\AI\\data\\codex\\skills\\zyc",
+      "link_path": "${DATA_ROOT}/codex\\skills\\zyc",
       "target_path": "packages/character-system/runtime/characters/zyc",
       "required": true
     },
@@ -483,7 +483,7 @@
       "id": "claude.zyc",
       "name": "claude zyc",
       "platform": "claude",
-      "link_path": "D:\\AI\\workspace\\.claude\\skills\\zyc",
+      "link_path": "${WORKSPACE_ROOT}\\.claude\\skills\\zyc",
       "target_path": "packages/character-system/runtime/characters/zyc",
       "required": true
     },
@@ -491,7 +491,7 @@
       "id": "hermes.zyc",
       "name": "hermes zyc",
       "platform": "hermes",
-      "link_path": "D:\\AI\\data\\hermes\\skills\\zyc",
+      "link_path": "${DATA_ROOT}/hermes\\skills\\zyc",
       "target_path": "packages/character-system/runtime/characters/zyc",
       "required": true
     }

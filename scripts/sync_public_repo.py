@@ -32,6 +32,10 @@ STAGING_DIR = os.environ.get(
 )
 REMOTE_NAME = "origin"
 REMOTE_BRANCH = "main"
+REMOTE_URL = os.environ.get(
+    "PUBLIC_REPO_URL",
+    "git@github.com:AnieerLhayK/Frame-for-AI-workspace.git",
+)
 
 
 def check_workspace_clean() -> bool:
@@ -73,6 +77,60 @@ def regenerate(staging: str) -> bool:
     summary = [l for l in result.stdout.strip().split("\n") if l.strip()][-3:]
     for l in summary:
         print(f"  {l}")
+    return True
+
+
+def run_git(staging_path: Path, args: list[str]) -> subprocess.CompletedProcess:
+    """Run git in the staging repository."""
+    return subprocess.run(
+        ["git", *args],
+        capture_output=True,
+        text=True,
+        cwd=staging_path,
+    )
+
+
+def prepare_staging_repo(staging: str, remote_url: str) -> bool:
+    """Ensure staging is a clean clone of the public repository."""
+    staging_path = Path(staging).resolve()
+    if not (staging_path / ".git").is_dir():
+        if staging_path.exists() and any(staging_path.iterdir()):
+            print(
+                f"[FAIL] {staging_path} exists but is not a git repository.",
+                file=sys.stderr,
+            )
+            return False
+        staging_path.parent.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(
+            ["git", "clone", "--branch", REMOTE_BRANCH, remote_url, str(staging_path)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print(f"[FAIL] git clone failed: {result.stderr.strip()}", file=sys.stderr)
+            return False
+
+    remote = run_git(staging_path, ["remote", "get-url", REMOTE_NAME])
+    if remote.returncode != 0:
+        remote = run_git(staging_path, ["remote", "add", REMOTE_NAME, remote_url])
+        if remote.returncode != 0:
+            print(f"[FAIL] git remote add failed: {remote.stderr.strip()}", file=sys.stderr)
+            return False
+
+    for args in (
+        ["fetch", REMOTE_NAME, REMOTE_BRANCH],
+        ["checkout", REMOTE_BRANCH],
+        ["reset", "--hard", f"{REMOTE_NAME}/{REMOTE_BRANCH}"],
+        ["clean", "-fdx"],
+        ["rm", "-r", "--ignore-unmatch", "."],
+    ):
+        result = run_git(staging_path, args)
+        if result.returncode != 0:
+            print(
+                f"[FAIL] git {' '.join(args)} failed: {result.stderr.strip()}",
+                file=sys.stderr,
+            )
+            return False
     return True
 
 
@@ -163,6 +221,10 @@ def main() -> int:
         help=f"Staging directory (default: {STAGING_DIR})",
     )
     parser.add_argument(
+        "--remote-url", default=REMOTE_URL,
+        help=f"Public repository URL (default: {REMOTE_URL})",
+    )
+    parser.add_argument(
         "--force-dirty", action="store_true",
         help="Allow sync even with uncommitted workspace changes.",
     )
@@ -196,6 +258,8 @@ def main() -> int:
 
     # Step 3: Regenerate
     print("[3/5] Regenerating staging directory ...")
+    if args.push and not prepare_staging_repo(args.staging_dir, args.remote_url):
+        return 1
     if not regenerate(args.staging_dir):
         return 1
     print()

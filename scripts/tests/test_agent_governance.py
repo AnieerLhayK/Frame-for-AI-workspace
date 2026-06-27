@@ -54,7 +54,7 @@ class AgentGovernanceTests(unittest.TestCase):
         external = classify_path(
             self.policy,
             self.manifest,
-            r"${WORKSPACE_ROOT}\out\hermes\document.docx",
+            r"${DATA_ROOT}/out\hermes\document.docx",
         )
         self.assertEqual(diagnosis["surface"], "runtime_record")
         self.assertEqual(

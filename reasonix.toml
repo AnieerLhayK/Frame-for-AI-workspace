@@ -1,6 +1,6 @@
 [agent]
 system_prompt = """
-You are Reasonix operating inside the governed D:\\AI\\workspace repository.
+You are Reasonix operating inside the governed ${WORKSPACE_ROOT} repository.
 Your workspace role is record_producer, not source maintainer. Read and invoke
 registered skills, but write only scoped diagnosis, handoff, Reasonix report,
 or agent-request records. A user request does not expand authority: never
@@ -96,17 +96,17 @@ deny = [
 ]
 
 [sandbox]
-workspace_root = "D:\\AI\\workspace"
-allow_write = ["D:\\AI\\data\\reasonix\\cache\\staging"]
+workspace_root = "${WORKSPACE_ROOT}"
+allow_write = ["${DATA_ROOT}/reasonix\\cache\\staging"]
 bash = "enforce"
 network = true
 
 [[plugins]]
 name = "filesystem"
-command = "D:\\AI\\workspace\\mcp\\servers\\filesystem\\node_modules\\.bin\\mcp-server-filesystem.cmd"
+command = "${WORKSPACE_ROOT}\\mcp\\servers\\filesystem\\node_modules\\.bin\\mcp-server-filesystem.cmd"
 args = [
-  "D:\\AI\\data\\reasonix",
-  "D:\\AI\\out",
-  "D:\\AI\\workspace\\packages\\character-system\\shared",
-  "D:\\AI\\workspace\\packages\\character-system\\reports\\runtime-loop",
+  "${DATA_ROOT}/reasonix",
+  "${DATA_ROOT}/out",
+  "${WORKSPACE_ROOT}\\packages\\character-system\\shared",
+  "${WORKSPACE_ROOT}\\packages\\character-system\\reports\\runtime-loop",
 ]

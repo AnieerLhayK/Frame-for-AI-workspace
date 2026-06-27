@@ -1,11 +1,11 @@
 ---
 report_name: protocol_validation_report
-generated_at: 2026-06-22 22:47:30 +0800
+generated_at: 2026-06-27 19:40:35 +0800
 generated_by: scripts/validate_protocols.py
 source_root: ${WORKSPACE_ROOT}
 manifest_path: ${WORKSPACE_ROOT}\workspace_manifest.yaml
 protocol_manifest_path: ${WORKSPACE_ROOT}\packages\character-system\shared\protocol_manifest.json
-source_commit: c3da42d
+source_commit: 57f7a3f
 report_scope: character-system protocol contract validation
 report_is_snapshot: true
 truth_source:

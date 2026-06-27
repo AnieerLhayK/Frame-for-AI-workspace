@@ -1,12 +1,12 @@
 ﻿---
 report_name: workspace_health_report
-generated_at: 2026-06-25 22:07:45 +08:00
+generated_at: 2026-06-27 19:40:43 +08:00
 generated_by: scripts/sync_report.ps1
 source_root: ${WORKSPACE_ROOT}
 manifest_path: ${WORKSPACE_ROOT}\workspace_manifest.yaml
 manifest_version: 1.3.0
 manifest_last_modified: 2026-06-20 18:27:28 +08:00
-source_commit: 3f751e6
+source_commit: 57f7a3f
 report_scope: manifest status, link status, missing files, hardcoded paths, protocol consistency, drift, shared uniqueness, and Git boundaries
 report_is_snapshot: true
 truth_source:
@@ -20,7 +20,7 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 
 # Workspace Health Report
 
-Generated: 2026-06-25 22:07:45 +08:00
+Generated: 2026-06-27 19:40:43 +08:00
 
 ## Manifest Status
 
@@ -64,19 +64,21 @@ Generated: 2026-06-25 22:07:45 +08:00
 
 | File | Token | Category |
 | --- | --- | --- |
-| PROJECT_CONTEXT\session_migrations.json | D:\\AI\\workspace | other |
+| PROJECT_CONTEXT\session_migrations.json | ${WORKSPACE_ROOT} | other |
 | PROJECT_CONTEXT\task_ledger.md | ${WORKSPACE_ROOT} | other |
+| WORKSPACE_ENGINEERING\plans\public-repo-plan.md | ${USER_HOME}/.config/opencode/skills | other |
+| WORKSPACE_ENGINEERING\plans\public-repo-plan.md | ${WORKSPACE_ROOT} | other |
 | WORKSPACE_ENGINEERING\reports\skill_engineering_setup_report.md | ${WORKSPACE_ROOT} | other |
 | mcp\README.md | ${WORKSPACE_ROOT} | other |
-| mcp\configs\installed-local.mcp.json | D:\\AI\\workspace | other |
-| mcp\configs\wps-agent.mcp.json | D:\\AI\\workspace | other |
+| mcp\configs\installed-local.mcp.json | ${WORKSPACE_ROOT} | other |
+| mcp\configs\wps-agent.mcp.json | ${WORKSPACE_ROOT} | other |
 | packages\character-system\reports\runtime-loop\handoffs\HANDOFF-20260604-002.md | ${USER_HOME}/.config/opencode/skills | skill-doc-or-source |
 | packages\character-system\reports\runtime-loop\runtime_loop_setup_report.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
 | packages\character-system\reports\runtime-loop\validations\VAL-20260623-002-002235-zyc-first-person-authority.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
 | packages\character-system\runtime\characters\zyc\reports\discussion_evidence_integrity_patch_20260622.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
 | packages\character-system\runtime\characters\zyc\reports\positive_exemplar_feedback_proposal_20260619.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
 | packages\character-system\runtime\characters\zyc\reports\runtime_boundary_patch_validation_20260623.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
-| reasonix.toml | D:\\AI\\workspace | other |
+| reasonix.toml | ${WORKSPACE_ROOT} | other |
 | reports\git_governance_report.md | ${WORKSPACE_ROOT} | generated-report |
 | reports\hermes\hermes_readiness_report.md | ${WORKSPACE_ROOT} | generated-report |
 | reports\hermes\messaging_diagnosis.md | ${WORKSPACE_ROOT} | generated-report |
@@ -92,12 +94,12 @@ Generated: 2026-06-25 22:07:45 +08:00
 | reports\migration_dry_run_report.md | ${WORKSPACE_ROOT} | generated-report |
 | reports\protocol_validation_report.md | ${WORKSPACE_ROOT} | generated-report |
 | reports\report_drift_governance_report.md | ${WORKSPACE_ROOT} | generated-report |
-| reports\workspace_health_report.md | C:\\Users\\Z1377\\.config\\opencode\\skills | generated-report |
 | reports\workspace_health_report.md | ${USER_HOME}/.config/opencode/skills | generated-report |
-| reports\workspace_health_report.md | D:\\AI\\data\\codex\\skills | generated-report |
-| reports\workspace_health_report.md | D:\\AI\\data\\hermes\\skills | generated-report |
-| reports\workspace_health_report.md | D:\\AI\\workspace | generated-report |
-| reports\workspace_health_report.md | D:\\AI\\workspace\\.claude\\skills | generated-report |
+| reports\workspace_health_report.md | ${USER_HOME}/.config/opencode/skills | generated-report |
+| reports\workspace_health_report.md | ${DATA_ROOT}/codex\\skills | generated-report |
+| reports\workspace_health_report.md | ${DATA_ROOT}/hermes\\skills | generated-report |
+| reports\workspace_health_report.md | ${WORKSPACE_ROOT} | generated-report |
+| reports\workspace_health_report.md | ${WORKSPACE_ROOT}\\.claude\\skills | generated-report |
 | reports\workspace_health_report.md | ${DATA_ROOT}/codex\skills | generated-report |
 | reports\workspace_health_report.md | ${DATA_ROOT}/hermes\skills | generated-report |
 | reports\workspace_health_report.md | ${WORKSPACE_ROOT} | generated-report |
@@ -107,18 +109,20 @@ Generated: 2026-06-25 22:07:45 +08:00
 | reports\workspace_setup_report.md | ${DATA_ROOT}/hermes\skills | generated-report |
 | reports\workspace_setup_report.md | ${WORKSPACE_ROOT} | generated-report |
 | reports\workspace_setup_report.md | ${WORKSPACE_ROOT}\.claude\skills | generated-report |
+| scripts\publish_public.py | ${USER_HOME}/.config/opencode/skills | script |
+| scripts\publish_public.py | ${WORKSPACE_ROOT} | script |
 | scripts\tests\test_agent_governance.py | ${WORKSPACE_ROOT} | script |
 | scripts\tests\test_hermes_workspace_guard.py | ${DATA_ROOT}/hermes\skills | script |
 | scripts\tests\test_hermes_workspace_guard.py | ${WORKSPACE_ROOT} | script |
 | skills\disk-scan-reporter\reports\disk_report_2026-06-19_002611.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
 | skills\disk-scan-reporter\reports\disk_report_2026-06-19_002927.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
-| workspace_manifest.yaml | C:\\Users\\Z1377\\.config\\opencode\\skills | manifest-source-of-truth |
-| workspace_manifest.yaml | D:\\AI\\data\\codex\\skills | manifest-source-of-truth |
-| workspace_manifest.yaml | D:\\AI\\data\\hermes\\skills | manifest-source-of-truth |
-| workspace_manifest.yaml | D:\\AI\\workspace | manifest-source-of-truth |
-| workspace_manifest.yaml | D:\\AI\\workspace\\.claude\\skills | manifest-source-of-truth |
+| workspace_manifest.yaml | ${USER_HOME}/.config/opencode/skills | manifest-source-of-truth |
+| workspace_manifest.yaml | ${DATA_ROOT}/codex\\skills | manifest-source-of-truth |
+| workspace_manifest.yaml | ${DATA_ROOT}/hermes\\skills | manifest-source-of-truth |
+| workspace_manifest.yaml | ${WORKSPACE_ROOT} | manifest-source-of-truth |
+| workspace_manifest.yaml | ${WORKSPACE_ROOT}\\.claude\\skills | manifest-source-of-truth |
 
-Unsafe hardcoded path references outside manifest/generated reports: `18`.
+Unsafe hardcoded path references outside manifest/generated reports: `22`.
 
 ## Protocol Consistency
 
@@ -197,4 +201,4 @@ Unsafe hardcoded path references outside manifest/generated reports: `18`.
 - Manifest portability missing count: `0`
 - Optional missing count: `3`
 - Projection drift count: `0`
-- Unsafe hardcoded path count: `18`
+- Unsafe hardcoded path count: `22`

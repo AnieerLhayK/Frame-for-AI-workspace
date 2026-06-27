@@ -5,7 +5,7 @@
       "id": "character-package-20260614",
       "date": "2026-06-14",
       "status": "protected",
-      "workspace_root": "D:\\AI\\workspace",
+      "workspace_root": "${WORKSPACE_ROOT}",
       "path_mappings": [
         {
           "old": "codex/character-generator",
@@ -27,17 +27,17 @@
       "claude": {
         "project_bucket": "D--AI-workspace",
         "observed_cwds": [
-          "D:\\AI\\workspace",
+          "${WORKSPACE_ROOT}",
           "d:\\AI\\workspace"
         ],
         "subdirectory_bucket_found": false,
-        "backup_path": "D:\\AI\\data\\claude\\backups\\session-migrations\\character-package-20260614-213542",
+        "backup_path": "${DATA_ROOT}/claude\\backups\\session-migrations\\character-package-20260614-213542",
         "expected_transcript_files": 5
       },
       "opencode": {
         "project_id": "c525213faf7378bc4316fcff93c1ee14a8d7b015",
         "project_worktree": "${WORKSPACE_ROOT}",
-        "backup_path": "D:\\AI\\data\\opencode\\backups\\session-migrations\\character-package-20260614-213542",
+        "backup_path": "${DATA_ROOT}/opencode\\backups\\session-migrations\\character-package-20260614-213542",
         "affected_session_ids": [
           "ses_14415b09cffeihcbX2uuviAU0T",
           "ses_16d127eecffeRe7QglkfNIc6tr",

@@ -24,11 +24,11 @@ from pathlib import Path
 
 # Patterns that should be scrubbed (must NOT appear in output)
 FORBIDDEN_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"D:[\\/]AI"),
-    re.compile(r"D:[\\/]AAAfromC"),
-    re.compile(r"D:[\\/]Dev"),
-    re.compile(r"D:[\\/]ztemp"),
-    re.compile(r"C:[\\/]Users[\\/]Z1377"),
+    re.compile(r"D:[\\/]+AI"),
+    re.compile(r"D:[\\/]+AAAfromC"),
+    re.compile(r"D:[\\/]+Dev"),
+    re.compile(r"D:[\\/]+ztemp"),
+    re.compile(r"C:[\\/]+Users[\\/]+Z1377"),
 ]
 
 EXPECTED_TEMPLATES: set[str] = {
@@ -153,6 +153,13 @@ def run_functional_checks(root: Path) -> list[str]:
     """Run key scripts in the staging directory to verify they work."""
     issues: list[str] = []
     cwd = os.getcwd()
+    routing_events = root / ".claude" / "routing_events.ndjson"
+    had_routing_events = routing_events.exists()
+    original_routing_events = (
+        routing_events.read_text(encoding="utf-8")
+        if had_routing_events
+        else None
+    )
     try:
         os.chdir(root)
 
@@ -196,6 +203,10 @@ def run_functional_checks(root: Path) -> list[str]:
         issues.append(f"  Script not found: {exc}")
     finally:
         os.chdir(cwd)
+        if had_routing_events and original_routing_events is not None:
+            routing_events.write_text(original_routing_events, encoding="utf-8")
+        elif routing_events.exists():
+            routing_events.unlink()
 
     return issues
 

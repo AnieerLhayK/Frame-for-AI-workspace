@@ -279,7 +279,7 @@ class HermesWorkspaceGuardTests(unittest.TestCase):
                 "mcp_wps_agent_offline_docx",
                 {
                     "action": "build",
-                    "output_path": r"${WORKSPACE_ROOT}\out\hermes\document.docx",
+                    "output_path": r"${DATA_ROOT}/out\hermes\document.docx",
                 },
             )
         )
@@ -318,7 +318,7 @@ class HermesWorkspaceGuardTests(unittest.TestCase):
                     "mcp_wps_agent_offline_docx",
                     {
                         "action": "build",
-                        "output_path": r"${WORKSPACE_ROOT}\out\hermes\document.docx",
+                        "output_path": r"${DATA_ROOT}/out\hermes\document.docx",
                     },
                 )
             )
