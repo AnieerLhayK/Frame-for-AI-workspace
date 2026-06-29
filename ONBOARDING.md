@@ -1,7 +1,8 @@
 # ONBOARDING — Getting Started with governed-skill-workspace-template
 
 This template provides a complete governed-skill-workspace architecture.
-Follow these steps to set it up in your local environment.
+Follow these steps to set it up in your local environment. For the shortest
+beginner path, start with `BEGINNER_GUIDE.md`.
 
 ## Prerequisites
 
@@ -28,6 +29,16 @@ cp mcp/configs/wps-agent.mcp.json.template mcp/configs/wps-agent.mcp.json
 # with your actual local paths. See PATH_MAPPING_REFERENCE.md for details.
 ```
 
+Or run the conservative helper:
+
+```bash
+python scripts/setup_public_workspace.py
+```
+
+The helper prepares only the workspace skeleton's own basic functions. It does
+not configure provider credentials, AI-platform plugins, or external model
+settings.
+
 ## Step 3: Install Dependencies
 
 ```bash
@@ -45,7 +56,11 @@ python -m pytest scripts/tests -q
 python scripts/workspace_cli.py health
 
 # List available tasks
-python scripts/resolve_task_context.py --list
+python scripts/workspace_cli.py task list
+
+# Explain how a mechanism or path connects to the workspace
+python scripts/workspace_cli.py explain mechanism task-routing
+python scripts/workspace_cli.py explain path scripts/workspace_cli.py
 
 # View agent registrations
 python scripts/workspace_cli.py agent list

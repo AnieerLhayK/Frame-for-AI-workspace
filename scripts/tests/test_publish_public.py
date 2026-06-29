@@ -2,8 +2,20 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.publish_check import check_forbidden_paths, run_functional_checks, run_tests
-from scripts.publish_public import SCRUB_FILES, scrub_content
+from scripts.publish_check import (
+    EXPECTED_DOCS,
+    REQUIRED_PATHS,
+    check_forbidden_paths,
+    run_functional_checks,
+    run_tests,
+)
+from scripts.publish_public import (
+    SCRUB_FILES,
+    generate_beginner_guide_md,
+    generate_onboarding_md,
+    generate_public_setup_py,
+    scrub_content,
+)
 
 
 AI_ROOT = "D:" + r"\\AI"
@@ -43,6 +55,34 @@ class PublicPublishTests(unittest.TestCase):
 
     def test_reasonix_config_is_scrubbed_for_public_release(self) -> None:
         self.assertIn("reasonix.toml", SCRUB_FILES)
+
+    def test_workspace_cli_tests_are_scrubbed_for_public_release(self) -> None:
+        self.assertIn("scripts/tests/test_workspace_cli.py", SCRUB_FILES)
+
+    def test_public_beginner_guide_mentions_setup_and_explain(self) -> None:
+        guide = generate_beginner_guide_md("Frame-for-AI-workspace")
+        self.assertIn("scripts/setup_public_workspace.py", guide)
+        self.assertIn("workspace_cli.py explain mechanism task-routing", guide)
+        self.assertIn("does not configure provider credentials", guide)
+
+    def test_public_setup_script_is_conservative(self) -> None:
+        script = generate_public_setup_py()
+        self.assertIn("TEMPLATE_FILES", script)
+        self.assertIn("explain\", \"mechanism\", \"task-routing", script)
+        self.assertIn("updated-placeholders", script)
+        self.assertIn("as_posix()", script)
+        self.assertIn("Provider credentials", script)
+        self.assertNotIn("git push", script)
+
+    def test_onboarding_points_beginners_to_setup_script(self) -> None:
+        onboarding = generate_onboarding_md("Frame-for-AI-workspace")
+        self.assertIn("BEGINNER_GUIDE.md", onboarding)
+        self.assertIn("scripts/setup_public_workspace.py", onboarding)
+        self.assertIn("workspace_cli.py explain path scripts/workspace_cli.py", onboarding)
+
+    def test_publish_check_requires_beginner_setup_assets(self) -> None:
+        self.assertIn("BEGINNER_GUIDE.md", EXPECTED_DOCS)
+        self.assertIn("scripts/setup_public_workspace.py", REQUIRED_PATHS)
 
     def test_functional_checks_do_not_leave_routing_events(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

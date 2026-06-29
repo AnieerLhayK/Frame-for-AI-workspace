@@ -146,6 +146,7 @@ SCRUB_FILES: set[str] = {
     "scripts/stop_hermes_gateway.ps1",
     "scripts/hermes_workspace_guard.py",
     "scripts/workspace_health.py",
+    "scripts/tests/test_workspace_cli.py",
     "scripts/tests/test_hermes_workspace_guard.py",
     "scripts/tests/test_workspace_health.py",
     "scripts/tests/test_agent_governance.py",
@@ -373,12 +374,214 @@ python scripts/workspace_cli.py agent list
 """
 
 
+def generate_public_setup_py() -> str:
+    """Return the conservative setup helper for the public skeleton."""
+    return r'''#!/usr/bin/env python3
+"""Conservative first-run setup for the public workspace skeleton.
+
+This helper makes the repository minimally runnable. It copies template files,
+replaces only standard path variables, and runs read-only self-checks. It does
+not configure provider credentials, install platform plugins, write outside the
+repository except the selected data root, or create AI-platform projections.
+"""
+
+from __future__ import annotations
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+
+TEMPLATE_FILES = (
+    "workspace_manifest.yaml",
+    "mcp/configs/installed-local.mcp.json",
+    "mcp/configs/wps-agent.mcp.json",
+)
+
+
+def run(command: list[str], root: Path, *, required: bool) -> bool:
+    print("+ " + " ".join(command))
+    result = subprocess.run(command, cwd=root, check=False)
+    if result.returncode == 0:
+        return True
+    label = "required" if required else "optional"
+    print(f"[{label} check failed] exit code {result.returncode}: {' '.join(command)}")
+    return not required
+
+
+def render_template(path: Path, replacements: dict[str, str], *, overwrite: bool) -> str:
+    template = path.with_name(path.name + ".template")
+    if not template.is_file():
+        return "missing-template"
+    if path.exists() and not overwrite:
+        current = path.read_text(encoding="utf-8")
+        if not any(key in current for key in replacements):
+            return "kept-existing"
+        text = current
+        status = "updated-placeholders"
+    else:
+        text = template.read_text(encoding="utf-8")
+        status = "written"
+
+    for key, value in replacements.items():
+        text = text.replace(key, value)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return status
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Prepare the public workspace skeleton for first use.")
+    parser.add_argument("--workspace-root", default=str(Path(__file__).resolve().parents[1]))
+    parser.add_argument("--data-root", default=str(Path.home() / ".ai-workspace-data"))
+    parser.add_argument("--user-home", default=str(Path.home()))
+    parser.add_argument("--dev-root", default=str(Path.home() / "dev"))
+    parser.add_argument("--scratch-root", default=str(Path.home() / "tmp"))
+    parser.add_argument("--other-project-root", default=str(Path.home() / "projects"))
+    parser.add_argument("--overwrite", action="store_true", help="Rewrite generated config files from templates.")
+    parser.add_argument("--install-deps", action="store_true", help="Install Python helper dependencies.")
+    parser.add_argument("--skip-checks", action="store_true", help="Only write config files; do not run self-checks.")
+    args = parser.parse_args()
+
+    root = Path(args.workspace_root).resolve()
+    if not (root / "scripts" / "workspace_cli.py").is_file():
+        print(f"[FAIL] Not a workspace skeleton root: {root}")
+        return 1
+
+    replacements = {
+        "${WORKSPACE_ROOT}": root.as_posix(),
+        "${DATA_ROOT}": Path(args.data_root).resolve().as_posix(),
+        "${USER_HOME}": Path(args.user_home).resolve().as_posix(),
+        "${DEV_ROOT}": Path(args.dev_root).resolve().as_posix(),
+        "${SCRATCH_ROOT}": Path(args.scratch_root).resolve().as_posix(),
+        "${OTHER_PROJECT_ROOT}": Path(args.other_project_root).resolve().as_posix(),
+    }
+
+    print("Public workspace first-run setup")
+    print(f"Workspace root: {root}")
+    print(f"Data root:      {replacements['${DATA_ROOT}']}")
+    print("")
+
+    for relative in TEMPLATE_FILES:
+        status = render_template(root / relative, replacements, overwrite=args.overwrite)
+        print(f"{relative}: {status}")
+
+    data_root = Path(args.data_root).resolve()
+    data_root.mkdir(parents=True, exist_ok=True)
+    print(f"Ensured data root: {data_root}")
+
+    if args.install_deps:
+        requirement_args: list[str] = []
+        for relative in ("scripts/requirements-context-tools.txt", "scripts/requirements-publish.txt"):
+            path = root / relative
+            if path.is_file():
+                requirement_args.extend(["-r", str(path)])
+        if requirement_args and not run([sys.executable, "-m", "pip", "install", *requirement_args], root, required=True):
+            return 1
+        if not requirement_args:
+            print("[WARN] No requirements files found; skipped dependency install.")
+
+    if args.skip_checks:
+        print("")
+        print("Skipped self-checks. Next: run `python scripts/workspace_cli.py health`.")
+        return 0
+
+    checks = [
+        ([sys.executable, "scripts/workspace_cli.py", "--help"], True),
+        ([sys.executable, "scripts/workspace_cli.py", "task", "list"], True),
+        ([sys.executable, "scripts/workspace_cli.py", "explain", "mechanism", "task-routing"], True),
+        ([sys.executable, "scripts/workspace_cli.py", "agent", "list"], False),
+        ([sys.executable, "scripts/workspace_cli.py", "health"], False),
+    ]
+
+    print("")
+    print("Read-only self-checks")
+    ok = True
+    for command, required in checks:
+        ok = run(command, root, required=required) and ok
+
+    print("")
+    if ok:
+        print("Setup complete. The core CLI, task routing, and explain entrypoint are available.")
+    else:
+        print("Setup completed with non-blocking environment warnings. Review the output above.")
+    print("Provider credentials, plugins, model settings, and platform projections remain explicit manual steps.")
+    return 0 if ok else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''
+
+
+def generate_beginner_guide_md(repo_name: str) -> str:
+    """Return beginner-focused guidance for the public skeleton."""
+    return f"""# BEGINNER_GUIDE - {repo_name}
+
+This repository is a public skeleton for building a governed AI workspace. It
+keeps the workspace's own structure visible: task routing, knowledge lookup,
+agent boundaries, report checks, and explainable CLI entrypoints.
+
+## Quick Start
+
+Clone your fork, then run the conservative first-run helper:
+
+```bash
+git clone <your-fork-url>
+cd {repo_name}
+python scripts/setup_public_workspace.py
+```
+
+The helper:
+
+- copies `.template` configuration files to their real names when missing;
+- replaces standard path variables such as `${{WORKSPACE_ROOT}}` and `${{DATA_ROOT}}`;
+- creates the basic data root;
+- runs read-only checks for `workspace_cli.py`, task routing, `workspace explain`,
+  agent listing, and health.
+
+It does not configure provider credentials, install AI-platform plugins, create
+platform projections, or grant extra permissions. Use `--overwrite` only when
+you want to regenerate local config files from templates.
+
+## Core Commands To Learn First
+
+```bash
+python scripts/workspace_cli.py --help
+python scripts/workspace_cli.py task list
+python scripts/workspace_cli.py task resolve workspace_developer_experience
+python scripts/workspace_cli.py explain mechanism task-routing
+python scripts/workspace_cli.py explain path scripts/workspace_cli.py
+python scripts/workspace_cli.py agent list
+python scripts/workspace_cli.py health
+```
+
+These commands show the environment's own basic functions before you add your
+own skills or platform integrations.
+
+## What To Configure Manually
+
+After the helper runs, review:
+
+- `workspace_manifest.yaml` for your local source root and platform roots;
+- `shared/agent_registry.yaml` for per-agent data/cache roots;
+- `mcp/configs/*.json` only if you use those MCP servers;
+- platform-specific loading surfaces only after you understand the projection
+  model in `ARCHITECTURE.md`.
+
+Keep credentials and provider settings out of this repository unless you have a
+separate, private policy for them.
+"""
+
+
 def generate_onboarding_md(repo_name: str) -> str:
     """Return the content for ONBOARDING.md."""
     return f"""# ONBOARDING — Getting Started with {repo_name}
 
 This template provides a complete governed-skill-workspace architecture.
-Follow these steps to set it up in your local environment.
+Follow these steps to set it up in your local environment. For the shortest
+beginner path, start with `BEGINNER_GUIDE.md`.
 
 ## Prerequisites
 
@@ -405,6 +608,16 @@ cp mcp/configs/wps-agent.mcp.json.template mcp/configs/wps-agent.mcp.json
 # with your actual local paths. See PATH_MAPPING_REFERENCE.md for details.
 ```
 
+Or run the conservative helper:
+
+```bash
+python scripts/setup_public_workspace.py
+```
+
+The helper prepares only the workspace skeleton's own basic functions. It does
+not configure provider credentials, AI-platform plugins, or external model
+settings.
+
 ## Step 3: Install Dependencies
 
 ```bash
@@ -422,7 +635,11 @@ python -m pytest scripts/tests -q
 python scripts/workspace_cli.py health
 
 # List available tasks
-python scripts/resolve_task_context.py --list
+python scripts/workspace_cli.py task list
+
+# Explain how a mechanism or path connects to the workspace
+python scripts/workspace_cli.py explain mechanism task-routing
+python scripts/workspace_cli.py explain path scripts/workspace_cli.py
 
 # View agent registrations
 python scripts/workspace_cli.py agent list
@@ -635,8 +852,10 @@ def main() -> int:
     # Generate metadata documents
     if not args.dry_run:
         write_file(out_dir, "PATH_MAPPING_REFERENCE.md", generate_path_mapping_md())
+        write_file(out_dir, "BEGINNER_GUIDE.md", generate_beginner_guide_md(repo_name))
         write_file(out_dir, "ONBOARDING.md", generate_onboarding_md(repo_name))
-        counts["copied"] += 2
+        write_file(out_dir, "scripts/setup_public_workspace.py", generate_public_setup_py())
+        counts["copied"] += 4
 
     print()
     if args.dry_run:

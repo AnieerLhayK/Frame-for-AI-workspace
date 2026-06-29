@@ -126,6 +126,17 @@ def last_change_commit(root: Path, paths: Iterable[str]) -> str | None:
     return value if result.returncode == 0 and value else None
 
 
+def has_working_tree_changes(root: Path, paths: Iterable[str]) -> bool:
+    result = subprocess.run(
+        ["git", "status", "--porcelain", "--", *paths],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.returncode == 0 and bool(result.stdout.strip())
+
+
 def is_ancestor(root: Path, older: str, newer: str) -> bool:
     result = subprocess.run(
         ["git", "merge-base", "--is-ancestor", older, newer],
@@ -174,11 +185,12 @@ def assess_report(
         reasons.append("grouped reports have different generation timestamps")
     if len(source_commits) != 1:
         reasons.append("grouped reports have different source commits")
-    git_reason = git_staleness_reason(spec, root)
+    report_has_working_tree_changes = has_working_tree_changes(root, spec.paths)
+    git_reason = None if report_has_working_tree_changes else git_staleness_reason(spec, root)
     if git_reason:
         reasons.append(git_reason)
-    elif commit and source_commit != commit and not (root / ".git").exists():
-        reasons.append(f"source commit changed: report={source_commit or 'missing'}, current={commit}")
+    elif not source_commit:
+        reasons.append("one or more reports lack a source_commit header")
 
     newest_path, newest_mtime = newest_source(root, spec.sources)
     oldest_report_mtime = min(path.stat().st_mtime for path in report_paths)

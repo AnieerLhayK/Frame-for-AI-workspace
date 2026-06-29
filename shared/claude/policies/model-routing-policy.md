@@ -17,6 +17,17 @@ This policy is a recommendation mechanism. It does not switch models, change
 LiteLLM, modify Claude Code settings, or grant permission to perform risky
 work.
 
+## Authority Boundary
+
+This policy only tells Claude Code when to visibly recommend `deepseek-v4-pro`.
+It must never be satisfied by editing LiteLLM configuration, Claude Code
+settings, VSCode plugin settings, provider credentials, environment variables,
+workspace permissions, or project boundary rules.
+
+Model strength is not authority. A stronger model recommendation does not expand
+write scope, bypass task resolution, skip Git checks, or weaken any workspace
+governance rule.
+
 ## Model Roles
 
 - Default model: `deepseek-v4-flash`
@@ -99,15 +110,28 @@ Recommend Pro when one or more of these signals is material:
 Stay on Flash when the task is narrow, reversible, locally verifiable, and has
 low impact if the first attempt is wrong.
 
-## Upgrade Message
+## First Response Format
 
-Use a concise message in this form:
+Start each task with a lightweight model-tier assessment.
 
-> ⚠ 建议切换模型：此任务符合 `deepseek-v4-pro` 的使用条件，因为 <具体原因>。我继续使用当前模型工作，由你决定是否切换。
+For low-risk tasks, use one sentence:
 
-Do not describe an upgrade as mandatory when it is only a recommendation. If
-the current session is already using Pro, state that the task meets the Pro
-criteria and continue within the user's existing authorization.
+```text
+任务复杂度评估：Flash sufficient。原因：<简短原因>。
+```
+
+For high-complexity or high-risk tasks, use a visible quote block:
+
+```text
+> 任务复杂度评估：Recommend Pro
+> 原因：<具体原因>
+> 模型建议：建议切换到 `deepseek-v4-pro`；我继续使用当前模型工作，由你决定是否切换。
+> 权限边界：模型建议不改变 write scope、Git 检查或 workspace governance。
+```
+
+Do not describe Pro as mandatory when it is only a recommendation. If the
+current session is already using Pro, state that the task meets the Pro criteria
+and continue within the user's existing authorization.
 
 Do not claim that a model switch occurred unless actual model selection is
 directly observable. A recommendation is not evidence of a switch.

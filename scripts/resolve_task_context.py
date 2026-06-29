@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -52,6 +53,64 @@ COMMAND_PREFIXES = (
     "pwsh ",
     "opencode ",
     "opencode:",
+)
+TASK_GROUPS = (
+    (
+        "Governance and Runtime Authority",
+        (
+            "agent_governance_update",
+            "runtime_authorization_enforcement",
+            "governance_workflow_simplification",
+            "claude_project_boundary",
+            "platform_exposure",
+        ),
+    ),
+    (
+        "Developer Workflow Tooling",
+        (
+            "developer_interface_tooling",
+            "workspace_developer_experience",
+            "workspace_health_tooling",
+            "workspace_launcher_tooling",
+            "context_resolution_tooling",
+            "failure_diagnostics_tooling",
+            "change_surface_planning",
+            "change_scope_verification",
+            "governance_summary_tooling",
+        ),
+    ),
+    (
+        "Knowledge, Prompts, and Documentation",
+        (
+            "project_memory_maintenance",
+            "startup_context_optimization",
+            "knowledge_interface_tooling",
+            "workspace_engineering_knowledge",
+            "prompt_usage_update",
+            "source_of_truth_dedup",
+            "task_registry_update",
+            "shared_policy_update",
+        ),
+    ),
+    (
+        "Skills and Packages",
+        (
+            "skill_lifecycle_tooling",
+            "skill_release_packaging",
+            "skill_architecture_update",
+            "skill_metadata_update",
+            "runtime_drift_fix",
+        ),
+    ),
+    (
+        "Reports, Freshness, and Migration",
+        (
+            "report_regeneration",
+            "report_freshness_tooling",
+            "cleanup_migration",
+            "session_continuity",
+        ),
+    ),
 )
 
 
@@ -896,6 +955,14 @@ def resolve_prompt(
 
 
 def print_task_list(task_registry: dict[str, Any], output_format: str) -> None:
+    rows_by_id = {
+        task_id: {
+            "id": task_id,
+            "use_when": task.get("use_when", []),
+            "use_when_zh": task.get("use_when_zh", []),
+        }
+        for task_id, task in task_registry.get("tasks", {}).items()
+    }
     rows = [
         {
             "id": task_id,
@@ -907,11 +974,43 @@ def print_task_list(task_registry: dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         print(json.dumps({"tasks": rows}, ensure_ascii=False, indent=2))
         return
+
+    printed: set[str] = set()
+    print("Registered workspace tasks")
+    print("Use `workspace task resolve <task-id>` to inspect context, write scope, and validation.")
+    for group_name, task_ids in TASK_GROUPS:
+        group_rows = [rows_by_id[task_id] for task_id in task_ids if task_id in rows_by_id]
+        if not group_rows:
+            continue
+        print("")
+        print(group_name)
+        print_task_table(group_rows)
+        printed.update(row["id"] for row in group_rows)
+    remaining = [row for row in rows if row["id"] not in printed]
+    if remaining:
+        print("")
+        print("Other")
+        print_task_table(remaining)
+
+
+def print_task_table(rows: list[dict[str, Any]]) -> None:
+    id_width = 34
+    desc_width = 76
+    print(f"{'Task id':<{id_width}}  Use when")
+    print(f"{'-' * id_width}  {'-' * 24}")
     for row in rows:
-        en = row["use_when"][0] if row["use_when"] else ""
-        zh = row["use_when_zh"][0] if row["use_when_zh"] else ""
-        suffix = f" | {zh}" if zh else ""
-        print(f"{row['id']}: {en}{suffix}")
+        description = row["use_when"][0] if row["use_when"] else ""
+        if row["use_when_zh"]:
+            description = f"{description} / {row['use_when_zh'][0]}"
+        wrapped = textwrap.wrap(
+            description,
+            width=desc_width,
+            break_long_words=False,
+            break_on_hyphens=False,
+        ) or [""]
+        print(f"{row['id']:<{id_width}}  {wrapped[0]}")
+        for line in wrapped[1:]:
+            print(f"{'':<{id_width}}  {line}")
 
 
 def print_prompt_list(prompt_registry: dict[str, Any], output_format: str) -> None:

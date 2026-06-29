@@ -6,7 +6,9 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime, timezone
+from io import StringIO
 from pathlib import Path, PurePosixPath
 from unittest.mock import patch
 
@@ -16,9 +18,11 @@ from scripts.workspace_health import (
     CheckResult,
     HERMES_GUARD_SCRIPT,
     WORKSPACE_ROOT,
+    check_claude_model_routing,
     check_hermes_guard,
     check_hygiene,
     check_platform_agent_guards,
+    render_text,
     run_health,
 )
 
@@ -83,6 +87,22 @@ class WorkspaceHealthTests(unittest.TestCase):
         self.assertEqual(payload["status"], "PASS")
         self.assertIn("tests", [check["check_id"] for check in payload["checks"]])
 
+    def test_text_render_groups_checks_and_explains_skipped_tests(self) -> None:
+        payload = run_health(
+            runner=self.healthy_runner,
+            hermes_guard_checker=lambda: check_hermes_guard_fixture("PASS"),
+            platform_guard_checker=lambda: check_platform_guard_fixture("PASS"),
+        )
+        output = StringIO()
+        with redirect_stdout(output):
+            render_text(payload)
+        text = output.getvalue()
+        self.assertIn("Core Workspace", text)
+        self.assertIn("Claude Code Boundary", text)
+        self.assertIn("Agent Runtime Guards", text)
+        self.assertIn("Script test suite: SKIPPED", text)
+        self.assertIn("workspace health --with-tests", text)
+
     def test_hygiene_fails_when_root_cache_exists(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -114,6 +134,101 @@ class WorkspaceHealthTests(unittest.TestCase):
             result = check_hygiene(root)
         self.assertEqual(result.status, "FAIL")
         self.assertIn("claude", result.summary)
+
+    def write_model_routing_fixture(self, root: Path, *, include_policy: bool = True) -> None:
+        (root / "shared" / "claude" / "policies").mkdir(parents=True, exist_ok=True)
+        claude_lines = [
+            "# Workspace Agent Instructions",
+            "@AGENTS.md",
+        ]
+        if include_policy:
+            claude_lines.append("@shared/claude/policies/model-routing-policy.md")
+        claude_lines.extend(
+            [
+                "",
+                "Treat model-routing guidance as a visible recommendation only; it must never",
+                "edit model configuration, provider settings, plugins, or permission policy.",
+            ]
+        )
+        (root / "CLAUDE.md").write_text("\n".join(claude_lines), encoding="utf-8")
+        (root / "shared" / "claude" / "policies" / "model-routing-policy.md").write_text(
+            "\n".join(
+                [
+                    "# Model Routing Policy",
+                    "## 执行时机（强制）",
+                    "## First Response Format",
+                    "任务复杂度评估：Flash sufficient。原因：<简短原因>。",
+                    "> 任务复杂度评估：Recommend Pro",
+                    "> 原因：<具体原因>",
+                    "> 模型建议：建议切换到 `deepseek-v4-pro`；我继续使用当前模型工作，由你决定是否切换。",
+                    "> 权限边界：模型建议不改变 write scope、Git 检查或 workspace governance。",
+                    "## Authority Boundary",
+                    "It must never be satisfied by editing LiteLLM configuration.",
+                    "Model strength is not authority.",
+                    "No workspace governance rule is weakened.",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+    def test_claude_model_routing_policy_passes_when_loaded_and_bounded(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self.write_model_routing_fixture(root)
+            result = check_claude_model_routing(root)
+        self.assertEqual(result.status, "PASS")
+
+    def test_claude_model_routing_policy_fails_without_claude_include(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self.write_model_routing_fixture(root, include_policy=False)
+            result = check_claude_model_routing(root)
+        self.assertEqual(result.status, "FAIL")
+        self.assertIn("CLAUDE.md", " ".join(result.details["findings"]))
+
+    def test_claude_model_routing_policy_fails_without_first_response_format(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self.write_model_routing_fixture(root)
+            policy = root / "shared" / "claude" / "policies" / "model-routing-policy.md"
+            policy.write_text(
+                "\n".join(
+                    [
+                        "# Model Routing Policy",
+                        "## 执行时机（强制）",
+                        "## Authority Boundary",
+                        "It must never be satisfied by editing LiteLLM configuration.",
+                        "Model strength is not authority.",
+                        "No workspace governance rule is weakened.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            result = check_claude_model_routing(root)
+        self.assertEqual(result.status, "FAIL")
+        self.assertIn("first response format", " ".join(result.details["findings"]))
+
+    def test_claude_model_routing_policy_fails_without_authority_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self.write_model_routing_fixture(root)
+            policy = root / "shared" / "claude" / "policies" / "model-routing-policy.md"
+            policy.write_text(
+                "\n".join(
+                    [
+                        "# Model Routing Policy",
+                        "## 执行时机（强制）",
+                        "## First Response Format",
+                        "任务复杂度评估：Flash sufficient。原因：<简短原因>。",
+                        "> 任务复杂度评估：Recommend Pro",
+                        "> 权限边界：模型建议不改变 write scope、Git 检查或 workspace governance。",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            result = check_claude_model_routing(root)
+        self.assertEqual(result.status, "FAIL")
+        self.assertIn("authority boundary", " ".join(result.details["findings"]))
 
     def test_stale_report_needs_attention(self) -> None:
         def runner(command: list[str]) -> subprocess.CompletedProcess[str]:

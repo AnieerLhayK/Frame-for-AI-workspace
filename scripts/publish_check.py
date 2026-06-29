@@ -6,8 +6,9 @@ Checks:
 1. No D:\AI, D:/AI, C:\Users\Z1377 absolute paths remain
 2. skills/ directory does not exist
 3. Template files match expected list
-4. Essential scripts are functional
-5. Test suite passes
+4. Beginner guide and conservative setup helper exist
+5. Essential scripts are functional
+6. Test suite passes
 
 Usage:
     python scripts/publish_check.py --dir <staging-dir>
@@ -38,6 +39,7 @@ EXPECTED_TEMPLATES: set[str] = {
 }
 
 EXPECTED_DOCS: set[str] = {
+    "BEGINNER_GUIDE.md",
     "PATH_MAPPING_REFERENCE.md",
     "ONBOARDING.md",
 }
@@ -67,6 +69,7 @@ REQUIRED_PATHS: set[str] = {
     "scripts/workspace_cli.py",
     "scripts/agent_governance.py",
     "scripts/workspace_health.py",
+    "scripts/setup_public_workspace.py",
     "PROJECT_CONTEXT/task_registry.yaml",
     "USAGE_GUIDES/prompt_registry.yaml",
     ".claude/rules/workspace-boundary.md",
@@ -185,7 +188,24 @@ def run_functional_checks(root: Path) -> list[str]:
                 + result.stderr.strip()[:200]
             )
 
-        # 3. workspace_cli.py health
+        # 3. workspace_cli.py explain mechanism task-routing
+        result = subprocess.run(
+            [
+                sys.executable,
+                "scripts/workspace_cli.py",
+                "explain",
+                "mechanism",
+                "task-routing",
+            ],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode != 0:
+            issues.append(
+                f"  workspace_cli.py explain mechanism failed (rc={result.returncode}): "
+                + result.stderr.strip()[:200]
+            )
+
+        # 4. workspace_cli.py health
         # rc=0 clean, rc=1 issues found, rc=2 infrastructure not fully set up
         result = subprocess.run(
             [sys.executable, "scripts/workspace_cli.py", "health"],

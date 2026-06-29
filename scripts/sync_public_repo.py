@@ -14,7 +14,9 @@ Workflow:
     5. Print a summary of what was updated.
 
 Use this script to keep the public skeleton in sync with the private workspace
-after safe changes (protocol files, scripts, boundary configs).
+after safe changes (protocol files, scripts, boundary configs). The public
+repository is maintained as a remote-only durable artifact; any local clone made
+by this script is a disposable staging checkout.
 """
 
 from __future__ import annotations
@@ -23,12 +25,16 @@ import argparse
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_STAGING_ROOT = Path(
+    os.environ.get("AI_TOOL_STAGING_DIR", str(Path(tempfile.gettempdir()) / "ai-workspace-staging"))
+)
 STAGING_DIR = os.environ.get(
     "PUBLIC_STAGING_DIR",
-    str(WORKSPACE_ROOT / "publish-staging"),
+    str(DEFAULT_STAGING_ROOT / "Frame-for-AI-workspace"),
 )
 REMOTE_NAME = "origin"
 REMOTE_BRANCH = "main"

@@ -7,6 +7,8 @@
 ## Claude Code
 
 - Use the workspace task resolver and CLI exactly as described in `AGENTS.md`.
+- Treat model-routing guidance as a visible recommendation only; it must never
+  edit model configuration, provider settings, plugins, or permission policy.
 - Treat `.claude/project-boundary.json` and `.claude/rules/` as the Claude-specific workspace boundary.
 - This workspace is not the CNN project. Use `claude-project cnn` before any CNN work.
 - This workspace is not the ztemp project. Use `claude-project ztemp` before any ztemp work.

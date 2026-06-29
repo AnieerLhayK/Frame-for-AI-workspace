@@ -63,7 +63,33 @@ def add_resolution_options(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="workspace",
-        description="Unified entry point for existing workspace maintenance tools.",
+        description=(
+            "Unified workspace maintenance console. Use it to discover task context, "
+            "check health, inspect reports, and verify change scope before commits."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Common flows:\n"
+            "  workspace summary\n"
+            "      Show version, Git state, inventory, and recent governance.\n"
+            "  workspace health [--with-tests]\n"
+            "      Check live workspace health; tests are optional for speed.\n"
+            "  workspace task list\n"
+            "      Browse registered task ids by area.\n"
+            "  workspace task resolve <task-id> [--bind name=value]\n"
+            "      Show required context, write scope, validation, and token budget.\n"
+            "  workspace preflight <task-id> [--bind name=value]\n"
+            "      Resolve a task and fail when the required context budget is too high.\n"
+            "  workspace knowledge find \"topic\"\n"
+            "      Find the smallest registered reading entry points.\n"
+            "  workspace explain path scripts/workspace_cli.py\n"
+            "      Explain a path's layer, related tasks, topics, and likely tests.\n"
+            "  workspace workflow check <task-id>\n"
+            "      Verify current Git changes against task scope before validation.\n"
+            "\n"
+            "Use `workspace <command> --help` and then "
+            "`workspace <command> <subcommand> --help` for details."
+        ),
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -350,6 +376,23 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("manifest-validation", "protocol-validation", "workspace", "all-current"),
     )
 
+    explain = commands.add_parser(
+        "explain",
+        help="Explain workspace paths, topics, or mechanisms.",
+    )
+    explain.add_argument("--format", dest="global_format", choices=("text", "json"))
+    explain_commands = explain.add_subparsers(dest="action", required=True)
+    explain_path = explain_commands.add_parser("path", help="Explain one workspace-relative path.")
+    explain_path.add_argument("path")
+    explain_path.add_argument("--format", choices=("text", "json"))
+    explain_topic = explain_commands.add_parser("topic", help="Explain matching knowledge topics.")
+    explain_topic.add_argument("query")
+    explain_topic.add_argument("--limit", type=int, default=3)
+    explain_topic.add_argument("--format", choices=("text", "json"))
+    explain_mechanism = explain_commands.add_parser("mechanism", help="Explain a named workspace mechanism.")
+    explain_mechanism.add_argument("name")
+    explain_mechanism.add_argument("--format", choices=("text", "json"))
+
     return parser
 
 
@@ -620,6 +663,23 @@ def dispatch(args: argparse.Namespace) -> int:
             if return_code != 0:
                 return return_code
         return 0
+    if args.command == "explain":
+        output_format = args.format or args.global_format or "text"
+        command = [
+            sys.executable,
+            str(SCRIPTS_DIR / "workspace_explain.py"),
+            "--format",
+            output_format,
+            args.action,
+        ]
+        if args.action == "path":
+            command.append(args.path)
+        elif args.action == "topic":
+            command.append(args.query)
+            command.extend(["--limit", str(max(1, args.limit))])
+        else:
+            command.append(args.name)
+        return run_command(command)
     raise ValueError(f"Unsupported command: {args.command}")
 
 

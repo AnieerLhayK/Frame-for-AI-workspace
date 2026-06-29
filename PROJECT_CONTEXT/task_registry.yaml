@@ -438,6 +438,70 @@ tasks:
       - "python scripts/workspace_cli.py bootstrap --print-json"
       - "git diff --check"
 
+  workspace_developer_experience:
+    use_when:
+      - "Changing the integrated human-facing workspace CLI experience across health summaries, task list rendering, help text, explain output, report freshness messaging, or quick-start guidance."
+    use_when_zh:
+      - "改进面向人的 workspace CLI 综合体验，包括 health 分层、任务列表渲染、帮助文本、explain 输出、报告 freshness 提示或 quick-start 指南"
+    required:
+      - "scripts/workspace_cli.py"
+      - "scripts/workspace_health.py"
+      - "scripts/check_links.ps1"
+      - "scripts/setup_links.ps1"
+      - "scripts/resolve_task_context.py"
+      - "scripts/workspace_explain.py"
+      - "scripts/report_status.py"
+      - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
+      - "scripts/tests/test_workspace_cli.py"
+      - "scripts/tests/test_workspace_health.py"
+      - "scripts/tests/test_resolve_task_context.py"
+      - "scripts/tests/test_workspace_explain.py"
+      - "scripts/tests/test_report_status.py"
+    optional:
+      - "README.md"
+      - "ARCHITECTURE.md"
+      - "PROJECT_CONTEXT/knowledge_registry.yaml"
+      - "reports/ current snapshots"
+    ignore:
+      - "external platform configuration"
+      - "private corpus material"
+      - "skill implementation"
+    prompt:
+      - "task_routing"
+    tool_profile: "workspace_maintenance"
+    ledger: true
+    write_scope:
+      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "PROJECT_CONTEXT/task_ledger.md"
+      - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
+      - "scripts/workspace_cli.py"
+      - "scripts/workspace_health.py"
+      - "scripts/check_links.ps1"
+      - "scripts/setup_links.ps1"
+      - "scripts/resolve_task_context.py"
+      - "scripts/workspace_explain.py"
+      - "scripts/report_status.py"
+      - "scripts/tests/test_workspace_cli.py"
+      - "scripts/tests/test_workspace_health.py"
+      - "scripts/tests/test_resolve_task_context.py"
+      - "scripts/tests/test_workspace_explain.py"
+      - "scripts/tests/test_report_status.py"
+      - "reports/manifest_validation_report.md"
+      - "reports/protocol_validation_report.md"
+      - "reports/workspace_health_report.md"
+      - "reports/workspace_setup_report.md"
+    validation:
+      - "python -m unittest scripts.tests.test_workspace_cli scripts.tests.test_workspace_health scripts.tests.test_resolve_task_context scripts.tests.test_workspace_explain scripts.tests.test_report_status"
+      - "python -m unittest discover -s scripts/tests -p \"test_*.py\""
+      - "workspace task list"
+      - "workspace explain mechanism task-routing"
+      - "workspace explain path scripts/workspace_cli.py"
+      - "workspace validate links"
+      - "workspace --help"
+      - "workspace reports status --strict"
+      - "workspace health --with-tests"
+      - "git diff --check"
+
   skill_lifecycle_tooling:
     use_when:
       - "Creating or changing manifest-aware skill init, validate, list, or guarded platform exposure commands."
@@ -507,6 +571,8 @@ tasks:
       - "scripts/publish_public.py"
       - "scripts/publish_check.py"
       - "scripts/sync_public_repo.py"
+      - "scripts/tests/test_workspace_cli.py"
+      - "WORKSPACE_ENGINEERING/PUBLISH.md"
     ignore:
       - "private corpus material"
       - "packages/character-system/reports/runtime-loop/"
@@ -532,6 +598,8 @@ tasks:
       - "scripts/publish_check.py"
       - "scripts/sync_public_repo.py"
       - "scripts/tests/test_publish_public.py"
+      - "scripts/tests/test_workspace_cli.py"
+      - "WORKSPACE_ENGINEERING/PUBLISH.md"
     validation:
       - "python scripts/resolve_task_context.py skill_release_packaging"
       - "python scripts/skill_lifecycle.py validate zyc"
@@ -543,6 +611,7 @@ tasks:
       - "python -m pytest -q scripts/tests/test_publish_public.py"
       - "publish_public.py explicit staging-dir smoke check under the tool staging directory"
       - "publish_check.py verification against the generated staging directory"
+      - "python scripts/sync_public_repo.py --dry-run --skip-tests"
       - "python scripts/workspace_cli.py changes verify skill_release_packaging --strict"
       - "python scripts/workspace_cli.py workflow check skill_release_packaging"
       - "git diff --check"
@@ -641,6 +710,7 @@ tasks:
       - ".claude/rules/workspace-boundary.md"
       - ".claude/settings.json"
       - ".claude/hooks/workspace_boundary_guard.ps1"
+      - "shared/claude/policies/model-routing-policy.md"
       - "scripts/workspace_health.py"
       - "scripts/tests/test_workspace_health.py"
     optional:
@@ -665,6 +735,7 @@ tasks:
       - "README.md"
       - "PROJECT_CONTEXT/"
       - "USAGE_GUIDES/"
+      - "shared/claude/policies/model-routing-policy.md"
       - "scripts/workspace_health.py"
       - "scripts/tests/test_workspace_health.py"
       - "explicitly approved machine-local Claude registry and launchers"

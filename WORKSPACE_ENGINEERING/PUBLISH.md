@@ -9,6 +9,16 @@
 - **验证脚本**: `scripts/publish_check.py`
 - **维护脚本**: `scripts/sync_public_repo.py`
 
+## 维护边界
+
+`Frame-for-AI-workspace` 只保留 GitHub 远端作为长期仓库。本 workspace 不维护一个
+独立的本地部署副本；同步脚本创建的本地 clone 只是可丢弃 staging，用于生成、验证和
+推送公开快照。
+
+默认 staging 位置由 `PUBLIC_STAGING_DIR` 控制；未设置时优先使用
+`AI_TOOL_STAGING_DIR` 下的 `Frame-for-AI-workspace`，再退回系统临时目录。不要把
+staging 当作源代码维护面。
+
 ## 首次发布
 
 首次发布已通过以下流程完成：
@@ -101,8 +111,9 @@ python scripts/sync_public_repo.py --push --skip-tests
 - [ ] 无 `<drive>:\Users\<user>` 硬编码路径
 - [ ] `skills/` 目录不存在
 - [ ] 模板文件（`.template`）齐全
-- [ ] 自动化文档（`PATH_MAPPING_REFERENCE.md`, `ONBOARDING.md`）存在
-- [ ] 核心脚本可运行（resolve_task, agent list, health）
+- [ ] 自动化文档（`BEGINNER_GUIDE.md`, `PATH_MAPPING_REFERENCE.md`, `ONBOARDING.md`）存在
+- [ ] 新手初始化脚本 `scripts/setup_public_workspace.py` 存在
+- [ ] 核心脚本可运行（task list, explain mechanism, agent list, health）
 - [ ] 核心测试通过（193+ 项）
 - [ ] CI workflow 兼容 Linux
 

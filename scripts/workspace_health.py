@@ -37,6 +37,7 @@ REQUIRED_CLAUDE_BOUNDARY_PATHS = (
     ".claude/settings.json",
     ".claude/hooks/workspace_boundary_guard.ps1",
 )
+CLAUDE_MODEL_ROUTING_POLICY = "shared/claude/policies/model-routing-policy.md"
 HERMES_HOME = Path(os.environ.get("HERMES_HOME", r"${DATA_ROOT}/hermes"))
 HERMES_GUARD_SCRIPT = SCRIPTS_DIR / "hermes_workspace_guard.py"
 
@@ -75,6 +76,7 @@ class CheckResult:
 def run_process(command: Sequence[str]) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
     return subprocess.run(
         list(command),
         cwd=WORKSPACE_ROOT,
@@ -205,6 +207,60 @@ def check_hygiene(root: Path = WORKSPACE_ROOT) -> CheckResult:
             },
         )
     return CheckResult("hygiene", "PASS", "Workspace root and Claude project boundary are clean.")
+
+
+def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
+    claude_path = root / "CLAUDE.md"
+    policy_path = root / CLAUDE_MODEL_ROUTING_POLICY
+    findings: list[str] = []
+    try:
+        claude_text = claude_path.read_text(encoding="utf-8-sig")
+        policy_text = policy_path.read_text(encoding="utf-8-sig")
+    except OSError as exc:
+        return CheckResult(
+            "claude-model-routing",
+            "FAIL",
+            "Claude model-routing policy could not be read.",
+            {"error": str(exc)},
+        )
+
+    normalized_claude = " ".join(claude_text.split())
+    normalized_policy = " ".join(policy_text.split())
+
+    if f"@{CLAUDE_MODEL_ROUTING_POLICY}" not in claude_text:
+        findings.append("CLAUDE.md does not include the shared model-routing policy")
+    if "model-routing guidance as a visible recommendation only" not in normalized_claude:
+        findings.append("CLAUDE.md does not state that model routing is recommendation-only")
+
+    required_policy_markers = {
+        "## 执行时机（强制）": "execution timing section is missing",
+        "## First Response Format": "first response format section is missing",
+        "任务复杂度评估：Flash sufficient": "low-risk first response format is missing",
+        "任务复杂度评估：Recommend Pro": "high-risk first response format is missing",
+        "权限边界：模型建议不改变 write scope": "model recommendation boundary message is missing",
+        "## Authority Boundary": "authority boundary section is missing",
+        "It must never be satisfied by editing LiteLLM configuration": (
+            "environment/configuration non-mutation boundary is missing"
+        ),
+        "Model strength is not authority": "model strength authority boundary is missing",
+        "workspace governance rule": "workspace governance boundary is missing",
+    }
+    for marker, finding in required_policy_markers.items():
+        if marker not in normalized_policy:
+            findings.append(finding)
+
+    if findings:
+        return CheckResult(
+            "claude-model-routing",
+            "FAIL",
+            "Claude model-routing recommendation policy has drifted.",
+            {"findings": findings},
+        )
+    return CheckResult(
+        "claude-model-routing",
+        "PASS",
+        "Claude model-routing recommendations are visible and non-authorizing.",
+    )
 
 
 def check_hermes_guard(
@@ -426,6 +482,10 @@ def check_platform_agent_guards(
         entry = agents.get(agent_id, {})
         if entry.get("status") != "active" or entry.get("role") != "record_producer":
             findings.append(f"{agent_id} is not an active record_producer")
+    for agent_id in ("codex", "claude"):
+        entry = agents.get(agent_id, {})
+        if entry.get("status") != "active" or entry.get("role") != "structural_maintainer":
+            findings.append(f"{agent_id} is not an active structural_maintainer")
     cursor = agents.get("cursor", {})
     cursor_capabilities = cursor.get("capabilities", {})
     if (
@@ -445,7 +505,7 @@ def check_platform_agent_guards(
     return CheckResult(
         "platform-agent-guards",
         "PASS",
-        "Reasonix and OpenCode are bounded record producers; Cursor remains Consumer.",
+        "Codex and Claude are structural maintainers; Reasonix/OpenCode are bounded; Cursor remains Consumer.",
     )
 
 
@@ -498,6 +558,7 @@ def run_health(
         check_reports(runner),
         check_links(runner),
         check_hygiene(),
+        check_claude_model_routing(),
         hermes_guard_checker(),
         platform_guard_checker(),
     ]
@@ -520,12 +581,72 @@ def run_health(
     }
 
 
+HEALTH_GROUPS = (
+    (
+        "Core Workspace",
+        (
+            ("bootstrap", "Manifest/source root"),
+            ("knowledge", "Knowledge index"),
+            ("links", "Platform links"),
+        ),
+    ),
+    (
+        "Reports",
+        (
+            ("reports", "Snapshot freshness"),
+        ),
+    ),
+    (
+        "Claude Code Boundary",
+        (
+            ("hygiene", "Project boundary files"),
+            ("claude-model-routing", "Model recommendation policy"),
+        ),
+    ),
+    (
+        "Agent Runtime Guards",
+        (
+            ("hermes-guard", "Hermes hooks/MCP guard"),
+            ("platform-agent-guards", "Agent roles and platform guards"),
+        ),
+    ),
+    (
+        "Validation",
+        (
+            ("tests", "Script test suite"),
+        ),
+    ),
+)
+
+
+def _print_check(checks: dict[str, dict[str, Any]], check_id: str, label: str) -> None:
+    check = checks.get(check_id)
+    if check is None:
+        print(f"  - {label}: SKIPPED - check not configured.")
+        return
+    print(f"  - {label}: {check['status']} - {check['summary']}")
+    if check_id == "reports" and check["status"] in {"FAIL", "ERROR"}:
+        print("    Remedy: run `workspace reports status --strict`, then `workspace reports refresh all-current` if the stale reports are expected.")
+    if check_id == "tests" and check["status"] == "SKIPPED":
+        print("    Note: omitted by default to keep `workspace health` fast; run `workspace health --with-tests` for the full suite.")
+
+
 def render_text(payload: dict[str, Any]) -> None:
     print(f"Workspace health: {payload['status']}")
-    for check in payload["checks"]:
-        print(f"- {check['check_id']}: {check['status']} - {check['summary']}")
+    checks = {check["check_id"]: check for check in payload["checks"]}
     if not payload["with_tests"]:
-        print("- tests: SKIPPED - rerun with --with-tests for the full script suite.")
+        checks["tests"] = {
+            "check_id": "tests",
+            "status": "SKIPPED",
+            "summary": "full script suite not run.",
+        }
+    for group_name, items in HEALTH_GROUPS:
+        print(f"\n{group_name}")
+        for check_id, label in items:
+            _print_check(checks, check_id, label)
+    if not payload["with_tests"]:
+        print("")
+        print("Tip: `workspace health` is read-only and lightweight. Use `workspace health --with-tests` before commit-sized changes.")
     print(payload["note"])
 
 

@@ -31,6 +31,14 @@ class WorkspaceCliTests(unittest.TestCase):
         result = self.run_cli("task", "list")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("platform_exposure", result.stdout)
+        self.assertIn("Registered workspace tasks", result.stdout)
+
+    def test_top_level_help_explains_common_flows(self) -> None:
+        result = self.run_cli("--help")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Common flows:", result.stdout)
+        self.assertIn("workspace task resolve <task-id>", result.stdout)
+        self.assertIn("workspace explain path scripts/workspace_cli.py", result.stdout)
 
     def test_task_resolve_preserves_json_output(self) -> None:
         result = self.run_cli(
@@ -354,6 +362,51 @@ class WorkspaceCliTests(unittest.TestCase):
         command = run.call_args.args[0]
         self.assertIn("--validate", command)
         self.assertNotIn("--query", command)
+
+    def test_validate_links_prints_long_paths_on_separate_lines(self) -> None:
+        result = self.run_cli("validate", "links")
+        self.assertIn(result.returncode, (0, 1), result.stderr)
+        self.assertIn("\n  LinkPath: ", result.stdout)
+        self.assertIn("\n  ExpectedTarget: ", result.stdout)
+        self.assertNotIn("ExpectedT\r\n", result.stdout)
+        self.assertNotIn("${WORKSPACE_ROOT}\\...", result.stdout)
+
+    def test_link_scripts_avoid_truncating_format_table_output(self) -> None:
+        for relative_path in ("scripts/check_links.ps1", "scripts/setup_links.ps1"):
+            text = (WORKSPACE_ROOT / relative_path).read_text(encoding="utf-8-sig")
+            self.assertNotIn("Format-Table", text)
+
+    def test_explain_path_delegates_to_explain_tool(self) -> None:
+        args = build_parser().parse_args(
+            ["explain", "--format", "json", "path", "scripts/workspace_cli.py"]
+        )
+        with patch("scripts.workspace_cli.run_command", return_value=0) as run:
+            self.assertEqual(dispatch(args), 0)
+        command = run.call_args.args[0]
+        self.assertEqual(Path(command[1]).name, "workspace_explain.py")
+        self.assertIn("path", command)
+        self.assertIn("scripts/workspace_cli.py", command)
+        self.assertEqual(command[command.index("--format") + 1], "json")
+
+    def test_explain_accepts_subcommand_format_option(self) -> None:
+        args = build_parser().parse_args(
+            ["explain", "path", "scripts/workspace_cli.py", "--format", "json"]
+        )
+        with patch("scripts.workspace_cli.run_command", return_value=0) as run:
+            self.assertEqual(dispatch(args), 0)
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index("--format") + 1], "json")
+
+    def test_explain_topic_delegates_limit(self) -> None:
+        args = build_parser().parse_args(
+            ["explain", "topic", "developer interface", "--limit", "2"]
+        )
+        with patch("scripts.workspace_cli.run_command", return_value=0) as run:
+            self.assertEqual(dispatch(args), 0)
+        command = run.call_args.args[0]
+        self.assertIn("topic", command)
+        self.assertIn("developer interface", command)
+        self.assertIn("2", command)
 
 
 if __name__ == "__main__":

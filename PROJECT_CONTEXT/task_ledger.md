@@ -46,6 +46,264 @@ Do not add entries for every command, read, or tiny edit. The entry should captu
 
 ## Recent Entries
 
+### TASK-20260629-001 - Add public workspace beginner setup and remote-only sync rule
+
+- Date: 2026-06-29
+- Status: implemented
+- Task type: skill_release_packaging
+- Branch: main
+- Commit: pending
+- Read:
+  - scripts/publish_public.py
+  - scripts/publish_check.py
+  - scripts/sync_public_repo.py
+  - WORKSPACE_ENGINEERING/PUBLISH.md
+  - scripts/tests/test_publish_public.py
+  - scripts/tests/test_workspace_cli.py
+- Modified:
+  - Public skeleton generation now emits `BEGINNER_GUIDE.md`.
+  - Public skeleton generation now emits `scripts/setup_public_workspace.py`, a
+    conservative first-run helper that renders template variables, creates a
+    basic data root, and runs read-only checks for CLI help, task list,
+    `workspace explain`, agent list, and health.
+  - Public publish verification now requires the beginner guide and setup
+    helper and exercises `workspace explain mechanism task-routing`.
+  - `scripts/sync_public_repo.py` now treats local public checkouts as
+    disposable staging, defaulting to `PUBLIC_STAGING_DIR`,
+    `AI_TOOL_STAGING_DIR`, or a system temp staging root instead of a durable
+    workspace-local deployment.
+  - `WORKSPACE_ENGINEERING/PUBLISH.md` now states that
+    `Frame-for-AI-workspace` is remote-only as the durable public repository.
+- Decision:
+  - Keep `Frame-for-AI-workspace` as a generated remote artifact; do not
+    maintain a separate local deployment repository inside this workspace.
+  - Make the new setup helper conservative: it prepares only the skeleton's own
+    basic functions and leaves provider credentials, plugins, model settings,
+    and platform projections as explicit manual steps.
+- Validation:
+  - `python -m unittest scripts.tests.test_publish_public` passed.
+  - `python -m py_compile scripts/publish_public.py scripts/publish_check.py scripts/sync_public_repo.py` passed.
+  - `python scripts/publish_public.py --out-dir ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-smoke --repo-name Frame-for-AI-workspace` passed.
+  - `python scripts/publish_check.py --dir ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-smoke` passed.
+  - `python ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-smoke\scripts\setup_public_workspace.py --workspace-root ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-smoke --data-root ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-smoke-data` completed core checks with expected optional health warning in the unconfigured skeleton.
+  - `python -m unittest discover -s scripts/tests -p "test_*.py"` passed.
+  - `python scripts/workspace_cli.py changes verify skill_release_packaging --agent codex --strict` passed.
+  - `python scripts/workspace_cli.py workflow check skill_release_packaging` passed.
+  - `git diff --check` passed.
+- Next:
+  - Commit the source changes, then run `python scripts/sync_public_repo.py --push`
+    from a clean workspace to update the remote public repository.
+
+### TASK-20260628-004 - Improve workspace CLI readability and explainability
+
+- Date: 2026-06-28
+- Status: implemented
+- Task type: workspace_developer_experience, report_regeneration
+- Branch: main
+- Commit: ac1ca2b for phase 1; follow-up explain/link-output commit pending at entry time
+- Read:
+  - README.md and ARCHITECTURE.md
+  - scripts/workspace_health.py and workspace health tests
+  - scripts/workspace_cli.py and workspace CLI tests
+  - scripts/resolve_task_context.py and resolver tests
+  - scripts/workspace_explain.py and workspace explain tests
+  - scripts/check_links.ps1 and scripts/setup_links.ps1
+  - USAGE_GUIDES/QUICK_START/workspace_cli.md
+  - report freshness tooling
+- Modified:
+  - Grouped `workspace health` text output into Core Workspace, Reports,
+    Claude Code Boundary, Agent Runtime Guards, and Validation.
+  - Added inline report-remediation guidance and an explanation for skipped
+    tests.
+  - Added Codex/Claude structural-maintainer checks to platform agent guard
+    health.
+  - Rendered `workspace task list` as grouped wrapped tables while preserving
+    JSON output.
+  - Expanded top-level `workspace --help` with common flows.
+  - Updated the workspace CLI quick start to prefer `workspace ...` commands
+    and include a Python command mapping table.
+  - Added `workspace explain path/topic/mechanism` for read-only explanation
+    of workspace paths, registered knowledge topics, and named mechanisms.
+  - Changed link validation and setup output from truncating PowerShell tables
+    to readable multiline records with full `LinkPath`, `ExpectedTarget`, and
+    target fields.
+  - Added `workspace_developer_experience` as the routed task for integrated
+    human-facing CLI/health/task-list/explain/link-output/report-guide
+    improvements.
+  - Refreshed current report snapshots after source changes.
+- Decision:
+  - Keep the integrated `workspace` entry point as the primary developer
+    surface and add bounded explanation commands inside it, instead of creating
+    a separate black-box inventory system.
+  - Keep health JSON flat for script compatibility; improve only the human text
+    rendering.
+  - Avoid table output for long console paths; use multiline records when path
+    fields would otherwise be truncated.
+- Validation:
+  - `workspace reports refresh all-current` regenerated the current report
+    snapshots.
+  - `workspace reports status --strict` returned FRESH for all current report
+    groups.
+  - `workspace health --with-tests` returned PASS with grouped text output.
+  - Focused tests for health, CLI, resolver, explain, and report freshness
+    passed.
+  - `python -m unittest discover -s scripts/tests -p "test_*.py"` passed.
+  - `workspace task list`, `workspace --help`, `workspace explain path
+    scripts/workspace_cli.py`, `workspace explain mechanism task-routing`, and
+    `workspace validate links` were manually inspected for readable text output.
+  - `workspace changes verify workspace_developer_experience --agent codex --strict`
+    passed.
+  - `workspace workflow check workspace_developer_experience` passed.
+  - `git diff --check` passed.
+- Next:
+  - Consider a later ranking/filtering pass for `workspace explain path` if
+    highly shared files produce too many related tasks.
+
+### TASK-20260628-003 - Add lightweight Claude first-response model assessment
+
+- Date: 2026-06-28
+- Status: implemented
+- Task type: claude_project_boundary
+- Branch: main
+- Commit: pending
+- Read:
+  - CLAUDE.md
+  - shared/claude/policies/model-routing-policy.md
+  - scripts/workspace_health.py and focused health tests
+- Modified:
+  - Replaced the single high-risk `Upgrade Message` with a two-tier
+    `First Response Format`.
+  - Low-risk work now has a one-sentence `Flash sufficient` assessment.
+  - High-risk work now has a visible `Recommend Pro` quote block with a fixed
+    permission boundary line.
+  - Health checks and regression tests now guard the new first-response
+    markers.
+- Decision:
+  - Keep model routing as advisory-only and do not introduce a scripted
+    complexity scorer or any external model/provider configuration change.
+- Validation:
+  - `python -m unittest scripts.tests.test_workspace_health` passed.
+  - `python -m unittest discover -s scripts/tests -p "test_*.py"` passed.
+  - `git diff --check` passed.
+  - `python scripts/workspace_cli.py changes verify claude_project_boundary --agent codex --strict`
+    reported WARNING, not ERROR, due to the existing declarative
+    machine-local launcher scope.
+  - `python scripts/workspace_cli.py workflow check claude_project_boundary`
+    reported WARNING with Git diff check PASS for the same declarative scope.
+  - `workspace health --with-tests` reported `claude-model-routing`, Hermes,
+    platform guards, and tests as PASS; overall health is NEEDS_ATTENTION
+    because reports are stale after the policy source change.
+- Next:
+  - Optionally smoke test in a fresh Claude Code session with one low-risk and
+    one high-risk prompt.
+
+### TASK-20260628-002 - Refresh Hermes guard hook approval
+
+- Date: 2026-06-28
+- Status: completed
+- Task type: runtime_authorization_enforcement, project_memory_maintenance
+- Branch: main
+- Commit: pending
+- Read:
+  - runtime authorization task context
+  - Hermes config and shell hook allowlist
+  - tracked `scripts/hermes_workspace_guard.py` mtime
+  - agent governance policy, registry, and runtime enforcement adapters
+- Modified:
+  - Updated external
+    `${DATA_ROOT}/hermes\shell-hooks-allowlist.json` for the three workspace
+    guard hook approvals: `pre_tool_call`, `post_tool_call`, and
+    `pre_llm_call`.
+  - Set each workspace guard `script_mtime_at_approval` to the current tracked
+    `scripts/hermes_workspace_guard.py` mtime.
+  - No tracked source file was changed by the external allowlist update.
+- Decision:
+  - Treat the user request for remaining governance as explicit approval for
+    this narrow environment-write operation.
+  - Do not broaden Codex's registered capabilities to `environment_write`;
+    this was a one-off local runtime approval refresh, not a policy expansion.
+- Validation:
+  - `workspace health --with-tests` returned PASS.
+  - `workspace agent doctor hermes --format json` returned PASS.
+  - `reports status --strict` returned FRESH for all current report groups.
+- Next:
+  - Reapprove the Hermes hook allowlist only when the tracked guard script
+    changes again.
+
+### TASK-20260628-001 - Retire stale model-routing governance branch
+
+- Date: 2026-06-28
+- Status: completed
+- Task type: cleanup_migration, project_memory_maintenance
+- Branch: main
+- Commit: pending
+- Read:
+  - `git worktree list --porcelain`
+  - `git log --left-right --cherry-pick --oneline main...codex/model-routing-governance`
+  - `git diff d3d51ba..codex/model-routing-governance`
+  - shared manifest portability and workspace path policies
+- Modified:
+  - Pruned the missing staging worktree metadata for
+    `${DATA_ROOT}/codex\cache\staging\workspace-model-routing-governance`.
+  - Deleted the local branch `codex/model-routing-governance`.
+  - Recorded this cleanup decision in the task ledger.
+- Decision:
+  - The branch was based on `9bf94c1` and its staging worktree path no longer
+    existed.
+  - Its model-routing governance intent was superseded on `main` by
+    `d3d51ba`, while `main` also retained later public publish/sync hardening
+    and report refresh commits.
+  - Do not merge or resurrect `44f57eb`; it would regress newer mainline
+    governance and publish-tool changes.
+- Validation:
+  - `git branch -vv --all` shows only `main` and `origin/main`.
+  - `git worktree list --porcelain` shows only `${WORKSPACE_ROOT}`.
+- Next:
+  - None for this branch.
+
+### TASK-20260627-002 - Bound Claude model-routing recommendations
+
+- Date: 2026-06-27
+- Status: ported_to_main_worktree
+- Task type: claude_project_boundary
+- Branch: main
+- Commit: pending
+- Read:
+  - CLAUDE.md
+  - shared/claude/policies/model-routing-policy.md
+  - .claude/project-boundary.json, .claude/rules/workspace-boundary.md,
+    .claude/settings.json, and workspace boundary hook
+  - scripts/workspace_health.py and focused health tests
+  - prior handoff branch commit 44f57eb
+- Modified:
+  - CLAUDE.md states model-routing guidance is a visible recommendation only
+    and must not edit model, provider, plugin, or permission settings.
+  - shared/claude/policies/model-routing-policy.md has an explicit Authority
+    Boundary section: model strength is not authority.
+  - workspace health checks that the model-routing policy is loaded, visible,
+    and non-authorizing.
+  - claude_project_boundary task routing declares the shared Claude
+    model-routing policy as required and writable context.
+- Decision:
+  - Port only the governance change from the isolated worktree instead of
+    merging the stale branch over newer main publish/report fixes.
+  - Keep model routing advisory: it may recommend `deepseek-v4-pro` before
+    complex or high-risk work, but must not switch models, edit runtime
+    configuration, or weaken workspace governance.
+- Validation:
+  - `python -m unittest scripts.tests.test_workspace_health` passed.
+  - `python -m unittest discover -s scripts/tests -p "test_*.py"` passed.
+  - `git diff --check` passed.
+  - `workspace health --with-tests` reported the new `claude-model-routing`
+    check and tests as PASS; overall health remains NEEDS_ATTENTION because
+    reports are stale and Hermes guard approvals have pre-existing drift.
+  - `workspace workflow check claude_project_boundary` reported WARNING, not
+    ERROR, due to declarative machine-local launcher scope and the auto-updated
+    `.claude/routing_events.ndjson` log.
+- Next:
+  - Verify in a real Claude Code session with a read-only complex-task prompt.
+  - Do not expand this into a model router service unless explicitly approved.
+
 ### TASK-20260627-001 - Repair public workspace publishing scrub checks
 
 - Date: 2026-06-27

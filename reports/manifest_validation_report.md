@@ -1,10 +1,10 @@
 ---
 report_name: manifest_validation_report
-generated_at: 2026-06-27 19:48:50 +0800
+generated_at: 2026-06-28 23:11:51 +0800
 generated_by: scripts/validate_manifest.py
 source_root: ${WORKSPACE_ROOT}
 manifest_path: ${WORKSPACE_ROOT}\workspace_manifest.yaml
-source_commit: 7eda155
+source_commit: ac1ca2b
 report_scope: manifest portability and consistency validation
 report_is_snapshot: true
 truth_source:

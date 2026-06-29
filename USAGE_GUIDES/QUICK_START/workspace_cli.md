@@ -28,7 +28,7 @@ Set-Location $workspaceRoot
 然后运行：
 
 ```powershell
-python scripts\workspace_cli.py --help
+workspace --help
 ```
 
 如果你不在 workspace 目录，也可以使用完整路径：
@@ -50,6 +50,7 @@ python scripts\workspace_cli.py launcher install
 ```powershell
 workspace health
 workspace task list
+workspace explain path scripts/workspace_cli.py
 workspace knowledge find "工程现状"
 ```
 
@@ -69,15 +70,35 @@ workspace launcher uninstall
 PowerShell profile 或系统 PATH。如果目标位置已有非本工具生成的同名命令，
 安装和卸载都会停止，不覆盖也不删除。
 
+## 命令风格对照
+
+本指南优先使用短命令 `workspace ...`。如果短命令尚未安装，使用右侧的
+Python 形式即可。
+
+| 推荐命令 | 等价 Python 命令 |
+| --- | --- |
+| `workspace --help` | `python scripts\workspace_cli.py --help` |
+| `workspace task list` | `python scripts\workspace_cli.py task list` |
+| `workspace task resolve <task-id>` | `python scripts\workspace_cli.py task resolve <task-id>` |
+| `workspace preflight <task-id>` | `python scripts\workspace_cli.py preflight <task-id>` |
+| `workspace failure check <task-id>` | `python scripts\workspace_cli.py failure check <task-id>` |
+| `workspace health` | `python scripts\workspace_cli.py health` |
+| `workspace explain path <path>` | `python scripts\workspace_cli.py explain path <path>` |
+| `workspace reports status` | `python scripts\workspace_cli.py reports status` |
+| `workspace reports refresh all-current` | `python scripts\workspace_cli.py reports refresh all-current` |
+
+后续示例默认使用 `workspace ...`。没有安装短命令时，把命令前缀替换成
+`python scripts\workspace_cli.py`。
+
 ## 第一次使用
 
 先试这四条：
 
 ```powershell
-python scripts\workspace_cli.py task list
-python scripts\workspace_cli.py knowledge find "工程现状"
-python scripts\workspace_cli.py reports status
-python scripts\workspace_cli.py validate links
+workspace task list
+workspace knowledge find "工程现状"
+workspace reports status
+workspace validate links
 ```
 
 它们分别用于：
@@ -92,13 +113,13 @@ python scripts\workspace_cli.py validate links
 如果只想用一条命令完成这些基础检查：
 
 ```powershell
-python scripts\workspace_cli.py health
+workspace health
 ```
 
 加上完整脚本测试：
 
 ```powershell
-python scripts\workspace_cli.py health --with-tests
+workspace health --with-tests
 ```
 
 查看当前 workspace 版本、Git 状态、能力数量和最近治理记录：
@@ -115,7 +136,7 @@ workspace summary --format json
 ### 1. 先确定任务类型
 
 ```powershell
-python scripts\workspace_cli.py task list
+workspace task list
 ```
 
 例如你想修改 skill 的发现 metadata，可以看到任务 id：
@@ -127,7 +148,7 @@ skill_metadata_update
 ### 2. 解析任务
 
 ```powershell
-python scripts\workspace_cli.py task resolve skill_metadata_update `
+workspace task resolve skill_metadata_update `
   --bind target-skill=packages/character-system/engineering/generation/character-generator
 ```
 
@@ -141,19 +162,29 @@ python scripts\workspace_cli.py task resolve skill_metadata_update `
 
 `--bind` 用来填写任务里的占位符。不要让维护 agent 通过扫描整个目录来猜占位符。
 
+`task resolve` 是最重要的开发入口之一。它不会修改文件，只会告诉你：
+
+- 当前任务应该读哪些 required context；
+- optional context 是否需要显式展开；
+- write scope 是否覆盖你打算修改的文件；
+- token 预算是否已经过大；
+- 完成后应该运行哪些验证命令。
+
 ### 3. 检查上下文预算
 
 ```powershell
-python scripts\workspace_cli.py preflight skill_metadata_update `
+workspace preflight skill_metadata_update `
   --bind target-skill=packages/character-system/engineering/generation/character-generator
 ```
 
-如果所需上下文太大，严格检查会返回非零退出码。你可以先缩小任务，而不是一开始就读取大量文件。
+`preflight` 等价于一次更严格的 `task resolve`：当 required context 的
+token 预算不是 `PASS` 时，它会返回非零退出码。你可以先缩小任务，而不是
+一开始就读取大量文件。
 
 如果命令提示缺少文件或占位符，但你看不懂原因：
 
 ```powershell
-python scripts\workspace_cli.py failure check skill_metadata_update
+workspace failure check skill_metadata_update
 ```
 
 它会把结果分为：
@@ -165,7 +196,7 @@ python scripts\workspace_cli.py failure check skill_metadata_update
 检查可选资源：
 
 ```powershell
-python scripts\workspace_cli.py failure check skill_metadata_update `
+workspace failure check skill_metadata_update `
   --bind target-skill=packages/character-system/engineering/generation/character-generator `
   --include-optional
 ```
@@ -173,26 +204,38 @@ python scripts\workspace_cli.py failure check skill_metadata_update `
 ### 4. 找不到知识入口时再搜索
 
 ```powershell
-python scripts\workspace_cli.py knowledge find "skill 开发"
-python scripts\workspace_cli.py knowledge find "错误处理"
-python scripts\workspace_cli.py knowledge find "报告刷新"
+workspace knowledge find "skill 开发"
+workspace knowledge find "错误处理"
+workspace knowledge find "报告刷新"
 ```
 
 它只搜索知识注册表，不会遍历整个 workspace。返回结果中的文件才是建议阅读入口。
 
-### 5. 多种修改方案难以选择时再规划
+### 5. 已知路径、主题或机制时先解释
+
+```powershell
+workspace explain path scripts/workspace_cli.py
+workspace explain topic "developer interface"
+workspace explain mechanism task-routing
+```
+
+`explain path` 会从 manifest、task registry、knowledge registry 和常见测试命名
+推导该路径的层级、相关任务、相关知识主题和可能的测试。它是只读解释入口，
+不是自动修改器。
+
+### 6. 多种修改方案难以选择时再规划
 
 自动分析任务的可写层：
 
 ```powershell
-python scripts\workspace_cli.py changes plan developer_interface_tooling `
+workspace changes plan developer_interface_tooling `
   --intent tooling
 ```
 
 比较两套具体方案：
 
 ```powershell
-python scripts\workspace_cli.py changes plan developer_interface_tooling `
+workspace changes plan developer_interface_tooling `
   --intent tooling `
   --option "implementation=scripts/workspace_cli.py,scripts/tests/test_workspace_cli.py" `
   --option "docs-only=README.md"
@@ -263,11 +306,11 @@ change. A broad task route cannot override a denied Agent or Skill boundary.
 
 规划结果只是调查起点，不代表必须修改列出的所有文件。
 
-### 6. 修改完成后检查
+### 7. 修改完成后检查
 
 ```powershell
-python scripts\workspace_cli.py reports status --strict
-python scripts\workspace_cli.py validate links
+workspace reports status --strict
+workspace validate links
 ```
 
 再运行任务解析结果中列出的测试或验证命令。
@@ -291,6 +334,7 @@ python scripts\workspace_cli.py validate links
 | `launcher install/status/uninstall` | 管理 `workspace` 短命令 | install/uninstall 会修改用户 bin |
 | `failure check` | 解释任务缺少什么以及能否继续 | 否 |
 | `knowledge list/find/validate` | 查找并验证知识入口 | 否 |
+| `explain path/topic/mechanism` | 解释路径、知识主题或 workspace 机制的关联 | 否 |
 | `changes plan` | 比较候选修改面 | 否 |
 | `reports status` | 检查报告是否过期 | 否 |
 | `reports refresh` | 重新生成指定报告 | 是 |
@@ -303,7 +347,7 @@ python scripts\workspace_cli.py validate links
 先创建一个尚未登记的源码骨架：
 
 ```powershell
-python scripts\workspace_cli.py skill init example-skill `
+workspace skill init example-skill `
   --source-path skills/example-skill `
   --description "Use when handling example tasks."
 ```
@@ -316,32 +360,32 @@ python scripts\workspace_cli.py skill init example-skill `
 projection。然后验证：
 
 ```powershell
-python scripts\workspace_cli.py skill validate example-skill
+workspace skill validate example-skill
 ```
 
 也可以直接验证 manifest 中登记的源码路径：
 
 ```powershell
-python scripts\workspace_cli.py skill validate skills/example-skill
+workspace skill validate skills/example-skill
 ```
 
 查看当前所有 skill：
 
 ```powershell
-python scripts\workspace_cli.py skill list
-python scripts\workspace_cli.py skill list --platform codex --format json
+workspace skill list
+workspace skill list --platform codex --format json
 ```
 
 平台暴露默认只预览：
 
 ```powershell
-python scripts\workspace_cli.py skill expose example-skill --platform codex
+workspace skill expose example-skill --platform codex
 ```
 
 确认输出中的 source 和 link path 后，才显式执行：
 
 ```powershell
-python scripts\workspace_cli.py skill expose example-skill --platform codex --apply
+workspace skill expose example-skill --platform codex --apply
 ```
 
 `skill expose` 只使用 manifest 已登记的 projection。遇到现有真实目录、
@@ -352,14 +396,14 @@ python scripts\workspace_cli.py skill expose example-skill --platform codex --ap
 查看 prompt：
 
 ```powershell
-python scripts\workspace_cli.py prompt list
-python scripts\workspace_cli.py prompt show minimal_edit
+workspace prompt list
+workspace prompt show minimal_edit
 ```
 
 需要完整模板内容时：
 
 ```powershell
-python scripts\workspace_cli.py prompt show zyc_natural_discussion `
+workspace prompt show zyc_natural_discussion `
   --include-template
 ```
 
@@ -370,21 +414,21 @@ Prompt 注册表主要减少重复编写复杂元提示词。它不会自动把 
 只查看，不修改：
 
 ```powershell
-python scripts\workspace_cli.py reports status
+workspace reports status
 ```
 
 明确刷新，报告文件会变化：
 
 ```powershell
-python scripts\workspace_cli.py reports refresh manifest-validation
-python scripts\workspace_cli.py reports refresh protocol-validation
-python scripts\workspace_cli.py reports refresh workspace
+workspace reports refresh manifest-validation
+workspace reports refresh protocol-validation
+workspace reports refresh workspace
 ```
 
 批量刷新当前报告：
 
 ```powershell
-python scripts\workspace_cli.py reports refresh all-current
+workspace reports refresh all-current
 ```
 
 不要为了让报告看起来正确而手工修改报告结论。应修改事实来源，再运行对应生成器。
@@ -394,24 +438,24 @@ python scripts\workspace_cli.py reports refresh all-current
 查看总帮助：
 
 ```powershell
-python scripts\workspace_cli.py --help
+workspace --help
 ```
 
 查看某一组命令：
 
 ```powershell
-python scripts\workspace_cli.py task --help
-python scripts\workspace_cli.py knowledge --help
-python scripts\workspace_cli.py changes --help
-python scripts\workspace_cli.py reports --help
+workspace task --help
+workspace knowledge --help
+workspace changes --help
+workspace reports --help
 ```
 
 继续查看具体命令：
 
 ```powershell
-python scripts\workspace_cli.py task resolve --help
-python scripts\workspace_cli.py knowledge find --help
-python scripts\workspace_cli.py reports refresh --help
+workspace task resolve --help
+workspace knowledge find --help
+workspace reports refresh --help
 ```
 
 ## 文本输出和 JSON 输出
@@ -421,7 +465,7 @@ python scripts\workspace_cli.py reports refresh --help
 当你希望把结果交给脚本、agent 或其他工具处理时：
 
 ```powershell
-python scripts\workspace_cli.py knowledge find "工程现状" --format json
+workspace knowledge find "工程现状" --format json
 ```
 
 通常的退出码：
@@ -460,6 +504,8 @@ python scripts\workspace_cli.py knowledge find "工程现状" --format json
 不知道任务类型：task list
 知道任务类型：task resolve
 不知道读什么：knowledge find
+知道路径但不知道作用：explain path
+知道机制名但不知道链路：explain mechanism
 不知道改哪里：changes plan
 不知道报告是否可信：reports status
 不知道 skill 链接是否正常：validate links

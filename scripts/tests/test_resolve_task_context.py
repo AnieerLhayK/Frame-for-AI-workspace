@@ -5,6 +5,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 import yaml
@@ -15,6 +17,7 @@ from scripts.resolve_task_context import (
     extract_markdown_section,
     expand_placeholders,
     parse_bindings,
+    print_task_list,
     resolve_prompt,
     resolve_task,
 )
@@ -126,6 +129,21 @@ class ResolverTests(unittest.TestCase):
             parse_bindings(["target=src", "target=other"]),
             {"target": ["src", "other"]},
         )
+
+    def test_task_list_text_is_grouped_table(self) -> None:
+        registry = yaml.safe_load(
+            (self.root / "PROJECT_CONTEXT" / "task_registry.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+        output = StringIO()
+        with redirect_stdout(output):
+            print_task_list(registry, "text")
+        text = output.getvalue()
+        self.assertIn("Registered workspace tasks", text)
+        self.assertIn("Task id", text)
+        self.assertIn("Other", text)
+        self.assertIn("demo", text)
 
     def test_placeholder_expansion_and_unresolved(self) -> None:
         expanded, unresolved = expand_placeholders("<target>/SKILL.md", {"target": ["a", "b"]})

@@ -30,6 +30,7 @@ reports/legacy_git_metadata/
 # still be tracked explicitly through CLAUDE.md and .claude/settings.json.
 .claude/*.local.json
 .claude/*.local.md
+.claude/routing_events.ndjson
 # Manifest-managed project skill projections. Source lives under skills/ or packages/.
 .claude/skills/
 

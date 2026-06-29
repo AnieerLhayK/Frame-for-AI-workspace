@@ -139,12 +139,53 @@ function Get-ProjectionStatus {
   }
 }
 
+function Get-ObjectValue {
+  param(
+    [Parameter(Mandatory = $true)]$InputObject,
+    [Parameter(Mandatory = $true)][string]$Name
+  )
+
+  $property = $InputObject.PSObject.Properties[$Name]
+  if ($null -eq $property -or $null -eq $property.Value) {
+    return ""
+  }
+
+  return [string]$property.Value
+}
+
+function Write-ProjectionResults {
+  param([Parameter(Mandatory = $true)][object[]]$Rows)
+
+  $count = @($Rows).Count
+  $index = 0
+  foreach ($row in $Rows) {
+    $index += 1
+    $linkType = Get-ObjectValue -InputObject $row -Name "LinkType"
+    $line = "[$index/$count] $($row.Name) - $($row.Status)"
+    if (-not [string]::IsNullOrWhiteSpace($linkType)) {
+      $line = "$line ($linkType)"
+    }
+
+    Write-Output $line
+    Write-Output "  LinkPath: $($row.LinkPath)"
+    Write-Output "  ExpectedTarget: $($row.ExpectedTarget)"
+
+    $actualTarget = Get-ObjectValue -InputObject $row -Name "ActualTarget"
+    if (-not [string]::IsNullOrWhiteSpace($actualTarget)) {
+      Write-Output "  ActualTarget: $actualTarget"
+    }
+
+    Write-Output "  TargetExists: $($row.TargetExists)"
+    Write-Output ""
+  }
+}
+
 $ManifestPath = Resolve-ManifestPath -RequestedPath $ManifestPath
 $manifest = Read-WorkspaceManifest -Path $ManifestPath
 $workspaceRoot = [string]$manifest.workspace.source_of_truth
 $results = $manifest.projections | ForEach-Object { Get-ProjectionStatus -Projection $_ -WorkspaceRoot $workspaceRoot }
 
-$results | Format-Table -AutoSize
+Write-ProjectionResults -Rows @($results)
 
 $sharedExpected = Get-NormalizedPath (Resolve-WorkspacePath -WorkspaceRoot $workspaceRoot -Path ([string]$manifest.shared.source_path))
 $sharedProjectionResults = $results | Where-Object { $_.ExpectedTarget -and ((Get-NormalizedPath $_.ExpectedTarget) -eq $sharedExpected) }

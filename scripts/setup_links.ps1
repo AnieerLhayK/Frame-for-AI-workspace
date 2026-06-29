@@ -126,6 +126,46 @@ function Remove-WorkspaceLink {
   throw "Refusing to remove non-link item: $LinkPath"
 }
 
+function Get-ObjectValue {
+  param(
+    [Parameter(Mandatory = $true)]$InputObject,
+    [Parameter(Mandatory = $true)][string]$Name
+  )
+
+  $property = $InputObject.PSObject.Properties[$Name]
+  if ($null -eq $property -or $null -eq $property.Value) {
+    return ""
+  }
+
+  return [string]$property.Value
+}
+
+function Write-ProjectionResults {
+  param([Parameter(Mandatory = $true)][object[]]$Rows)
+
+  $count = @($Rows).Count
+  $index = 0
+  foreach ($row in $Rows) {
+    $index += 1
+    $linkType = Get-ObjectValue -InputObject $row -Name "LinkType"
+    $line = "[$index/$count] $($row.Name) - $($row.Status)"
+    if (-not [string]::IsNullOrWhiteSpace($linkType)) {
+      $line = "$line ($linkType)"
+    }
+
+    Write-Output $line
+    Write-Output "  LinkPath: $($row.LinkPath)"
+    Write-Output "  Target: $($row.Target)"
+
+    $note = Get-ObjectValue -InputObject $row -Name "Note"
+    if (-not [string]::IsNullOrWhiteSpace($note)) {
+      Write-Output "  Note: $note"
+    }
+
+    Write-Output ""
+  }
+}
+
 $ManifestPath = Resolve-ManifestPath -RequestedPath $ManifestPath
 $manifest = Read-WorkspaceManifest -Path $ManifestPath
 $workspaceRoot = [string]$manifest.workspace.source_of_truth
@@ -204,7 +244,7 @@ $results = foreach ($projection in $manifest.projections) {
   }
 }
 
-$results | Format-Table -AutoSize
+Write-ProjectionResults -Rows @($results)
 
 if ($results.Status -contains "BLOCKED_REAL_ITEM" -or $results.Status -contains "MISSING_TARGET") {
   exit 1
