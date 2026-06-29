@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import unittest
@@ -364,6 +365,8 @@ class WorkspaceCliTests(unittest.TestCase):
         self.assertNotIn("--query", command)
 
     def test_validate_links_prints_long_paths_on_separate_lines(self) -> None:
+        if not (shutil.which("powershell.exe") or shutil.which("pwsh")):
+            self.skipTest("PowerShell is required for workspace validate links integration output.")
         result = self.run_cli("validate", "links")
         self.assertIn(result.returncode, (0, 1), result.stderr)
         self.assertIn("\n  LinkPath: ", result.stdout)

@@ -46,6 +46,38 @@ Do not add entries for every command, read, or tiny edit. The entry should captu
 
 ## Recent Entries
 
+### TASK-20260629-002 - Fix public CI validate-links test gating
+
+- Date: 2026-06-29
+- Status: implemented
+- Task type: skill_release_packaging
+- Branch: main
+- Commit: pending
+- Read:
+  - GitHub Actions failure log for `Frame-for-AI-workspace` run 28374155583
+  - scripts/ci_run.py
+  - scripts/tests/test_workspace_cli.py
+  - scripts/publish_public.py and publish staging output
+- Modified:
+  - `scripts/tests/test_workspace_cli.py` now skips the live
+    `workspace validate links` output integration assertion when neither
+    `powershell.exe` nor `pwsh` is available.
+- Decision:
+  - Keep the static no-`Format-Table` regression test as a cross-platform core
+    test.
+  - Treat the live PowerShell link-check rendering assertion as a
+    PowerShell-capable environment test, not a public Ubuntu CI requirement.
+- Validation:
+  - `python -m unittest scripts.tests.test_workspace_cli` passed.
+  - `python -m unittest scripts.tests.test_publish_public` passed.
+  - `python scripts/publish_public.py --out-dir ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-ci-fix --repo-name Frame-for-AI-workspace` passed.
+  - `python scripts/publish_check.py --dir ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-ci-fix` passed.
+  - `python ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-ci-fix\scripts\ci_run.py` returned PASS with 0 core failures and only expected infra-dependent failures.
+  - `git diff --check` passed.
+- Next:
+  - Commit and sync `Frame-for-AI-workspace` remote, then confirm the GitHub
+    Actions `python-quality` run passes.
+
 ### TASK-20260629-001 - Add public workspace beginner setup and remote-only sync rule
 
 - Date: 2026-06-29
