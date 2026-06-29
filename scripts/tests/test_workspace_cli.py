@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.workspace_cli import WORKSPACE_ROOT, build_parser, dispatch
+from scripts.workspace_cli import WORKSPACE_ROOT, build_parser, dispatch, powershell_executable
 
 
 CLI = WORKSPACE_ROOT / "scripts" / "workspace_cli.py"
@@ -378,6 +378,21 @@ class WorkspaceCliTests(unittest.TestCase):
         for relative_path in ("scripts/check_links.ps1", "scripts/setup_links.ps1"):
             text = (WORKSPACE_ROOT / relative_path).read_text(encoding="utf-8-sig")
             self.assertNotIn("Format-Table", text)
+
+    def test_powershell_executable_prefers_available_pwsh_fallback(self) -> None:
+        with patch("scripts.workspace_cli.shutil.which") as which:
+            which.side_effect = lambda name: "pwsh" if name == "pwsh" else None
+            self.assertEqual(powershell_executable(), "pwsh")
+
+    def test_validate_links_uses_resolved_powershell_executable(self) -> None:
+        args = build_parser().parse_args(["validate", "links"])
+        with (
+            patch("scripts.workspace_cli.powershell_executable", return_value="pwsh"),
+            patch("scripts.workspace_cli.run_command", return_value=0) as run,
+        ):
+            self.assertEqual(dispatch(args), 0)
+        command = run.call_args.args[0]
+        self.assertEqual(command[0], "pwsh")
 
     def test_explain_path_delegates_to_explain_tool(self) -> None:
         args = build_parser().parse_args(

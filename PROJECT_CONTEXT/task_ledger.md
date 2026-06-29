@@ -59,14 +59,18 @@ Do not add entries for every command, read, or tiny edit. The entry should captu
   - scripts/tests/test_workspace_cli.py
   - scripts/publish_public.py and publish staging output
 - Modified:
+  - `scripts/workspace_cli.py` now resolves PowerShell as `powershell.exe`,
+    then `pwsh`, then a final `powershell.exe` fallback for `validate links`
+    and workspace report refresh commands.
   - `scripts/tests/test_workspace_cli.py` now skips the live
-    `workspace validate links` output integration assertion when neither
-    `powershell.exe` nor `pwsh` is available.
+    `workspace validate links` output integration assertion only when neither
+    `powershell.exe` nor `pwsh` is available, and covers the `pwsh` fallback.
 - Decision:
   - Keep the static no-`Format-Table` regression test as a cross-platform core
     test.
   - Treat the live PowerShell link-check rendering assertion as a
-    PowerShell-capable environment test, not a public Ubuntu CI requirement.
+    PowerShell-capable environment test, and make the CLI use `pwsh` on
+    non-Windows runners where that is the available PowerShell executable.
 - Validation:
   - `python -m unittest scripts.tests.test_workspace_cli` passed.
   - `python -m unittest scripts.tests.test_publish_public` passed.
@@ -75,8 +79,8 @@ Do not add entries for every command, read, or tiny edit. The entry should captu
   - `python ${DATA_ROOT}/codex\cache\staging\frame-ai-workspace-ci-fix\scripts\ci_run.py` returned PASS with 0 core failures and only expected infra-dependent failures.
   - `git diff --check` passed.
 - Next:
-  - Commit and sync `Frame-for-AI-workspace` remote, then confirm the GitHub
-    Actions `python-quality` run passes.
+  - Commit and sync `Frame-for-AI-workspace` remote again, then confirm the
+    GitHub Actions `python-quality` run passes.
 
 ### TASK-20260629-001 - Add public workspace beginner setup and remote-only sync rule
 

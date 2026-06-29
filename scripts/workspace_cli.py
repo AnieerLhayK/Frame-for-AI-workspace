@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +14,10 @@ SCRIPTS_DIR = WORKSPACE_ROOT / "scripts"
 
 def run_command(command: Sequence[str]) -> int:
     return subprocess.run(list(command), cwd=WORKSPACE_ROOT, check=False).returncode
+
+
+def powershell_executable() -> str:
+    return shutil.which("powershell.exe") or shutil.which("pwsh") or "powershell.exe"
 
 
 def resolver_command(args: argparse.Namespace, *, strict_budget: bool = False) -> list[str]:
@@ -544,7 +549,7 @@ def dispatch(args: argparse.Namespace) -> int:
         if args.target == "protocols":
             return run_command([sys.executable, str(SCRIPTS_DIR / "validate_protocols.py")])
         command = [
-            "powershell.exe",
+            powershell_executable(),
             "-NoProfile",
             "-ExecutionPolicy",
             "Bypass",
@@ -645,7 +650,7 @@ def dispatch(args: argparse.Namespace) -> int:
                 str(SCRIPTS_DIR / "validate_protocols.py"),
             ],
             "workspace": [
-                "powershell.exe",
+                powershell_executable(),
                 "-NoProfile",
                 "-ExecutionPolicy",
                 "Bypass",
