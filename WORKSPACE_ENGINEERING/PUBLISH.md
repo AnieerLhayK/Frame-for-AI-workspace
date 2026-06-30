@@ -19,6 +19,17 @@
 `AI_TOOL_STAGING_DIR` 下的 `Frame-for-AI-workspace`，再退回系统临时目录。不要把
 staging 当作源代码维护面。
 
+**强规则：维护 `Frame-for-AI-workspace` 时，不得把它部署为长期本地仓库。**
+
+- 长期事实来源是 GitHub 远端和本 workspace 中的生成规则。
+- 本地只允许出现一次性 clone/staging，用于生成、验证、提交和推送。
+- 同步工作完成后，应立即清除一次性 clone/staging；不得继续在该目录里修补、调试或
+  积累未提交状态。
+- 如果需要排查同步失败，可以临时保留 staging，但它仍然不是维护副本；排查结束后必须
+  删除，后续改动回到本 workspace 的原件中完成。
+- 不要在 `${WORKSPACE_ROOT}`、`${WORKSPACE_ROOT}\projects` 或其他长期源码目录下 clone
+  `Frame-for-AI-workspace` 作为本地部署。
+
 ## 首次发布
 
 首次发布已通过以下流程完成：
@@ -49,6 +60,9 @@ python scripts/sync_public_repo.py
 
 # 推送模式 —— 生成 + 验证 + 提交 + 推送
 python scripts/sync_public_repo.py --push
+
+# 临时保留 staging 只用于排查失败；排查后必须删除
+python scripts/sync_public_repo.py --push --keep-staging
 
 # 跳过测试（更快）
 python scripts/sync_public_repo.py --push --skip-tests

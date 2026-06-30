@@ -132,6 +132,10 @@ default_rules:
     - "archive*/"
     - "archives/"
     - "backups/"
+    - "external-skills/"
+    - "mcp/servers/"
+    - "mcp/downloads/"
+    - "mcp/logs/"
   context_budget:
     policy_file: "PROJECT_CONTEXT/context_budget.md"
     initial_level: "resolver_required"

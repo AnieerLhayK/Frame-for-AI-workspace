@@ -84,6 +84,9 @@ Do not read these by default:
 - older `PROJECT_CONTEXT/task_ledger.md` entries beyond the latest 5
 - platform data roots such as `${DATA_ROOT}/`
 - tool install roots such as `${WORKSPACE_ROOT}/tools/`
+- gitignored external skill drops such as `external-skills/`
+- gitignored local MCP payloads such as `mcp/servers/`, `mcp/downloads/`, and
+  `mcp/logs/`
 
 Read them only when the task registry or user explicitly requires them.
 
@@ -97,6 +100,8 @@ Do not read, move, delete, or traverse these without explicit task-specific appr
 - private raw corpus material;
 - `.git/` internals;
 - platform loading surfaces as editable source;
+- gitignored external skill drops and MCP payload directories during ordinary
+  workspace maintenance;
 - whole-drive searches;
 - unbounded parent traversal;
 - junction targets reached through deletion or migration commands.

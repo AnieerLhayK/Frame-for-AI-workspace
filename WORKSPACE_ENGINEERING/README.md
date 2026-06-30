@@ -60,7 +60,8 @@ implementing or deploying anything.
 ### Evidence
 
 - `case_studies/`: real incidents and completed changes.
-- `experiments/`: bounded hypotheses and results.
+- `experiments/`: bounded hypotheses and results; currently dormant until a
+  real experiment is opened.
 - `templates/`: reusable authoring structures.
 - `reports/`: snapshots about this knowledge layer.
 
@@ -75,6 +76,21 @@ Add an entry only when a completed task produces at least one of:
 5. A material change in long-term risk or architecture.
 
 Ordinary task status stays in `PROJECT_CONTEXT/task_ledger.md`.
+
+## Completion Writeback Check
+
+At the end of a workspace maintenance task, the agent should make a short
+knowledge writeback decision:
+
+- **Write back** when the task produced a reusable method, anti-pattern,
+  incident, migration lesson, experiment result, or architecture tradeoff.
+- **Record no writeback** when the task only changed local state, applied an
+  existing rule, refreshed reports, or fixed a narrow defect without a reusable
+  lesson.
+
+Use the smallest durable home. Add operational continuity to
+`PROJECT_CONTEXT/task_ledger.md`, reusable methodology to this directory, and
+enforceable rules to `shared/` only when a policy contract actually changes.
 
 ## Evidence Levels
 

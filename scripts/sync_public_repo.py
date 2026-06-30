@@ -16,13 +16,17 @@ Workflow:
 Use this script to keep the public skeleton in sync with the private workspace
 after safe changes (protocol files, scripts, boundary configs). The public
 repository is maintained as a remote-only durable artifact; any local clone made
-by this script is a disposable staging checkout.
+by this script is a disposable staging checkout. By default, the script removes
+its managed staging checkout after a successful run so the public repository
+does not become a long-lived local deployment.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -42,6 +46,37 @@ REMOTE_URL = os.environ.get(
     "PUBLIC_REPO_URL",
     "git@github.com:AnieerLhayK/Frame-for-AI-workspace.git",
 )
+
+
+def _is_managed_staging_path(staging_path: Path) -> bool:
+    """Return True only for the script-managed disposable staging checkout."""
+    try:
+        staging_path.resolve().relative_to(DEFAULT_STAGING_ROOT.resolve())
+    except ValueError:
+        return False
+    return staging_path.name == "Frame-for-AI-workspace"
+
+
+def cleanup_staging(staging: str, keep_staging: bool = False) -> None:
+    """Remove the script-managed staging checkout after successful work."""
+    staging_path = Path(staging).resolve()
+    if keep_staging:
+        print("[WARN] Keeping staging checkout for temporary debugging only.")
+        print("       Delete it after inspection; it is not a maintained local repo.")
+        return
+    if not staging_path.exists():
+        return
+    if not _is_managed_staging_path(staging_path):
+        print("[WARN] Custom staging path was not removed automatically:")
+        print(f"       {staging_path}")
+        print("       Remove it manually after use; do not maintain it as a local repo.")
+        return
+    def remove_readonly(function, path, _exc_info):
+        os.chmod(path, stat.S_IWRITE)
+        function(path)
+
+    shutil.rmtree(staging_path, onerror=remove_readonly)
+    print(f"[OK] Removed disposable staging checkout: {staging_path}")
 
 
 def check_workspace_clean() -> bool:
@@ -234,6 +269,13 @@ def main() -> int:
         "--force-dirty", action="store_true",
         help="Allow sync even with uncommitted workspace changes.",
     )
+    parser.add_argument(
+        "--keep-staging", action="store_true",
+        help=(
+            "Temporarily keep the staging checkout for debugging. This is not "
+            "a local deployment and must be deleted after inspection."
+        ),
+    )
     args = parser.parse_args()
 
     print("=" * 54)
@@ -286,6 +328,7 @@ def main() -> int:
         print("  [DRY-RUN] Use --push to actually push to remote.")
         print(f"  Staging dir: {args.staging_dir}")
         print(f"  Remote:      {REMOTE_NAME} {REMOTE_BRANCH}")
+    cleanup_staging(args.staging_dir, keep_staging=args.keep_staging)
     print()
 
     print("Done.")

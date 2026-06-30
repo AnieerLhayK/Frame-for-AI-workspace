@@ -22,6 +22,40 @@ policies rather than being repeated as tasks here.
   Confirm caller identity, Session boundary, cache location, and whether the
   client can honor an exact `reports/agent-experiments/cursor/` scope.
 
+## P1: Prompt Library Module Follow-Ups
+
+- The foundation branch `codex/prompt-library-foundation` has been merged back
+  to `main`; use focused short-lived branches for future prompt families unless
+  a larger rebuild explicitly needs a long-running branch.
+- Treat `USAGE_GUIDES/PROMPT_LIBRARY.md` as the user-facing entry point for the
+  prompt library module.
+- Keep `USAGE_GUIDES/prompt_registry.yaml` as the machine-readable prompt id
+  index, and keep full copy-ready prompt bodies under
+  `USAGE_GUIDES/PROMPT_TEMPLATES/`.
+- Build the library in small phases:
+  1. done: add first workspace-maintenance templates for health remediation,
+     scoped change planning, task handoff continuation, and branch merge review;
+  2. next: add report-refresh, skill-release, platform-exposure, and
+     model-routing prompt families only where repeated work justifies them;
+  3. next: add lightweight validation for missing template paths and duplicate
+     prompt ids if registry growth makes manual review brittle;
+  4. later: add search only after enough entries exist to justify it.
+- Do not make the prompt library a permission system. Prompt reuse must not
+  bypass task routing, write scope, model-routing boundaries, or Git checks.
+
+## P1: Workspace Structure Optimization Follow-Ups
+
+- Treat ignored `external-skills/` content as external tool/source drops, not
+  workspace maintenance input. Do not inspect or clean it unless a task
+  explicitly names that path or uses that external skill as a tool.
+- Treat `.agents/` as an empty runtime-reserved directory for now. Add a tracked
+  README only if an agent-state workflow starts using it as source context.
+- Treat ignored `mcp/servers/`, `mcp/downloads/`, and `mcp/logs/` content as
+  local MCP payload/runtime state. Do not inspect or clean it during ordinary
+  workspace optimization; deletion remains explicit cleanup work.
+- Revisit character reference sharing only after at least two runtime
+  characters show the same reference structure and maintenance pain.
+
 ## Governance Observation Window
 
 - Observe the risk verifier and daily workflow across 5 to 10 real maintenance

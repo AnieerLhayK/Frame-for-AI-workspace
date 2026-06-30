@@ -8,10 +8,11 @@ Use this folder when you want to run a skill, copy a safe prompt template, under
 
 1. Open `START_HERE.md`.
 2. Open `QUICK_START/workspace_cli.md` when maintaining or developing the workspace.
-3. Check `prompt_registry.yaml` when you need a reusable prompt id or task-specific prompt frame.
-4. Copy a prompt from `PROMPT_TEMPLATES/`.
-5. Check `QUICK_START/` if you are unsure which platform to use.
-6. Open `REFERENCE/README.md` when you need detailed role or workflow guidance.
+3. Open `PROMPT_LIBRARY.md` when you need the prompt library entry point.
+4. Check `prompt_registry.yaml` when you need a reusable prompt id or task-specific prompt frame.
+5. Copy a prompt from `PROMPT_TEMPLATES/`.
+6. Check `QUICK_START/` if you are unsure which platform to use.
+7. Open `REFERENCE/README.md` when you need detailed role or workflow guidance.
 
 ## What This Is
 
@@ -32,6 +33,7 @@ Use this folder when you want to run a skill, copy a safe prompt template, under
 ## Main Entry Points
 
 - `PROMPT_TEMPLATES/`: copy-ready prompts.
+- `PROMPT_LIBRARY.md`: prompt library purpose, commands, maturity, and build plan.
 - `prompt_registry.yaml`: prompt id registry for task routing, reusable meta-prompts, and template lookup.
 - `QUICK_START/`: short platform usage notes.
 - `QUICK_START/workspace_cli.md`: beginner guide for the unified maintenance CLI.
@@ -41,3 +43,15 @@ Use this folder when you want to run a skill, copy a safe prompt template, under
 - `REFERENCE/workflows/`: end-to-end workflows that cross multiple roles.
 - `REFERENCE/platforms/`: platform-specific loading and safety notes.
 - `SAFETY.md`: compact guardrails for avoiding common misuse.
+
+## Reference And Template Split
+
+`REFERENCE/` and `PROMPT_TEMPLATES/` may cover the same skill or workflow, but
+they are not duplicate sources:
+
+- Use `REFERENCE/` for explanation, role boundaries, and when-to-use guidance.
+- Use `PROMPT_TEMPLATES/` for text that can be copied into an AI session.
+
+When both layers need the same safety rule, keep the full operational wording in
+the prompt template and point the reference guide to the template instead of
+repeating long prompt text.

@@ -41,10 +41,196 @@ Do not add entries for every command, read, or tiny edit. The entry should captu
 - Modified:
 - Decision:
 - Validation:
+- Knowledge writeback:
 - Next:
 ```
 
 ## Recent Entries
+
+### TASK-20260630-003 - Bound remote-only public repo and ignored payload maintenance
+
+- Date: 2026-06-30
+- Status: implemented
+- Task type: skill_release_packaging, startup_context_optimization, task_registry_update, project_memory_maintenance
+- Branch: main
+- Commit: pending
+- Modified:
+  - AGENTS.md
+  - PROJECT_CONTEXT/context_budget.md
+  - PROJECT_CONTEXT/task_registry.yaml
+  - PROJECT_CONTEXT/todo.md
+  - PROJECT_CONTEXT/task_ledger.md
+  - WORKSPACE_ENGINEERING/PUBLISH.md
+  - scripts/sync_public_repo.py
+  - scripts/tests/test_publish_public.py
+- Decision:
+  - Keep `Frame-for-AI-workspace` remote-only as the durable public repository.
+    Local staging is disposable and should be removed after successful sync.
+  - Treat gitignored `external-skills/`, `mcp/servers/`, `mcp/downloads/`,
+    and `mcp/logs/` as outside ordinary workspace maintenance. Access them
+    only for explicit path tasks or when using that payload as a tool.
+  - Add a regression check for cleanup of the managed public staging checkout.
+- Validation:
+  - `python -m unittest scripts.tests.test_publish_public` passed.
+  - `python -m unittest scripts.tests.test_resolve_task_context scripts.tests.test_startup_context_policy` passed.
+  - `python scripts/workspace_cli.py changes verify startup_context_optimization --agent codex --strict` passed after isolating the startup-boundary file set.
+  - `python scripts/workspace_cli.py workflow check startup_context_optimization` passed.
+  - `python scripts/resolve_task_context.py platform_exposure --format json` passed.
+  - `python scripts/resolve_task_context.py skill_metadata_update --bind target-skill=packages/character-system/engineering/generation/character-generator --format json` passed.
+  - `python scripts/workspace_cli.py changes verify skill_release_packaging --agent codex --strict` passed.
+  - `python scripts/workspace_cli.py workflow check skill_release_packaging` passed.
+  - `git diff --check` passed.
+- Knowledge writeback:
+  - Not applicable; this is an enforceable workspace boundary and release-sync
+    rule update, recorded here and in source policy files.
+
+### TASK-20260630-002 - Merge prompt library foundation into main
+
+- Date: 2026-06-30
+- Status: implemented
+- Task type: prompt_usage_update, project_memory_maintenance
+- Branch: main
+- Commit: pending
+- Modified:
+  - PROJECT_CONTEXT/todo.md
+  - PROJECT_CONTEXT/task_ledger.md
+- Decision:
+  - Fast-forward merge `codex/prompt-library-foundation` into `main` after the
+    prompt registry, templates, and workflow checks passed.
+  - Delete the merged local branch; no remote prompt-library branch existed.
+  - Treat future prompt-library work as focused follow-up branches unless a
+    larger rebuild explicitly needs a long-running branch.
+- Validation:
+  - `workspace workflow check prompt_usage_update` passed on `main`.
+  - `workspace prompt list` showed the workspace-maintenance prompt ids.
+  - `git diff --check` passed before merge and before this memory update.
+- Knowledge writeback:
+  - Not applicable; this records branch lifecycle and next maintenance posture.
+
+### TASK-20260630-001 - Add workspace maintenance prompt templates
+
+- Date: 2026-06-30
+- Status: implemented
+- Task type: prompt_usage_update, project_memory_maintenance
+- Branch: codex/prompt-library-foundation, merged to main
+- Commit: 41787ba, a5ee8a5
+- Modified:
+  - USAGE_GUIDES/PROMPT_LIBRARY.md
+  - USAGE_GUIDES/PROMPT_TEMPLATES/README.md
+  - USAGE_GUIDES/prompt_registry.yaml
+  - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/branch-merge-review.md
+  - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/scoped-change-planning.md
+  - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/task-handoff-continuation.md
+  - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/workspace-health-remediation.md
+  - PROJECT_CONTEXT/todo.md
+  - PROJECT_CONTEXT/task_ledger.md
+- Decision:
+  - Build prompt library coverage first around repeated workspace maintenance
+    work rather than broad search or a new runtime service.
+  - Add the first prompt family for health remediation, scoped change planning,
+    handoff continuation, and branch merge review.
+  - Keep each prompt advisory: it does not grant write scope, model access,
+    tool access, or permission to bypass Git checks.
+- Validation:
+  - `workspace prompt list` showed the new prompt ids.
+  - `workspace prompt show <prompt-id> --include-template` resolved all four
+    new workspace-maintenance templates.
+  - `python -m unittest scripts.tests.test_resolve_task_context` passed.
+  - `workspace workflow check prompt_usage_update` passed.
+  - `git diff --check` passed.
+- Knowledge writeback:
+  - Not applicable; this expands user-facing prompt assets and records next
+    steps in project memory.
+- Next:
+  - Add more prompt families only after a repeated workflow demonstrates that a
+    reusable template would be shorter and safer than an ad hoc prompt.
+
+### TASK-20260629-004 - Optimize workspace structure governance
+
+- Date: 2026-06-29
+- Status: implemented
+- Task type: workspace_engineering_knowledge, prompt_usage_update, runtime_drift_fix, project_memory_maintenance
+- Branch: codex/workspace-structure-optimization
+- Commit: pending
+- Read:
+  - ${DATA_ROOT}/out/workspace\external-reports\workspace-structure-audit-v2.md
+  - AGENTS.md
+  - WORKSPACE_ENGINEERING/README.md
+  - WORKSPACE_ENGINEERING/experiments/README.md
+  - USAGE_GUIDES/README.md
+  - USAGE_GUIDES/REFERENCE/README.md
+  - USAGE_GUIDES/PROMPT_TEMPLATES/README.md
+  - USAGE_GUIDES/REFERENCE/platforms/opencode-safety.md
+  - packages/character-system/runtime/characters/zyc/README.md
+  - packages/character-system/engineering/generation/character-generator/characters/writerA/README.md
+- Modified:
+  - AGENTS.md
+  - PROJECT_CONTEXT/task_ledger.md
+  - PROJECT_CONTEXT/todo.md
+  - WORKSPACE_ENGINEERING/README.md
+  - WORKSPACE_ENGINEERING/experiments/README.md
+  - USAGE_GUIDES/README.md
+  - USAGE_GUIDES/REFERENCE/README.md
+  - USAGE_GUIDES/PROMPT_TEMPLATES/README.md
+  - USAGE_GUIDES/REFERENCE/platforms/opencode-safety.md
+  - packages/character-system/runtime/characters/zyc/references/LINEAGE.md
+- Decision:
+  - Accept the audit's broad priority ordering, but correct two assumptions:
+    ZYC runtime files are same-name divergent lineage files, not byte-identical
+    copies, and USAGE_GUIDES reference pages are explanatory while templates
+    are copy-ready operational text.
+  - Add a lightweight task-completion knowledge writeback check instead of a
+    new automation service.
+  - Mark `WORKSPACE_ENGINEERING/experiments/` as dormant until a real
+    experiment exists.
+  - Record ZYC runtime lineage instead of replacing runtime references with
+    symlinks or a shared pool.
+  - Document the tracked OpenCode plugin versus ignored local npm install state;
+    do not blanket-ignore `.opencode/`.
+- Validation:
+  - Scope and workflow checks passed for `workspace_engineering_knowledge`,
+    `prompt_usage_update`, `runtime_drift_fix`, and
+    `project_memory_maintenance` as applicable.
+  - Focused knowledge, prompt, resolver, and workspace CLI tests passed.
+  - `git diff --check` passed.
+- Knowledge writeback:
+  - Implemented: the reusable lesson is now captured as the completion
+    writeback check and the dormant experiments marker.
+- Next:
+  - Ask the user before deleting ignored external skills or MCP download zips.
+  - Revisit shared character reference pools only after another runtime
+    character creates repeated maintenance evidence.
+
+### TASK-20260629-003 - Start prompt library foundation branch
+
+- Date: 2026-06-29
+- Status: implemented
+- Task type: prompt_usage_update
+- Branch: codex/prompt-library-foundation, merged to main
+- Modified:
+  - USAGE_GUIDES/PROMPT_LIBRARY.md
+  - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.md
+  - USAGE_GUIDES/PROMPT_TEMPLATES/README.md
+  - USAGE_GUIDES/README.md
+  - USAGE_GUIDES/START_HERE.md
+  - USAGE_GUIDES/prompt_registry.yaml
+  - PROJECT_CONTEXT/todo.md
+  - PROJECT_CONTEXT/task_ledger.md
+- Decision:
+  - Use the existing prompt registry and prompt template folder as the prompt
+    library foundation instead of creating a parallel system.
+  - Keep `PROJECT_CONTEXT/todo.md` as the active engineering backlog for the
+    long-lived branch.
+  - Keep `PROJECT_CONTEXT/task_ledger.md` as the durable decision record.
+  - Do not let prompt reuse grant authority, write scope, model access, or
+    permission to bypass Git checks.
+- Knowledge writeback:
+  - Not applicable; this entry records the prompt library branch foundation
+    rather than a reusable workspace engineering lesson.
+- Next:
+  - Add workspace-maintenance copy-ready templates for repeated high-frequency
+    AI maintenance work.
+  - Add lightweight discovery only after enough prompt entries exist.
 
 ### TASK-20260629-002 - Fix public CI validate-links test gating
 

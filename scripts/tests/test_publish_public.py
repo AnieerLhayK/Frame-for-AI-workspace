@@ -1,5 +1,7 @@
 import tempfile
 import unittest
+import os
+import stat
 from pathlib import Path
 
 from scripts.publish_check import (
@@ -16,6 +18,7 @@ from scripts.publish_public import (
     generate_public_setup_py,
     scrub_content,
 )
+from scripts.sync_public_repo import cleanup_staging
 
 
 AI_ROOT = "D:" + r"\\AI"
@@ -120,6 +123,36 @@ class PublicPublishTests(unittest.TestCase):
 
             self.assertEqual(issues, [])
             self.assertFalse((root / ".claude" / "routing_events.ndjson").exists())
+
+    def test_public_sync_cleans_managed_staging_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            managed = Path(tmp) / "Frame-for-AI-workspace"
+            managed.mkdir()
+            marker = managed / "marker.txt"
+            marker.write_text("temporary", encoding="utf-8")
+            marker.chmod(stat.S_IREAD)
+
+            import scripts.sync_public_repo as sync_public_repo
+
+            original = sync_public_repo.DEFAULT_STAGING_ROOT
+            sync_public_repo.DEFAULT_STAGING_ROOT = Path(tmp)
+            try:
+                cleanup_staging(str(managed))
+            finally:
+                sync_public_repo.DEFAULT_STAGING_ROOT = original
+                if marker.exists():
+                    os.chmod(marker, stat.S_IWRITE)
+
+            self.assertFalse(managed.exists())
+
+    def test_public_sync_does_not_remove_custom_staging_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            custom = Path(tmp) / "custom-public-checkout"
+            custom.mkdir()
+
+            cleanup_staging(str(custom))
+
+            self.assertTrue(custom.exists())
 
 
 if __name__ == "__main__":

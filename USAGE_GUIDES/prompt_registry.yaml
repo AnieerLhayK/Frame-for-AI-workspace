@@ -205,6 +205,55 @@ prompts:
       - "Leave historical report snapshots intact unless explicitly regenerating them."
       - "Run a narrow path-duplication search and focused validation."
 
+  prompt_library_maintenance:
+    type: workflow_template
+    family: workspace_maintenance
+    tags:
+      - prompt-library
+      - governance
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.md"
+    purpose: "Extend the workspace prompt library without changing task authority or platform configuration."
+
+  workspace_health_remediation:
+    type: workflow_template
+    family: workspace_maintenance
+    tags:
+      - health
+      - reports
+      - validation
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/workspace-health-remediation.md"
+    purpose: "Diagnose and remediate workspace health failures without confusing reports, tests, and source owners."
+
+  scoped_change_planning:
+    type: workflow_template
+    family: workspace_maintenance
+    tags:
+      - scope
+      - planning
+      - validation
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/scoped-change-planning.md"
+    purpose: "Plan the smallest safe change surface when a maintenance request could touch multiple owning layers."
+
+  task_handoff_continuation:
+    type: workflow_template
+    family: workspace_maintenance
+    tags:
+      - handoff
+      - continuation
+      - git
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/task-handoff-continuation.md"
+    purpose: "Continue a prior workspace maintenance task from handoff notes while reconciling with current Git state."
+
+  branch_merge_review:
+    type: workflow_template
+    family: workspace_maintenance
+    tags:
+      - branch
+      - merge
+      - review
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/branch-merge-review.md"
+    purpose: "Review a workspace maintenance branch before merging it into main."
+
   character_generator:
     type: copy_ready_template
     platform: codex

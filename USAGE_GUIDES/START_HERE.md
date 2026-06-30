@@ -20,6 +20,19 @@ QUICK_START/workspace_cli.md
 It explains the unified task, prompt, knowledge, change-planning, report, and
 validation commands in beginner-friendly language.
 
+If you are trying to reuse, find, or extend stored prompts, start with:
+
+```text
+PROMPT_LIBRARY.md
+```
+
+The direct commands are:
+
+```powershell
+workspace prompt list
+workspace prompt show <prompt-id> --include-template
+```
+
 When switching Claude Code between the workspace and a separate project, read:
 
 ```text
