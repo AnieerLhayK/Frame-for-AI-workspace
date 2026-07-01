@@ -40,6 +40,7 @@ class WorkspaceCliTests(unittest.TestCase):
         self.assertIn("Common flows:", result.stdout)
         self.assertIn("workspace task resolve <task-id>", result.stdout)
         self.assertIn("workspace explain path scripts/workspace_cli.py", result.stdout)
+        self.assertIn("workspace claude model-advice status", result.stdout)
 
     def test_task_resolve_preserves_json_output(self) -> None:
         result = self.run_cli(
@@ -225,6 +226,26 @@ class WorkspaceCliTests(unittest.TestCase):
         self.assertEqual(Path(command[1]).name, "workspace_launcher.py")
         self.assertIn("D:/tools/bin", command)
         self.assertIn("--dry-run", command)
+
+    def test_claude_model_advice_delegates_state_project_root_and_format(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "claude",
+                "model-advice",
+                "off",
+                "--project-root",
+                "D:/example/project",
+                "--format",
+                "json",
+            ]
+        )
+        with patch("scripts.workspace_cli.run_command", return_value=0) as run:
+            self.assertEqual(dispatch(args), 0)
+        command = run.call_args.args[0]
+        self.assertEqual(Path(command[1]).name, "claude_model_advice.py")
+        self.assertIn("off", command)
+        self.assertIn("D:/example/project", command)
+        self.assertIn("json", command)
 
     def test_failure_check_delegates_bindings_and_optional_mode(self) -> None:
         args = build_parser().parse_args(

@@ -12,6 +12,7 @@ from scripts.publish_check import (
     run_tests,
 )
 from scripts.publish_public import (
+    EXCLUDED_PATHS,
     SCRUB_FILES,
     generate_beginner_guide_md,
     generate_onboarding_md,
@@ -61,6 +62,15 @@ class PublicPublishTests(unittest.TestCase):
 
     def test_workspace_cli_tests_are_scrubbed_for_public_release(self) -> None:
         self.assertIn("scripts/tests/test_workspace_cli.py", SCRUB_FILES)
+
+    def test_public_release_excludes_claude_local_settings(self) -> None:
+        self.assertIn(".claude/settings.local.json", EXCLUDED_PATHS)
+
+    def test_claude_notification_hermes_client_is_scrubbed(self) -> None:
+        self.assertIn(
+            "scripts/claude_long_task_notifications/hermes-mcp-client.js",
+            SCRUB_FILES,
+        )
 
     def test_public_beginner_guide_mentions_setup_and_explain(self) -> None:
         guide = generate_beginner_guide_md("Frame-for-AI-workspace")

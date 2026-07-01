@@ -213,6 +213,60 @@ route legitimate writes through path-aware file tools. For multiplexed MCP
 tools, classify the requested action and fail closed when a mutating action
 does not expose a resolvable target path.
 
+### Visible Advice Needs Lifecycle Enforcement
+
+Observed and validated locally on 2026-06-30: a prompt-only Claude Code rule
+that said "recommend Pro before complex work" was not reliable enough. Claude
+sometimes launched an Explore Agent or file read before producing any visible
+model-tier assessment. After stronger text in `CLAUDE.md`, the model produced
+an assessment but still downgraded high-risk read-only planning to Flash when
+the user said not to modify files.
+
+The durable pattern is:
+
+1. Keep the cognitive rule in tracked project instructions and shared policy.
+2. Add a `UserPromptSubmit` hook that injects a short current-turn reminder.
+3. Add a broad `PreToolUse` hook that blocks tool or subagent execution until
+   the transcript contains a visible model-tier assessment after the last user
+   message.
+4. Classify read-only planning by underlying risk, not by the first permitted
+   action. Workspace guard design, permission design, multi-agent governance,
+   health/out-of-scope diagnosis, and Git conflict planning remain Pro-class
+   even when the user asks only for a plan.
+
+This remains advisory governance: the hook does not switch models or edit
+provider configuration. It only makes the recommendation visible before Claude
+spends tool calls or delegates exploration. Use ASCII-only PowerShell hook
+strings when supporting Windows PowerShell; UTF-8 without BOM plus non-ASCII
+string literals can break parsing in older hosts.
+
+### Completion Notifications Belong On Per-Turn Stop
+
+Claude Code `Stop` hooks are per-turn completion hooks, not process-exit hooks.
+Use `SessionEnd` for terminal/session teardown and `Stop` for "the main agent
+finished responding" workflows such as long-task completion notifications.
+
+The durable pattern for completion notifications is:
+
+1. Record a per-session start timestamp on `UserPromptSubmit`.
+2. Preserve an existing active start timestamp for the same session. Long
+   background or monitor work can emit task-notification prompts that also fire
+   `UserPromptSubmit`; those must not reset the clock just before `Stop`.
+3. On `Stop`, read the matching session state, calculate elapsed time, and
+   notify only after the agent is actually done.
+4. If `background_tasks` are present, keep the state file and skip notification
+   so a paused session with pending work is not announced as complete. Log
+   `session_crons`, but do not treat their mere presence as pending work.
+5. Run the delivery command synchronously enough that Claude Code does not
+   discard a fire-and-forget child process during hook shutdown. Give cold MCP
+   startup a realistic timeout.
+6. Write compact hook diagnostics outside the source tree, such as under
+   `%TEMP%\claude-code-notifications`, so delivery failures are distinguishable
+   from hooks not firing.
+7. Keep user-level settings installation explicit and reversible; tracked
+   workspace source should provide the repair kit, while writes to
+   `%USERPROFILE%\.claude` remain user-approved environment changes.
+
 ### One Authority Model, Platform-Specific Adapters
 
 Do not make Hermes, OpenCode, Reasonix, or future clients invent separate

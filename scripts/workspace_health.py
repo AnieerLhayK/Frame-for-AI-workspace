@@ -35,9 +35,12 @@ REQUIRED_CLAUDE_BOUNDARY_PATHS = (
     ".claude/project-boundary.json",
     ".claude/rules/workspace-boundary.md",
     ".claude/settings.json",
+    ".claude/model-routing-advice.json",
+    ".claude/hooks/model_routing_guard.ps1",
     ".claude/hooks/workspace_boundary_guard.ps1",
 )
 CLAUDE_MODEL_ROUTING_POLICY = "shared/claude/policies/model-routing-policy.md"
+CLAUDE_MODEL_ROUTING_TOGGLE = ".claude/model-routing-advice.json"
 HERMES_HOME = Path(os.environ.get("HERMES_HOME", r"${DATA_ROOT}/hermes"))
 HERMES_GUARD_SCRIPT = SCRIPTS_DIR / "hermes_workspace_guard.py"
 
@@ -212,7 +215,9 @@ def check_hygiene(root: Path = WORKSPACE_ROOT) -> CheckResult:
 def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
     claude_path = root / "CLAUDE.md"
     policy_path = root / CLAUDE_MODEL_ROUTING_POLICY
+    toggle_path = root / CLAUDE_MODEL_ROUTING_TOGGLE
     findings: list[str] = []
+    toggle_enabled: bool | None = None
     try:
         claude_text = claude_path.read_text(encoding="utf-8-sig")
         policy_text = policy_path.read_text(encoding="utf-8-sig")
@@ -223,6 +228,19 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
             "Claude model-routing policy could not be read.",
             {"error": str(exc)},
         )
+    try:
+        toggle = json.loads(toggle_path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        findings.append(f"model-routing toggle could not be read: {exc}")
+        toggle = {}
+
+    if toggle:
+        if toggle.get("interface_version") != 1:
+            findings.append("model-routing toggle interface_version must be 1")
+        if not isinstance(toggle.get("enabled"), bool):
+            findings.append("model-routing toggle enabled field must be boolean")
+        else:
+            toggle_enabled = toggle["enabled"]
 
     normalized_claude = " ".join(claude_text.split())
     normalized_policy = " ".join(policy_text.split())
@@ -231,12 +249,30 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
         findings.append("CLAUDE.md does not include the shared model-routing policy")
     if "model-routing guidance as a visible recommendation only" not in normalized_claude:
         findings.append("CLAUDE.md does not state that model routing is recommendation-only")
+    if CLAUDE_MODEL_ROUTING_TOGGLE not in normalized_claude:
+        findings.append("CLAUDE.md does not document the model-routing advice toggle")
 
     required_policy_markers = {
         "## 执行时机（强制）": "execution timing section is missing",
+        "## Manual Toggle": "manual toggle section is missing",
+        CLAUDE_MODEL_ROUTING_TOGGLE: "manual toggle path is missing",
+        '"enabled": false': "manual toggle disabled state is missing",
+        "advice injection and pre-tool enforcement": "manual toggle boundary is missing",
         "## First Response Format": "first response format section is missing",
+        "same Claude Code session": "same-session reassessment rule is missing",
+        "Do not suppress the assessment": "repeat assessment anti-suppression rule is missing",
+        "before any tool call": "pre-tool assessment rule is missing",
+        "subagent/Agent delegation": "pre-delegation assessment rule is missing",
+        "Do not downgrade a task to Flash": "read-only planning downgrade guard is missing",
+        "workspace guard or permission design": "guard/permission planning Pro signal is missing",
+        "Claude Code, Codex, OpenCode, and Hermes": "multi-agent guard Pro signal is missing",
+        "workflow out-of-scope errors": "workspace health/out-of-scope Pro signal is missing",
+        "Git merge conflicts": "Git conflict Pro signal is missing",
+        "prompt_registry.yaml": "workspace registry conflict Pro example is missing",
         "任务复杂度评估：Flash sufficient": "low-risk first response format is missing",
         "任务复杂度评估：Recommend Pro": "high-risk first response format is missing",
+        "pause after the visible recommendation": "high-risk model recommendation pause is missing",
+        "continue with the current model": "current-model continuation rule is missing",
         "权限边界：模型建议不改变 write scope": "model recommendation boundary message is missing",
         "## Authority Boundary": "authority boundary section is missing",
         "It must never be satisfied by editing LiteLLM configuration": (
@@ -259,7 +295,11 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
     return CheckResult(
         "claude-model-routing",
         "PASS",
-        "Claude model-routing recommendations are visible and non-authorizing.",
+        (
+            "Claude model-routing recommendations are "
+            f"{'enabled' if toggle_enabled is not False else 'disabled by toggle'} and non-authorizing."
+        ),
+        {"toggle_enabled": toggle_enabled},
     )
 
 

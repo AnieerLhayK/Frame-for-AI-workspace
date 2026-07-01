@@ -1,6 +1,27 @@
 {
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/model_routing_guard.ps1\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/model_routing_guard.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
       {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
         "hooks": [

@@ -1,0 +1,6 @@
+{
+  "interface_version": 1,
+  "enabled": true,
+  "mode": "advisory_pause",
+  "description": "Developer-facing switch for Claude model-tier advice. Set enabled to false to disable advice injection and pre-tool enforcement without changing model configuration or permissions."
+}

@@ -47,6 +47,178 @@ Do not add entries for every command, read, or tiny edit. The entry should captu
 
 ## Recent Entries
 
+### TASK-20260701-001 - Expose Claude model advice through workspace CLI
+
+- Date: 2026-07-01
+- Status: implemented
+- Task type: developer_interface_tooling
+- Branch: codex/model-advice-cli
+- Commit: pending
+- Modified:
+  - scripts/workspace_cli.py
+  - scripts/claude_model_advice.py
+  - scripts/tests/test_workspace_cli.py
+  - scripts/tests/test_claude_model_advice.py
+  - USAGE_GUIDES/QUICK_START/claude_code.md
+  - PROJECT_CONTEXT/task_registry.yaml
+  - PROJECT_CONTEXT/task_ledger.md
+- Decision:
+  - Add `workspace claude model-advice status|on|off` as the supported human
+    interface for the Claude model advice switch.
+  - Keep `.claude/model-routing-advice.json` as the stable low-level contract.
+  - Support external projects through `--project-root <git-root>` while making
+    `status` report whether the target project actually has hook/settings,
+    `CLAUDE.md`, and policy integration installed.
+  - Extend `developer_interface_tooling` scope to include CLI helper scripts,
+    their tests, and quick-start docs for integrated workspace CLI commands.
+  - Do not create Claude Code slash commands; the workspace CLI is the intended
+    control surface for now.
+- Validation:
+  - `python -m unittest scripts.tests.test_claude_model_advice scripts.tests.test_workspace_cli scripts.tests.test_workspace_health`
+    passed.
+  - `python scripts/workspace_cli.py claude model-advice status` reported the
+    current integration as ready.
+  - `python scripts/workspace_cli.py changes verify developer_interface_tooling --agent codex --strict`
+    passed after task scope was updated.
+  - `git diff --check` passed.
+- Knowledge writeback:
+  - Not needed; this is a CLI wrapper over an already recorded governance
+    pattern.
+- Next:
+  - Review, then commit/push if desired.
+
+### TASK-20260630-006 - Add Claude model advice toggle
+
+- Date: 2026-06-30
+- Status: implemented
+- Task type: claude_project_boundary
+- Branch: codex/model-routing-advice-toggle
+- Commit: pending
+- Modified:
+  - .claude/model-routing-advice.json
+  - .claude/hooks/model_routing_guard.ps1
+  - CLAUDE.md
+  - shared/claude/policies/model-routing-policy.md
+  - scripts/workspace_health.py
+  - scripts/tests/test_workspace_health.py
+  - USAGE_GUIDES/QUICK_START/claude_code.md
+  - PROJECT_CONTEXT/task_ledger.md
+- Decision:
+  - Add a tracked, portable JSON switch for the Claude model advice integration.
+  - Keep the default enabled so current governance remains active.
+  - When disabled, the hook exits silently for both prompt injection and
+    pre-tool enforcement, and `CLAUDE.md` instructs Claude to behave as if the
+    integration is absent.
+  - Keep the switch advisory-only; it does not alter model configuration,
+    providers, credentials, plugins, permissions, Git checks, or workspace
+    governance.
+- Validation:
+  - `python -m unittest scripts.tests.test_workspace_health` passed.
+  - `python -m unittest discover -s scripts/tests -p "test_*.py"` passed
+    with 259 tests.
+  - `workspace health` reported PASS for Claude model-routing and the known
+    reports freshness failure unrelated to this change.
+  - `python scripts/workspace_cli.py changes verify claude_project_boundary --agent codex --strict`
+    returned only the known declarative-scope warning.
+  - `python scripts/workspace_cli.py workflow check claude_project_boundary`
+    returned only the same known warning.
+  - `git diff --check` passed.
+- Knowledge writeback:
+  - Not needed; this is an interface switch over the existing lifecycle
+    enforcement pattern.
+- Next:
+  - Push the feature branch for review/longer-lived maintenance.
+
+### TASK-20260630-005 - Pause Claude Pro advice before work
+
+- Date: 2026-06-30
+- Status: implemented
+- Task type: claude_project_boundary
+- Branch: main
+- Commit: pending
+- Modified:
+  - .claude/hooks/model_routing_guard.ps1
+  - CLAUDE.md
+  - shared/claude/policies/model-routing-policy.md
+  - scripts/workspace_health.py
+  - scripts/tests/test_workspace_health.py
+  - PROJECT_CONTEXT/task_ledger.md
+- Decision:
+  - Treat `Recommend Pro` as an actionable user-control point before
+    substantive work starts, not as a message that can be followed immediately
+    by tool calls.
+  - Keep low-risk `Flash sufficient` assessments non-blocking.
+  - Allow continuation after the user explicitly says to continue with the
+    current model, ignore the recommendation, or confirms that the model was
+    already switched.
+  - Keep the behavior advisory-only; no model configuration, LiteLLM,
+    provider, plugin, environment, or permission policy was changed.
+- Validation:
+  - `python -m unittest scripts.tests.test_workspace_health` passed.
+  - `python -m unittest discover -s scripts/tests -p "test_*.py"` passed
+    with 256 tests.
+  - `python scripts/workspace_cli.py changes verify claude_project_boundary --agent codex --strict`
+    returned only the known declarative-scope warning.
+  - `python scripts/workspace_cli.py workflow check claude_project_boundary`
+    returned only the same known warning.
+  - `git diff --check` passed.
+- Knowledge writeback:
+  - Not needed; this refines the lifecycle enforcement pattern already recorded
+    in `WORKSPACE_ENGINEERING/governance_patterns.md`.
+- Next:
+  - Commit and push main, then implement the manual model-advice toggle on a
+    separate branch.
+
+### TASK-20260630-004 - Force same-session Claude model assessment
+
+- Date: 2026-06-30
+- Status: implemented
+- Task type: claude_project_boundary
+- Branch: main
+- Commit: pending
+- Modified:
+  - .claude/settings.json
+  - .claude/hooks/model_routing_guard.ps1
+  - CLAUDE.md
+  - shared/claude/policies/model-routing-policy.md
+  - scripts/workspace_health.py
+  - scripts/tests/test_workspace_health.py
+  - WORKSPACE_ENGINEERING/governance_patterns.md
+  - PROJECT_CONTEXT/task_ledger.md
+- Decision:
+  - Treat the observed behavior as a same-session trigger ambiguity: Claude
+    appeared to apply model-routing output only to the first task in a session.
+  - Strengthen the policy so every new user task/request in the same Claude
+    Code session must receive a lightweight model-tier assessment, including
+    low-risk requests.
+  - Follow-up hardening: the assessment must be visible before tool calls,
+    file reads, searches, Todo/Plan steps, or subagent/Agent delegation.
+    Internal policy reads and delegated exploration prompts do not count.
+  - Real Claude Code tests showed prompt-only rules were insufficient. Add a
+    `UserPromptSubmit` reminder hook plus a broad `PreToolUse` guard that blocks
+    tool/subagent execution until the transcript contains a visible assessment.
+  - Tighten Pro classification for read-only planning of guard/permission
+    design, workspace health/workflow out-of-scope diagnosis, stale report
+    diagnosis, and Git merge conflict planning.
+  - Keep the behavior advisory-only; no model configuration, provider,
+    LiteLLM, plugin, environment, or permission policy was changed.
+- Validation:
+  - `python -m unittest scripts.tests.test_workspace_health` passed.
+  - `python scripts/workspace_cli.py changes verify claude_project_boundary --agent codex --strict` returned only the known declarative-scope warning.
+  - `python scripts/workspace_cli.py workflow check claude_project_boundary` returned only the same known warning.
+  - Follow-up validation reran the same health test, scope verifier, workflow
+    check, and `git diff --check`; results remained the same.
+  - Real `claude -p --no-session-persistence --output-format stream-json`
+    batches verified 5/5 original smoke cases after targeted hardening: three
+    Pro-class prompts and two Flash-class prompts emitted the expected visible
+    assessment before tool/subagent execution.
+  - Test Claude sessions created during validation were removed from the local
+    Claude project session store.
+  - `git diff --check` passed.
+- Knowledge writeback:
+  - Implemented in `WORKSPACE_ENGINEERING/governance_patterns.md` as "Visible
+    Advice Needs Lifecycle Enforcement."
+
 ### TASK-20260630-003 - Bound remote-only public repo and ignored payload maintenance
 
 - Date: 2026-06-30

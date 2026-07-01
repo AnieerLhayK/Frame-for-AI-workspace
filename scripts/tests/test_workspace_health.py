@@ -119,6 +119,8 @@ class WorkspaceHealthTests(unittest.TestCase):
                 ".claude/project-boundary.json",
                 ".claude/rules/workspace-boundary.md",
                 ".claude/settings.json",
+                ".claude/model-routing-advice.json",
+                ".claude/hooks/model_routing_guard.ps1",
                 ".claude/hooks/workspace_boundary_guard.ps1",
             ):
                 path = root / relative
@@ -148,15 +150,37 @@ class WorkspaceHealthTests(unittest.TestCase):
                 "",
                 "Treat model-routing guidance as a visible recommendation only; it must never",
                 "edit model configuration, provider settings, plugins, or permission policy.",
+                "Apply model-routing guidance only when .claude/model-routing-advice.json is enabled.",
             ]
         )
         (root / "CLAUDE.md").write_text("\n".join(claude_lines), encoding="utf-8")
+        (root / ".claude").mkdir(parents=True, exist_ok=True)
+        (root / ".claude" / "model-routing-advice.json").write_text(
+            json.dumps({"interface_version": 1, "enabled": True}, ensure_ascii=False),
+            encoding="utf-8",
+        )
         (root / "shared" / "claude" / "policies" / "model-routing-policy.md").write_text(
             "\n".join(
                 [
                     "# Model Routing Policy",
                     "## 执行时机（强制）",
+                    "## Manual Toggle",
+                    ".claude/model-routing-advice.json",
+                    '"enabled": false',
+                    "This controls advice injection and pre-tool enforcement.",
                     "## First Response Format",
+                    "This applies repeatedly inside the same Claude Code session.",
+                    "Do not suppress the assessment merely because an earlier turn already recommended Pro.",
+                    "The assessment must appear before any tool call.",
+                    "The parent Claude response must show it before subagent/Agent delegation.",
+                    "Do not downgrade a task to Flash merely because the user asks for read-only planning.",
+                    "Read-only workspace guard or permission design still warrants Pro.",
+                    "Claude Code, Codex, OpenCode, and Hermes guard design is Pro-class.",
+                    "workspace health failures with workflow out-of-scope errors are Pro-class.",
+                    "Git merge conflicts are Pro-class.",
+                    "prompt_registry.yaml conflicts are Pro-class.",
+                    "pause after the visible recommendation before substantive work.",
+                    "The user may explicitly continue with the current model.",
                     "任务复杂度评估：Flash sufficient。原因：<简短原因>。",
                     "> 任务复杂度评估：Recommend Pro",
                     "> 原因：<具体原因>",
@@ -177,6 +201,19 @@ class WorkspaceHealthTests(unittest.TestCase):
             self.write_model_routing_fixture(root)
             result = check_claude_model_routing(root)
         self.assertEqual(result.status, "PASS")
+
+    def test_claude_model_routing_policy_passes_when_toggle_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self.write_model_routing_fixture(root)
+            (root / ".claude" / "model-routing-advice.json").write_text(
+                json.dumps({"interface_version": 1, "enabled": False}, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            result = check_claude_model_routing(root)
+        self.assertEqual(result.status, "PASS")
+        self.assertEqual(result.details["toggle_enabled"], False)
+        self.assertIn("disabled by toggle", result.summary)
 
     def test_claude_model_routing_policy_fails_without_claude_include(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -219,6 +256,16 @@ class WorkspaceHealthTests(unittest.TestCase):
                         "# Model Routing Policy",
                         "## 执行时机（强制）",
                         "## First Response Format",
+                        "This applies repeatedly inside the same Claude Code session.",
+                        "Do not suppress the assessment merely because an earlier turn already recommended Pro.",
+                        "The assessment must appear before any tool call.",
+                        "The parent Claude response must show it before subagent/Agent delegation.",
+                        "Do not downgrade a task to Flash merely because the user asks for read-only planning.",
+                        "Read-only workspace guard or permission design still warrants Pro.",
+                        "Claude Code, Codex, OpenCode, and Hermes guard design is Pro-class.",
+                        "workspace health failures with workflow out-of-scope errors are Pro-class.",
+                        "Git merge conflicts are Pro-class.",
+                        "prompt_registry.yaml conflicts are Pro-class.",
                         "任务复杂度评估：Flash sufficient。原因：<简短原因>。",
                         "> 任务复杂度评估：Recommend Pro",
                         "> 权限边界：模型建议不改变 write scope、Git 检查或 workspace governance。",
@@ -512,9 +559,15 @@ class WorkspaceHealthTests(unittest.TestCase):
 class ClaudeBoundaryGuardTests(unittest.TestCase):
     guard_path = WORKSPACE_ROOT / ".claude" / "hooks" / "workspace_boundary_guard.ps1"
 
-    def run_guard(self, payload: dict) -> subprocess.CompletedProcess[str]:
+    def run_guard(self, payload: dict, project_dir: Path | None = None) -> subprocess.CompletedProcess[str]:
+        return self.run_guard_text(
+            json.dumps(payload, ensure_ascii=False),
+            project_dir=project_dir,
+        )
+
+    def run_guard_text(self, payload_text: str, project_dir: Path | None = None) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
-        env["CLAUDE_PROJECT_DIR"] = str(WORKSPACE_ROOT)
+        env["CLAUDE_PROJECT_DIR"] = str(project_dir or WORKSPACE_ROOT)
         return subprocess.run(
             [
                 "powershell.exe",
@@ -524,7 +577,7 @@ class ClaudeBoundaryGuardTests(unittest.TestCase):
                 "-File",
                 str(self.guard_path),
             ],
-            input=json.dumps(payload),
+            input=payload_text,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -574,6 +627,226 @@ class ClaudeBoundaryGuardTests(unittest.TestCase):
             )
         self.assertEqual(result.returncode, 2)
         self.assertIn("wrapped shell command", result.stderr)
+
+
+@unittest.skipUnless(
+    os.name == "nt" and shutil.which("powershell.exe"),
+    "Claude model-routing hook tests require Windows PowerShell.",
+)
+class ClaudeModelRoutingGuardTests(unittest.TestCase):
+    guard_path = WORKSPACE_ROOT / ".claude" / "hooks" / "model_routing_guard.ps1"
+
+    def run_guard(self, payload: dict, project_dir: Path | None = None) -> subprocess.CompletedProcess[str]:
+        return self.run_guard_text(
+            json.dumps(payload, ensure_ascii=False),
+            project_dir=project_dir,
+        )
+
+    def run_guard_text(self, payload_text: str, project_dir: Path | None = None) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["CLAUDE_PROJECT_DIR"] = str(project_dir or WORKSPACE_ROOT)
+        return subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(self.guard_path),
+            ],
+            input=payload_text,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            check=False,
+        )
+
+    def write_transcript(self, path: Path, entries: list[dict]) -> None:
+        path.write_text(
+            "\n".join(json.dumps(entry, ensure_ascii=False) for entry in entries),
+            encoding="utf-8",
+        )
+
+    def write_model_advice_toggle(self, root: Path, *, enabled: bool) -> None:
+        toggle = root / ".claude" / "model-routing-advice.json"
+        toggle.parent.mkdir(parents=True, exist_ok=True)
+        toggle.write_text(
+            json.dumps({"interface_version": 1, "enabled": enabled}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+    def test_user_prompt_submit_injects_visible_assessment_context(self) -> None:
+        result = self.run_guard({"hook_event_name": "UserPromptSubmit"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        additional = payload["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("Flash sufficient", additional)
+        self.assertIn("Recommend Pro", additional)
+        self.assertIn("before any tool call", additional)
+        self.assertIn("pause for the user", additional)
+
+    def test_user_prompt_submit_falls_back_when_prompt_json_is_corrupt(self) -> None:
+        payload_text = (
+            '{"hook_event_name":"UserPromptSubmit",'
+            '"transcript_path":"${WORKSPACE_ROOT}\\\\session.jsonl",'
+            '"prompt":"unterminated text}'
+        )
+        result = self.run_guard_text(payload_text)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        additional = payload["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("Flash sufficient", additional)
+
+    def test_pre_tool_use_blocks_before_visible_assessment(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            transcript = Path(temp_dir) / "transcript.jsonl"
+            self.write_transcript(
+                transcript,
+                [
+                    {"message": {"role": "user", "content": "high risk task"}},
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": [{"type": "tool_use", "name": "Read"}],
+                        }
+                    },
+                ],
+            )
+            result = self.run_guard(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": "Read",
+                    "transcript_path": str(transcript),
+                }
+            )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("model-tier assessment", result.stderr)
+
+    def test_pre_tool_use_blocks_after_pro_assessment_without_user_confirmation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            transcript = Path(temp_dir) / "transcript.jsonl"
+            self.write_transcript(
+                transcript,
+                [
+                    {"message": {"role": "user", "content": "high risk task"}},
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "> 任务复杂度评估：Recommend Pro",
+                                }
+                            ],
+                        }
+                    },
+                ],
+            )
+            result = self.run_guard(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": "Read",
+                    "transcript_path": str(transcript),
+                }
+            )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Recommend Pro was issued", result.stderr)
+
+    def test_pre_tool_use_allows_after_flash_assessment(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            transcript = Path(temp_dir) / "transcript.jsonl"
+            self.write_transcript(
+                transcript,
+                [
+                    {"message": {"role": "user", "content": "summarize a short log"}},
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "任务复杂度评估：Flash sufficient。原因：低风险。",
+                                }
+                            ],
+                        }
+                    },
+                ],
+            )
+            result = self.run_guard(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": "Read",
+                    "transcript_path": str(transcript),
+                }
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_pre_tool_use_allows_after_user_confirms_current_model(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            transcript = Path(temp_dir) / "transcript.jsonl"
+            self.write_transcript(
+                transcript,
+                [
+                    {"message": {"role": "user", "content": "high risk task"}},
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "> 任务复杂度评估：Recommend Pro",
+                                }
+                            ],
+                        }
+                    },
+                    {"message": {"role": "user", "content": "继续使用当前模型"}},
+                ],
+            )
+            result = self.run_guard(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": "Read",
+                    "transcript_path": str(transcript),
+                }
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_user_prompt_submit_is_silent_when_model_advice_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self.write_model_advice_toggle(root, enabled=False)
+            result = self.run_guard({"hook_event_name": "UserPromptSubmit"}, project_dir=root)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_pre_tool_use_allows_without_assessment_when_model_advice_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self.write_model_advice_toggle(root, enabled=False)
+            transcript = root / "transcript.jsonl"
+            self.write_transcript(
+                transcript,
+                [
+                    {"message": {"role": "user", "content": "high risk task"}},
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": [{"type": "tool_use", "name": "Read"}],
+                        }
+                    },
+                ],
+            )
+            result = self.run_guard(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": "Read",
+                    "transcript_path": str(transcript),
+                },
+                project_dir=root,
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 ﻿---
 report_name: workspace_health_report
-generated_at: 2026-06-28 23:11:54 +08:00
+generated_at: 2026-07-01 20:54:24 +08:00
 generated_by: scripts/sync_report.ps1
 source_root: ${WORKSPACE_ROOT}
 manifest_path: ${WORKSPACE_ROOT}\workspace_manifest.yaml
 manifest_version: 1.3.0
 manifest_last_modified: 2026-06-20 18:27:28 +08:00
-source_commit: ac1ca2b
+source_commit: 28909d8
 report_scope: manifest status, link status, missing files, hardcoded paths, protocol consistency, drift, shared uniqueness, and Git boundaries
 report_is_snapshot: true
 truth_source:
@@ -20,7 +20,7 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 
 # Workspace Health Report
 
-Generated: 2026-06-28 23:11:54 +08:00
+Generated: 2026-07-01 20:54:24 +08:00
 
 ## Manifest Status
 
@@ -66,6 +66,8 @@ Generated: 2026-06-28 23:11:54 +08:00
 | --- | --- | --- |
 | PROJECT_CONTEXT\session_migrations.json | ${WORKSPACE_ROOT} | other |
 | PROJECT_CONTEXT\task_ledger.md | ${WORKSPACE_ROOT} | other |
+| USAGE_GUIDES\QUICK_START\claude_code.md | ${WORKSPACE_ROOT} | other |
+| WORKSPACE_ENGINEERING\PUBLISH.md | ${WORKSPACE_ROOT} | other |
 | WORKSPACE_ENGINEERING\plans\public-repo-plan.md | ${USER_HOME}/.config/opencode/skills | other |
 | WORKSPACE_ENGINEERING\plans\public-repo-plan.md | ${WORKSPACE_ROOT} | other |
 | WORKSPACE_ENGINEERING\reports\skill_engineering_setup_report.md | ${WORKSPACE_ROOT} | other |
@@ -122,7 +124,7 @@ Generated: 2026-06-28 23:11:54 +08:00
 | workspace_manifest.yaml | ${WORKSPACE_ROOT} | manifest-source-of-truth |
 | workspace_manifest.yaml | ${WORKSPACE_ROOT}\\.claude\\skills | manifest-source-of-truth |
 
-Unsafe hardcoded path references outside manifest/generated reports: `22`.
+Unsafe hardcoded path references outside manifest/generated reports: `24`.
 
 ## Protocol Consistency
 
@@ -201,4 +203,4 @@ Unsafe hardcoded path references outside manifest/generated reports: `22`.
 - Manifest portability missing count: `0`
 - Optional missing count: `3`
 - Projection drift count: `0`
-- Unsafe hardcoded path count: `22`
+- Unsafe hardcoded path count: `24`

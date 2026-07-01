@@ -91,6 +91,8 @@ def build_parser() -> argparse.ArgumentParser:
             "      Explain a path's layer, related tasks, topics, and likely tests.\n"
             "  workspace workflow check <task-id>\n"
             "      Verify current Git changes against task scope before validation.\n"
+            "  workspace claude model-advice status\n"
+            "      Show whether Claude model advice is on, off, and fully integrated.\n"
             "\n"
             "Use `workspace <command> --help` and then "
             "`workspace <command> <subcommand> --help` for details."
@@ -228,6 +230,20 @@ def build_parser() -> argparse.ArgumentParser:
     launcher.add_argument("--install-dir")
     launcher.add_argument("--dry-run", action="store_true")
     launcher.add_argument("--format", choices=("text", "json"), default="text")
+
+    claude = commands.add_parser("claude", help="Inspect or toggle Claude workspace integrations.")
+    claude_commands = claude.add_subparsers(dest="action", required=True)
+    model_advice = claude_commands.add_parser(
+        "model-advice",
+        help="Turn Claude model advice on/off or inspect integration status.",
+    )
+    model_advice.add_argument("state", choices=("status", "on", "off"))
+    model_advice.add_argument(
+        "--project-root",
+        default=str(WORKSPACE_ROOT),
+        help="Git/project root that owns the .claude model advice files.",
+    )
+    model_advice.add_argument("--format", choices=("text", "json"), default="text")
 
     failure = commands.add_parser("failure", help="Explain task resource failures.")
     failure_commands = failure.add_subparsers(dest="action", required=True)
@@ -530,6 +546,19 @@ def dispatch(args: argparse.Namespace) -> int:
         if args.dry_run:
             command.append("--dry-run")
         return run_command(command)
+    if args.command == "claude":
+        if args.action == "model-advice":
+            return run_command(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "claude_model_advice.py"),
+                    args.state,
+                    "--project-root",
+                    args.project_root,
+                    "--format",
+                    args.format,
+                ]
+            )
     if args.command == "failure":
         command = [
             sys.executable,

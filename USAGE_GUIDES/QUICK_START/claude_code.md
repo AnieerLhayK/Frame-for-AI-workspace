@@ -25,6 +25,54 @@ governed skill workspace.
 
 Do not create unrelated business projects inside this workspace.
 
+## Model Advice Switch
+
+The workspace can ask Claude Code to assess whether a task is safe for the
+default model or should use `deepseek-v4-pro`. Use the workspace CLI:
+
+```powershell
+workspace claude model-advice status
+workspace claude model-advice on
+workspace claude model-advice off
+```
+
+The low-level switch file is:
+
+```text
+${WORKSPACE_ROOT}\.claude\model-routing-advice.json
+```
+
+Default state:
+
+```json
+{
+  "interface_version": 1,
+  "enabled": true,
+  "mode": "advisory_pause"
+}
+```
+
+`workspace claude model-advice off` sets `"enabled": false`. When disabled,
+Claude Code should not print model-tier assessments and the hook will not pause
+or block tool use for model advice. This does not change the active model,
+LiteLLM, provider credentials, plugins, permissions, or Git rules.
+
+`workspace claude model-advice on` sets `"enabled": true` and restores the
+visible assessment and Pro pause behavior.
+
+For another Claude Code project, use the same interface with an explicit root:
+
+```powershell
+workspace claude model-advice status --project-root D:\path\to\project
+workspace claude model-advice on --project-root D:\path\to\project
+workspace claude model-advice off --project-root D:\path\to\project
+```
+
+The CLI can create or update that project's toggle file, but a project also
+needs its own `.claude/settings.json` hook, model-routing hook script,
+`CLAUDE.md` rule, and policy reference before the switch affects Claude Code
+behavior. `status` reports those integration checks explicitly.
+
 ## Start In The CNN Project
 
 ```powershell
@@ -92,3 +140,55 @@ Do not work around a blocked native editor with PowerShell string replacement,
 Python file rewriting, shell redirection, or another indirect write command.
 That bypasses project instructions and is especially risky for Markdown tables,
 code fences, line endings, and non-ASCII text.
+
+## Long-Task Completion Notifications
+
+This workspace keeps a managed repair kit for user-level Claude Code completion
+notifications in:
+
+```text
+scripts\claude_long_task_notifications\
+scripts\install_claude_long_task_notifications.ps1
+```
+
+The repair uses `UserPromptSubmit` to record a per-session start time and `Stop`
+to notify after the main Claude Code agent finishes responding. Tasks that run
+for at least 5 minutes show a Windows tray notification. Tasks that run for at
+least 10 minutes also call Hermes `messages_send`; the default target is
+`qqbot`, which sends to the configured QQBot home channel.
+
+If a long task emits internal task-notification prompts before the final Stop
+event, the start hook preserves the existing per-session start state instead of
+resetting the clock. State older than 24 hours is treated as stale and may be
+overwritten.
+
+Preview the installation without touching user settings:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass `
+  -File scripts\install_claude_long_task_notifications.ps1
+```
+
+Install or refresh the user-level hooks:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass `
+  -File scripts\install_claude_long_task_notifications.ps1 `
+  -Apply `
+  -Target qqbot
+```
+
+The installer copies the managed scripts to `%USERPROFILE%\.claude\hooks`,
+backs up `%USERPROFILE%\.claude\settings.json`, and updates only notification
+entries under `UserPromptSubmit` and `Stop`. Other hook entries are preserved.
+
+Runtime diagnostics are written to:
+
+```text
+%TEMP%\claude-code-notifications\hook-events.log
+%TEMP%\claude-code-notifications\hermes-mcp-client.log
+```
+
+Check `hook-events.log` first. It records whether the start state was written,
+whether `Stop` found that state, the calculated duration, and whether Hermes
+was invoked.

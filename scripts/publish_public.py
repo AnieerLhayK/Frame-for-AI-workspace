@@ -124,6 +124,7 @@ EXCLUDED_PATHS = {
     # Individual files
     ".env",
     ".claude/routing_events.ndjson",
+    ".claude/settings.local.json",
 }
 
 # ── Files that need path scrubbing ──────────────────────────────────────────
@@ -144,6 +145,7 @@ SCRUB_FILES: set[str] = {
     "USAGE_GUIDES/QUICK_START/agent_governance.md",
     "scripts/start_hermes_gateway.ps1",
     "scripts/stop_hermes_gateway.ps1",
+    "scripts/claude_long_task_notifications/hermes-mcp-client.js",
     "scripts/hermes_workspace_guard.py",
     "scripts/workspace_health.py",
     "scripts/tests/test_workspace_cli.py",

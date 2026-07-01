@@ -274,7 +274,7 @@ function Get-HardcodedPathFindings {
     $files = $gitFiles |
       ForEach-Object { Join-Path $WorkspaceRoot $_ } |
       Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
-      ForEach-Object { Get-Item -LiteralPath $_ } |
+      ForEach-Object { Get-Item -LiteralPath $_ -Force } |
       Where-Object {
         $_.Length -le 2MB -and
         $textExtensions -contains $_.Extension.ToLowerInvariant()
