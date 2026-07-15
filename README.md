@@ -1,5 +1,7 @@
 # Agent Ecosystem Workspace
 
+[简体中文](README.zh-CN.md)
+
 This workspace is governed by `workspace_manifest.yaml` as the source of truth for skill roots, roles, authority, execution modes, shared protocols, and platform exposures.
 
 ## Project Context

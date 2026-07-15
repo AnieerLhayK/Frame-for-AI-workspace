@@ -1,5 +1,7 @@
 # Agent Ecosystem Workspace（智能体生态系统工作空间）
 
+[English](README.md)
+
 本工作空间以 `workspace_manifest.yaml` 为事实来源，统一管理技能根目录、角色、权限、执行模式、共享协议和平台映射。
 
 ## 项目上下文
