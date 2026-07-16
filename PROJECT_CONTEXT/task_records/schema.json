@@ -1,8 +1,0 @@
-{
-  "schema_version": "1.1",
-  "purpose": "Tracked, machine-readable facts about one workspace task outcome.",
-  "storage": "YYYY/MM/DD/TASK-*.json",
-  "required": ["task_id", "started_at", "status", "validation", "human_edit_rounds", "tokens", "usability"],
-  "registration": {"introduced_in": "1.1", "operations": ["workspace_write", "external_write"], "compatibility": "Historical 1.0 records remain valid but cannot authorize new writes."},
-  "notes": {"token_estimated": "Measured context estimate, not API billing.", "token_actual": "Populate only from a provider or runtime usage source.", "token_saved": "Requires a documented comparison baseline."}
-}

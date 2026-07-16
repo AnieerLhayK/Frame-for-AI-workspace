@@ -134,6 +134,20 @@ EXCLUDED_PATHS = {
     "scripts/tests/test_plan_change_surface.py",
     "scripts/tests/test_find_knowledge.py",
     "scripts/tests/test_workspace_explain.py",
+    "reports",
+    "reasonix.toml",
+    "README.zh-CN.md",
+    "PROJECT_CONTEXT/todo",
+    "PROJECT_CONTEXT/external_projects.yaml",
+    "PROJECT_CONTEXT/task_ledger",
+    "PROJECT_CONTEXT/task_records",
+    "USAGE_GUIDES/PROMPT_TEMPLATES/character-system",
+    "opencode.json",
+    "scripts/report_status.py",
+    "scripts/report_routing_quality.py",
+    "scripts/validate_protocols.py",
+    "scripts/sync_report.ps1",
+    "scripts/tests/test_report_status.py",
     "mcp/servers",
     "mcp/downloads",
     "mcp/logs",
@@ -438,6 +452,62 @@ python -m pytest scripts/tests -q
 Read `BEGINNER_GUIDE.md` and `PATH_MAPPING_REFERENCE.md` before adding local
 skills or platform integrations. Keep credentials and private source outside
 this repository.
+"""
+
+
+def generate_public_readme_zh(repo_name: str) -> str:
+    """Return the paired generic Chinese README for the public template."""
+    return f"""# {repo_name}
+
+这是一个可部署的受治理 AI 工作区框架模板，包含架构、策略、路由工具和
+便携式初始化脚本。
+
+## 边界
+
+- 不包含任何 character system 产品包。
+- `skills/` 与 `external-skills/` 只是空的扩展插槽。
+- 不包含私人语料、个人角色、既有第三方 skill 或运行时记忆。
+- 不提供现成角色，也不替任何模型或平台配置凭据。
+
+## 开始使用
+
+```bash
+python scripts/setup_public_workspace.py
+python scripts/workspace_cli.py health
+python -m pytest scripts/tests -q
+```
+
+请先阅读 `BEGINNER_GUIDE.md` 和 `PATH_MAPPING_REFERENCE.md`，再添加本地
+skill 或平台集成。凭据和私有源文件应放在仓库之外。
+"""
+
+
+def generate_public_architecture_md() -> str:
+    """Return a framework-only architecture description."""
+    return """# Architecture
+
+This repository is a framework template for a governed AI workspace. It is
+organized around a small set of portable layers:
+
+- `workspace_manifest.yaml`: source-of-truth registry for this template.
+- `shared/`: reusable policies and contracts for bounded discovery and writes.
+- `scripts/`: framework utilities for routing, health, setup, and validation.
+- `skills/`: the empty local extension layer for skills created by the adopter.
+- `external-skills/`: the empty reviewed-import layer for externally sourced
+  skills.
+- `PROJECT_CONTEXT/`: optional workspace memory and routing context.
+
+The public template intentionally has no bundled product package, character,
+corpus, runtime memory, provider credentials, or platform projection. Add
+domain packages only in a downstream workspace after reviewing their source,
+privacy, licensing, and deployment boundaries.
+
+## Deployment Boundary
+
+The first-run helper configures only template paths and performs read-only
+checks. It does not install providers, create platform links, or grant extra
+permissions. A healthy deployment means the framework CLI and tests run; a
+platform-specific health warning is expected until that platform is configured.
 """
 
 
@@ -978,13 +1048,15 @@ def main() -> int:
         public_manifest = generate_public_manifest(manifest_path)
         write_file(out_dir, "workspace_manifest.yaml", public_manifest)
         write_file(out_dir, "README.md", generate_public_readme(repo_name))
+        write_file(out_dir, "README.zh-CN.md", generate_public_readme_zh(repo_name))
+        write_file(out_dir, "ARCHITECTURE.md", generate_public_architecture_md())
         write_file(out_dir, "PATH_MAPPING_REFERENCE.md", generate_path_mapping_md())
         write_file(out_dir, "BEGINNER_GUIDE.md", generate_beginner_guide_md(repo_name))
         write_file(out_dir, "ONBOARDING.md", generate_onboarding_md(repo_name))
         write_file(out_dir, "scripts/setup_public_workspace.py", generate_public_setup_py())
         for layer in PUBLIC_EMPTY_LAYERS:
             write_file(out_dir, f"{layer}/.gitkeep", "")
-        counts["copied"] += 7
+        counts["copied"] += 9
 
     print()
     if args.dry_run:

@@ -48,6 +48,7 @@ EXPECTED_DOCS: set[str] = {
 FORBIDDEN_DIRS: set[str] = {
     "packages/character-system",
 }
+FORBIDDEN_PATH_SEGMENTS: set[str] = {"character-system"}
 
 REQUIRED_EMPTY_LAYERS: set[str] = {
     "skills",
@@ -124,11 +125,18 @@ def check_forbidden_paths(root: Path) -> list[str]:
 
 
 def check_missing_dirs(root: Path) -> list[str]:
-    """Check that private/product package directories don't exist."""
+    """Check that private/product package directories don't exist anywhere."""
     issues: list[str] = []
     for d in FORBIDDEN_DIRS:
         if (root / d).is_dir():
             issues.append(f"  Forbidden directory exists: {d}/")
+    for path in root.rglob("*"):
+        if not path.is_dir() or ".git" in path.parts:
+            continue
+        if any(part.lower() in FORBIDDEN_PATH_SEGMENTS for part in path.parts):
+            issues.append(
+                f"  Forbidden path segment exists: {path.relative_to(root).as_posix()}/"
+            )
     return issues
 
 
