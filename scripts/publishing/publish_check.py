@@ -197,17 +197,34 @@ def check_docs(root: Path) -> list[str]:
     return issues
 
 
+def _routing_event_snapshot(root: Path) -> dict[Path, str | None]:
+    """Snapshot resolver logs at both workspace and script-relative locations."""
+    paths = (
+        root / ".claude" / "routing_events.ndjson",
+        root / "scripts" / ".claude" / "routing_events.ndjson",
+    )
+    return {
+        path: path.read_text(encoding="utf-8") if path.is_file() else None
+        for path in paths
+    }
+
+
+def _restore_routing_event_snapshot(snapshot: dict[Path, str | None]) -> None:
+    """Restore pre-check resolver logs and remove newly created transient logs."""
+    for path, original in snapshot.items():
+        if original is None:
+            if path.exists():
+                path.unlink()
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(original, encoding="utf-8")
+
+
 def run_functional_checks(root: Path) -> list[str]:
     """Run key scripts in the staging directory to verify they work."""
     issues: list[str] = []
     cwd = os.getcwd()
-    routing_events = root / ".claude" / "routing_events.ndjson"
-    had_routing_events = routing_events.exists()
-    original_routing_events = (
-        routing_events.read_text(encoding="utf-8")
-        if had_routing_events
-        else None
-    )
+    routing_events = _routing_event_snapshot(root)
     try:
         os.chdir(root)
 
@@ -268,10 +285,7 @@ def run_functional_checks(root: Path) -> list[str]:
         issues.append(f"  Script not found: {exc}")
     finally:
         os.chdir(cwd)
-        if had_routing_events and original_routing_events is not None:
-            routing_events.write_text(original_routing_events, encoding="utf-8")
-        elif routing_events.exists():
-            routing_events.unlink()
+        _restore_routing_event_snapshot(routing_events)
 
     return issues
 
@@ -280,13 +294,7 @@ def run_tests(root: Path) -> list[str]:
     """Run pytest in the staging directory."""
     issues: list[str] = []
     cwd = os.getcwd()
-    routing_events = root / ".claude" / "routing_events.ndjson"
-    had_routing_events = routing_events.exists()
-    original_routing_events = (
-        routing_events.read_text(encoding="utf-8")
-        if had_routing_events
-        else None
-    )
+    routing_events = _routing_event_snapshot(root)
     try:
         os.chdir(root)
         result = subprocess.run(
@@ -335,10 +343,7 @@ def run_tests(root: Path) -> list[str]:
         issues.append(f"  pytest not found: {exc}")
     finally:
         os.chdir(cwd)
-        if had_routing_events and original_routing_events is not None:
-            routing_events.write_text(original_routing_events, encoding="utf-8")
-        elif routing_events.exists():
-            routing_events.unlink()
+        _restore_routing_event_snapshot(routing_events)
     return issues
 
 
