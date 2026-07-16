@@ -4,7 +4,7 @@ publish_check.py — Verify a public-workspace staging directory is ready to pus
 
 Checks:
 1. No D:\AI, D:/AI, C:\Users\Z1377 absolute paths remain
-2. character-system does not exist and skills layers are empty
+2. character-system does not exist and skills layers contain only README placeholders
 3. Template files match expected list
 4. Beginner guide and conservative setup helper exist
 5. Essential scripts are functional
@@ -50,16 +50,16 @@ FORBIDDEN_DIRS: set[str] = {
 }
 FORBIDDEN_PATH_SEGMENTS: set[str] = {"character-system"}
 
-REQUIRED_EMPTY_LAYERS: set[str] = {
-    "skills",
-    "external-skills",
+REQUIRED_EXTENSION_LAYER_FILES: dict[str, set[str]] = {
+    "skills": {"README.md"},
+    "external-skills": {"README.md"},
 }
 
 # Paths that MUST exist
 REQUIRED_PATHS: set[str] = {
     "workspace_manifest.yaml",
-    "skills/.gitkeep",
-    "external-skills/.gitkeep",
+    "skills/README.md",
+    "external-skills/README.md",
     "AGENTS.md",
     "CLAUDE.md",
     "ARCHITECTURE.md",
@@ -140,10 +140,10 @@ def check_missing_dirs(root: Path) -> list[str]:
     return issues
 
 
-def check_empty_layers(root: Path) -> list[str]:
-    """Ensure extension layers exist but contain no bundled skill files."""
+def check_extension_layers(root: Path) -> list[str]:
+    """Ensure extension layers contain only their documentation placeholders."""
     issues: list[str] = []
-    for layer in REQUIRED_EMPTY_LAYERS:
+    for layer, expected_files in REQUIRED_EXTENSION_LAYER_FILES.items():
         path = root / layer
         if not path.is_dir():
             issues.append(f"  Missing public extension layer: {layer}/")
@@ -153,9 +153,9 @@ def check_empty_layers(root: Path) -> list[str]:
             for entry in path.rglob("*")
             if entry.is_file()
         )
-        if entries != [".gitkeep"]:
+        if set(entries) != expected_files:
             issues.append(
-                f"  Public extension layer is not empty: {layer}/ ({entries})"
+                f"  Public extension layer contains more than its README placeholder: {layer}/ ({entries})"
             )
     return issues
 
@@ -371,7 +371,7 @@ def main() -> int:
     checks: list[tuple[str, list[str]]] = [
         ("Forbidden paths", check_forbidden_paths(root)),
         ("Forbidden directories", check_missing_dirs(root)),
-        ("Empty extension layers", check_empty_layers(root)),
+        ("Documentation-only extension layers", check_extension_layers(root)),
         ("Bundled skills", check_no_bundled_skills(root)),
         ("Required files", check_required_paths(root)),
         ("Templates", check_templates(root)),

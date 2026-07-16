@@ -8,7 +8,7 @@ edit workspace structure, or change a platform projection.
 
 | Surface | Examples | Required capability |
 | --- | --- | --- |
-| Platform projection | `.claude/skills/`, manifest platform roots | `platform_write` |
+| Platform projection | `.claude/skills/`, manifest platform roots, registered public projections | `platform_write` |
 | Proposal record | `reports/agent-requests/` | `proposal_write` |
 | Runtime record | diagnosis, handoff, approved runtime-loop records | `record_write` |
 | Generated snapshot | current reports under root `reports/` | `report_write` |
@@ -16,6 +16,23 @@ edit workspace structure, or change a platform projection.
 | Governance structure | manifest, `shared/`, `scripts/`, `PROJECT_CONTEXT/`, root governance files | `structural_write` |
 
 The ordered machine-readable form is `shared/agent_governance.yaml`.
+
+### Managed Public Publishers
+
+The public projections for Frame for AI Workspace, Chatty Ch System, and
+qq-chat-raw-filter are not generic external-environment writes. Each is a
+registered platform projection with exactly one publisher script, disposable
+staging path, and approved Git remote URL. Every publisher invocation must satisfy
+all of the following before it creates a checkout, commits, or sends data:
+
+1. the staging path and remote URL exactly match its declared publisher;
+2. the invoking agent has `platform_write` and the path is inside its scope;
+3. an active task record declares `external_write` for the external release;
+4. the publisher's normal projection checks pass.
+
+Custom staging paths or remote URLs are rejected by the managed publishers;
+use a separate inspection workflow when a temporary local copy is needed. They
+cannot be used to bypass the registered publication target.
 
 Concrete identities do not live in that policy. They live in
 `shared/agent_registry.yaml`, which records status, registration type, aliases,
@@ -150,7 +167,8 @@ replacement for Agent and acting-Skill authority.
 Effective write authority is the intersection of:
 
 1. an active task outcome record whose declared operation matches the target
-   (`workspace_write` or `external_write`);
+   (`workspace_write` or `external_write`; managed external publishers retain
+   `external_write` for release audit);
 2. the resolved task write scope;
 3. the Agent capability and path scope;
 4. the acting Skill execution mode, when a Skill is active;

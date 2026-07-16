@@ -244,8 +244,31 @@ SKELETON_DIRS: list[tuple[str, list[str], str]] = [
 # Stub content for skeleton skill files
 SKELETON_DIRS = []
 
-# Tracked extension points. They intentionally contain no bundled skills.
-PUBLIC_EMPTY_LAYERS = ("skills", "external-skills")
+# Tracked extension points. They contain documentation only, never bundled skills.
+PUBLIC_EXTENSION_LAYERS = ("skills", "external-skills")
+
+EXTENSION_LAYER_READMES: dict[str, str] = {
+    "skills": """# Local Skills
+
+This is a documentation-only placeholder for skills created in a downstream
+workspace. The Frame template does not bundle any local skill implementations
+or `SKILL.md` manifests here.
+
+Before adding a skill, define its source boundary, authority, validation, and
+registration in the downstream workspace. Keep private corpora, credentials,
+and provider state outside the repository.
+""",
+    "external-skills": """# External Skills
+
+This is a documentation-only placeholder for reviewed third-party skill imports.
+The Frame template does not bundle any external skill implementation or
+`SKILL.md` manifest here.
+
+Before importing a skill, review provenance, license, privacy implications,
+maintenance ownership, and the permissions it would receive in the downstream
+workspace.
+""",
+}
 
 SKELETON_STUB: dict[str, str] = {
     "README.md": """# {dir_name}
@@ -435,7 +458,8 @@ It contains architecture, policies, routing tools, and portable setup helpers.
 ## Boundary
 
 - No `character-system` package is bundled.
-- `skills/` and `external-skills/` are empty extension points.
+- `skills/` and `external-skills/` contain documentation-only extension
+  placeholders, not bundled skills.
 - No private corpus, personal character, or existing third-party skill is
   included.
 - The framework does not claim to provide a finished character or provider
@@ -465,7 +489,7 @@ def generate_public_readme_zh(repo_name: str) -> str:
 ## 边界
 
 - 不包含任何 character system 产品包。
-- `skills/` 与 `external-skills/` 只是空的扩展插槽。
+- `skills/` 与 `external-skills/` 仅包含说明性扩展插槽，不包含任何 skill。
 - 不包含私人语料、个人角色、既有第三方 skill 或运行时记忆。
 - 不提供现成角色，也不替任何模型或平台配置凭据。
 
@@ -492,9 +516,10 @@ organized around a small set of portable layers:
 - `workspace_manifest.yaml`: source-of-truth registry for this template.
 - `shared/`: reusable policies and contracts for bounded discovery and writes.
 - `scripts/`: framework utilities for routing, health, setup, and validation.
-- `skills/`: the empty local extension layer for skills created by the adopter.
-- `external-skills/`: the empty reviewed-import layer for externally sourced
-  skills.
+- `skills/`: a documentation-only local extension layer for skills created by
+  the adopter.
+- `external-skills/`: a documentation-only reviewed-import layer for
+  externally sourced skills.
 - `PROJECT_CONTEXT/`: optional workspace memory and routing context.
 
 The public template intentionally has no bundled product package, character,
@@ -522,7 +547,8 @@ This public repository is a governed AI workspace framework template.
 - Treat this repository as source for framework structure and policies only.
 - Keep credentials, private corpora, personal data, and provider state outside
   the repository.
-- `skills/` and `external-skills/` are empty extension layers in this release.
+- `skills/` and `external-skills/` are documentation-only extension layers in
+  this release, with no bundled skills.
 - Add downstream domain packages only after reviewing provenance, privacy,
   licensing, and deployment boundaries.
 
@@ -1082,8 +1108,8 @@ def main() -> int:
         write_file(out_dir, "BEGINNER_GUIDE.md", generate_beginner_guide_md(repo_name))
         write_file(out_dir, "ONBOARDING.md", generate_onboarding_md(repo_name))
         write_file(out_dir, "scripts/setup_public_workspace.py", generate_public_setup_py())
-        for layer in PUBLIC_EMPTY_LAYERS:
-            write_file(out_dir, f"{layer}/.gitkeep", "")
+        for layer in PUBLIC_EXTENSION_LAYERS:
+            write_file(out_dir, f"{layer}/README.md", EXTENSION_LAYER_READMES[layer])
         counts["copied"] += 11
 
     print()

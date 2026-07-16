@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import task_records
+from scripts import task_ledger, task_records
 
 
 class TaskRecordsTests(unittest.TestCase):
@@ -60,6 +60,48 @@ class TaskRecordsTests(unittest.TestCase):
                 task_records.active_registration(
                     "TASK-20260715-001", "workspace_write"
                 )
+
+    def test_finalize_syncs_one_idempotent_ledger_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record_root = root / "task_records"
+            ledger_root = root / "task_ledger"
+            with patch.object(task_records, "RECORD_ROOT", record_root), patch.object(
+                task_ledger, "DESTINATION", ledger_root
+            ):
+                record = task_records.initial_record(
+                    "TASK-20260716-001",
+                    task_type="task_outcome_records",
+                    started_at="2026-07-16T00:00:00Z",
+                    tokens_estimated=0,
+                    operations=["workspace_write"],
+                )
+                path = task_records.record_path(record["task_id"], record["started_at"])
+                task_records.create_record(path, record)
+                args = type(
+                    "Args",
+                    (),
+                    {
+                        "task_id": record["task_id"],
+                        "ended_at": "2026-07-16T00:10:00Z",
+                        "status": "successful",
+                        "validation": "passed",
+                        "usability": "usable",
+                        "human_edit_rounds": 0,
+                        "command": ["python -m unittest"],
+                        "tokens_actual": None,
+                        "tokens_saved": None,
+                        "currency_cost": None,
+                    },
+                )()
+
+                task_records.finalize(args)
+                task_records.sync_ledger(type("Args", (), {"task_id": None, "date": "2026-07-16"})())
+
+            ledger = ledger_root / "2026" / "07" / "16.md"
+            content = ledger.read_text(encoding="utf-8")
+            self.assertEqual(content.count("### TASK-20260716-001"), 1)
+            self.assertIn("automatic task-outcome record synchronization", content)
 
 
 if __name__ == "__main__":

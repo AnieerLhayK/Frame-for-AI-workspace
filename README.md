@@ -6,7 +6,8 @@ It contains architecture, policies, routing tools, and portable setup helpers.
 ## Boundary
 
 - No `character-system` package is bundled.
-- `skills/` and `external-skills/` are empty extension points.
+- `skills/` and `external-skills/` contain documentation-only extension
+  placeholders, not bundled skills.
 - No private corpus, personal character, or existing third-party skill is
   included.
 - The framework does not claim to provide a finished character or provider

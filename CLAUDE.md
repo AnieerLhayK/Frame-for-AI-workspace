@@ -7,7 +7,8 @@ This public repository is a governed AI workspace framework template.
 - Treat this repository as source for framework structure and policies only.
 - Keep credentials, private corpora, personal data, and provider state outside
   the repository.
-- `skills/` and `external-skills/` are empty extension layers in this release.
+- `skills/` and `external-skills/` are documentation-only extension layers in
+  this release, with no bundled skills.
 - Add downstream domain packages only after reviewing provenance, privacy,
   licensing, and deployment boundaries.
 

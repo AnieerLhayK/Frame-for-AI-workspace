@@ -6,7 +6,7 @@
 ## 边界
 
 - 不包含任何 character system 产品包。
-- `skills/` 与 `external-skills/` 只是空的扩展插槽。
+- `skills/` 与 `external-skills/` 仅包含说明性扩展插槽，不包含任何 skill。
 - 不包含私人语料、个人角色、既有第三方 skill 或运行时记忆。
 - 不提供现成角色，也不替任何模型或平台配置凭据。
 

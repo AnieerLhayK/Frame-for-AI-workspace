@@ -256,7 +256,24 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
     if errors:
         raise ValueError("; ".join(errors))
     write_record(path, record)
+    try:
+        from scripts.task_ledger import upsert_task_record
+    except ImportError:
+        from task_ledger import upsert_task_record
+
+    upsert_task_record(path, record)
     return record
+
+
+def sync_ledger(args: argparse.Namespace) -> dict[str, Any]:
+    """Backfill finalized records into the human-readable task ledger."""
+    try:
+        from scripts.task_ledger import sync_records
+    except ImportError:
+        from task_ledger import sync_records
+
+    synced = sync_records(task_id=args.task_id, day=args.date)
+    return {"synced": synced, "count": len(synced)}
 
 
 def records() -> list[dict[str, Any]]:
@@ -298,6 +315,9 @@ def main() -> int:
     p.add_argument("--currency-cost", type=float)
     p = sub.add_parser("show")
     p.add_argument("task_id")
+    p = sub.add_parser("sync-ledger", help="Backfill finalized records into the task ledger.")
+    p.add_argument("--task-id")
+    p.add_argument("--date", help="ISO date (YYYY-MM-DD) for backfill")
     sub.add_parser("summary")
     sub.add_parser("validate")
     args = parser.parse_args()
@@ -312,6 +332,8 @@ def main() -> int:
             output = finalize(args)
         elif args.action == "show":
             _, output = read_record(args.task_id)
+        elif args.action == "sync-ledger":
+            output = sync_ledger(args)
         elif args.action == "validate":
             failures = {
                 item["task_id"]: validate_record(item)

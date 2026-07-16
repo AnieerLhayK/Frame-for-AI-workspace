@@ -97,6 +97,26 @@ surface_classes:
     path_patterns:
       - "**"
 
+# Public repositories generated from this workspace are external artifacts, but
+# their publishers are narrower than general environment access. Any publisher
+# invocation must target one declared staging checkout and one declared remote.
+managed_platform_publishers:
+  frame_for_ai_workspace:
+    publisher_script: scripts/sync_public_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/Frame-for-AI-workspace
+    remote_urls:
+      - git@github.com:AnieerLhayK/Frame-for-AI-workspace.git
+  chatty_ch_system:
+    publisher_script: scripts/sync_chatty_ch_system_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/Chatty-Ch-System
+    remote_urls:
+      - git@github.com:AnieerLhayK/Chatty-Ch-System.git
+  qq_chat_raw_filter:
+    publisher_script: scripts/sync_qq_raw_filter_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/qq-chat-raw-filter
+    remote_urls:
+      - git@github.com:AnieerLhayK/qq-chat-raw-filter.git
+
 change_risk_policy:
   elevated_path_patterns:
     - AGENTS.md

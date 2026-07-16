@@ -52,6 +52,14 @@ def absolute_path_is_within(value: str, root: str) -> bool:
     return absolute_path_relative_to(value, root) is not None
 
 
+def absolute_paths_equal(left: str, right: str) -> bool:
+    """Compare Windows or POSIX absolute paths without relying on this host."""
+    return (
+        absolute_path_relative_to(left, right) == ""
+        and absolute_path_relative_to(right, left) == ""
+    )
+
+
 def absolute_path_relative_to(value: str, root: str) -> str | None:
     value_windows = PureWindowsPath(value)
     root_windows = PureWindowsPath(root)
@@ -603,12 +611,39 @@ def effective_registration(
     }
 
 
+def managed_platform_publisher(
+    policy: dict[str, Any], publisher_id: str
+) -> dict[str, Any] | None:
+    """Return one declared external platform publisher, if it is valid enough to use."""
+    publishers = policy.get("managed_platform_publishers", {})
+    if not isinstance(publishers, dict):
+        return None
+    publisher = publishers.get(publisher_id)
+    if not isinstance(publisher, dict):
+        return None
+    return publisher
+
+
 def classify_path(
     policy: dict[str, Any],
     manifest: dict[str, Any],
     raw_path: str,
-) -> dict[str, str]:
+) -> dict[str, Any]:
     value = raw_path.strip().strip("\"'")
+    for publisher_id, publisher in policy.get("managed_platform_publishers", {}).items():
+        if not isinstance(publisher, dict):
+            continue
+        staging_path = str(publisher.get("staging_path", ""))
+        if staging_path and absolute_path_relative_to(value, staging_path) is not None:
+            return {
+                "surface": "platform_projection",
+                "required_capability": "platform_write",
+                "path": value,
+                "workspace_relative": "",
+                "platform": "managed_public_publisher",
+                "publisher": str(publisher_id),
+                "requires_external_write": True,
+            }
     for platform, root_value in manifest.get("platform_roots", {}).items():
         if absolute_path_relative_to(value, str(root_value)) is not None:
             return {
@@ -617,6 +652,8 @@ def classify_path(
                 "path": value,
                 "workspace_relative": "",
                 "platform": str(platform),
+                "publisher": "",
+                "requires_external_write": False,
             }
 
     relative: str | None = None
@@ -638,6 +675,8 @@ def classify_path(
                 "path": value,
                 "workspace_relative": "",
                 "platform": "",
+                "publisher": "",
+                "requires_external_write": False,
             }
     else:
         absolute = (WORKSPACE_ROOT / Path(value)).resolve()
@@ -648,6 +687,8 @@ def classify_path(
                 "path": str(absolute),
                 "workspace_relative": "",
                 "platform": "",
+                "publisher": "",
+                "requires_external_write": False,
             }
         relative = absolute.relative_to(WORKSPACE_ROOT).as_posix()
 
@@ -660,6 +701,8 @@ def classify_path(
             "path": str(absolute),
             "workspace_relative": "",
             "platform": "",
+            "publisher": "",
+            "requires_external_write": False,
         }
 
     for surface in policy.get("surface_classes", []):
@@ -673,8 +716,81 @@ def classify_path(
                     "path": str(absolute),
                     "workspace_relative": relative,
                     "platform": "",
+                    "publisher": "",
+                    "requires_external_write": False,
                 }
     raise ValueError(f"No surface classification for {relative}")
+
+
+def check_managed_platform_publish(
+    policy: dict[str, Any],
+    manifest: dict[str, Any],
+    *,
+    publisher_id: str,
+    publisher_script: str,
+    agent_name: str,
+    record_id: str,
+    staging_path: str,
+    remote_url: str,
+    registry: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Authorize an exact managed public-repository publication target."""
+    publisher = managed_platform_publisher(policy, publisher_id)
+    if publisher is None:
+        return {
+            "status": "DENY",
+            "publisher": publisher_id,
+            "reason": "publisher is not registered in agent_governance.yaml",
+        }
+
+    expected_staging = str(publisher.get("staging_path", ""))
+    expected_script = normalize_relative(str(publisher.get("publisher_script", "")))
+    allowed_remotes = {
+        str(value) for value in publisher.get("remote_urls", []) if str(value)
+    }
+    if not expected_script or normalize_relative(publisher_script) != expected_script:
+        return {
+            "status": "DENY",
+            "publisher": publisher_id,
+            "reason": "publisher script does not match the registered publisher",
+        }
+    if not expected_staging or not absolute_paths_equal(staging_path, expected_staging):
+        return {
+            "status": "DENY",
+            "publisher": publisher_id,
+            "reason": "push staging path must exactly match the registered publisher",
+        }
+    if remote_url not in allowed_remotes:
+        return {
+            "status": "DENY",
+            "publisher": publisher_id,
+            "reason": "push remote URL is not registered for this publisher",
+        }
+
+    try:
+        registration = active_registration(record_id, "external_write")
+    except ValueError as error:
+        return {
+            "status": "DENY",
+            "publisher": publisher_id,
+            "reason": f"task registration denied: {error}",
+        }
+
+    authorization = check_access(
+        policy,
+        manifest,
+        registry=registry,
+        agent_name=agent_name,
+        operation="write",
+        raw_path=staging_path,
+    )
+    authorization["publisher"] = publisher_id
+    authorization["task_registration"] = registration
+    if authorization["status"] != "ALLOW":
+        authorization["reason"] = (
+            "managed publisher authorization denied: " + authorization["reason"]
+        )
+    return authorization
 
 
 def validate_lease(
@@ -1397,7 +1513,10 @@ def main() -> int:
                             args.record_id,
                             (
                                 "external_write"
-                                if target["surface"] == "external_environment"
+                                if (
+                                    target["surface"] == "external_environment"
+                                    or target.get("requires_external_write")
+                                )
                                 else "workspace_write"
                             ),
                         )

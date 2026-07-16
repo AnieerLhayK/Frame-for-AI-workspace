@@ -6,8 +6,9 @@ from pathlib import Path
 
 from scripts.publish_check import (
     EXPECTED_DOCS,
-    REQUIRED_EMPTY_LAYERS,
+    REQUIRED_EXTENSION_LAYER_FILES,
     REQUIRED_PATHS,
+    check_extension_layers,
     check_forbidden_paths,
     run_functional_checks,
     run_tests,
@@ -15,6 +16,7 @@ from scripts.publish_check import (
 from scripts.publish_public import (
     EXCLUDED_PATHS,
     SCRUB_FILES,
+    EXTENSION_LAYER_READMES,
     generate_beginner_guide_md,
     generate_public_manifest,
     generate_public_readme,
@@ -23,6 +25,7 @@ from scripts.publish_public import (
     scrub_content,
 )
 from scripts.sync_public_repo import cleanup_staging
+from scripts import sync_public_repo
 
 
 AI_ROOT = "D:" + r"\\AI"
@@ -69,9 +72,14 @@ class PublicPublishTests(unittest.TestCase):
     def test_public_release_excludes_claude_local_settings(self) -> None:
         self.assertIn(".claude/settings.local.json", EXCLUDED_PATHS)
 
-    def test_public_frame_excludes_character_system_and_keeps_empty_skill_layers(self) -> None:
+    def test_public_frame_excludes_character_system_and_keeps_documented_skill_layers(self) -> None:
         self.assertIn("packages/character-system", EXCLUDED_PATHS)
-        self.assertEqual(REQUIRED_EMPTY_LAYERS, {"skills", "external-skills"})
+        self.assertEqual(
+            REQUIRED_EXTENSION_LAYER_FILES,
+            {"skills": {"README.md"}, "external-skills": {"README.md"}},
+        )
+        self.assertIn("does not bundle", EXTENSION_LAYER_READMES["skills"])
+        self.assertIn("does not bundle", EXTENSION_LAYER_READMES["external-skills"])
 
     def test_public_manifest_has_no_private_packages_or_skills(self) -> None:
         manifest = generate_public_manifest(Path("workspace_manifest.yaml"))
@@ -83,7 +91,19 @@ class PublicPublishTests(unittest.TestCase):
     def test_public_readme_states_framework_boundary(self) -> None:
         readme = generate_public_readme("Frame-for-AI-workspace")
         self.assertIn("No `character-system` package is bundled", readme)
-        self.assertIn("`skills/` and `external-skills/` are empty", readme)
+        self.assertIn("documentation-only extension", readme)
+
+    def test_extension_layer_check_allows_only_readme_placeholders(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for layer in REQUIRED_EXTENSION_LAYER_FILES:
+                (root / layer).mkdir()
+                (root / layer / "README.md").write_text("placeholder\n", encoding="utf-8")
+
+            self.assertEqual(check_extension_layers(root), [])
+
+            (root / "skills" / "SKILL.md").write_text("not allowed\n", encoding="utf-8")
+            self.assertIn("skills/", check_extension_layers(root)[0])
 
     def test_claude_notification_hermes_client_is_scrubbed(self) -> None:
         self.assertIn(
@@ -182,6 +202,10 @@ class PublicPublishTests(unittest.TestCase):
             cleanup_staging(str(custom))
 
             self.assertTrue(custom.exists())
+
+    def test_frame_sync_requires_a_task_record(self) -> None:
+        with self.assertRaises(SystemExit):
+            sync_public_repo.build_parser().parse_args([])
 
 
 if __name__ == "__main__":

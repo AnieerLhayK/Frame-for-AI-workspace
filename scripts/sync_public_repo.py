@@ -29,13 +29,29 @@ import shutil
 import stat
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
+try:
+    from scripts.agent_governance import (
+        POLICY_PATH,
+        check_managed_platform_publish,
+        load_manifest,
+        load_registry,
+        load_yaml,
+    )
+except ModuleNotFoundError:  # Direct execution
+    from agent_governance import (
+        POLICY_PATH,
+        check_managed_platform_publish,
+        load_manifest,
+        load_registry,
+        load_yaml,
+    )
+
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_STAGING_ROOT = Path(
-    os.environ.get("AI_TOOL_STAGING_DIR", str(Path(tempfile.gettempdir()) / "ai-workspace-staging"))
-)
+PUBLISHER_ID = "frame_for_ai_workspace"
+PUBLISHER_SCRIPT = "scripts/sync_public_repo.py"
+DEFAULT_STAGING_ROOT = Path(r"${DATA_ROOT}/codex\cache\staging")
 STAGING_DIR = os.environ.get(
     "PUBLIC_STAGING_DIR",
     str(DEFAULT_STAGING_ROOT / "Frame-for-AI-workspace"),
@@ -248,7 +264,28 @@ def push_to_remote(staging: str) -> bool:
     return True
 
 
-def main() -> int:
+def require_managed_publish_authorization(
+    record_id: str,
+    staging: str,
+    remote_url: str,
+    agent: str,
+) -> None:
+    authorization = check_managed_platform_publish(
+        load_yaml(POLICY_PATH),
+        load_manifest(),
+        registry=load_registry(),
+        publisher_id=PUBLISHER_ID,
+        publisher_script=PUBLISHER_SCRIPT,
+        agent_name=agent,
+        record_id=record_id,
+        staging_path=staging,
+        remote_url=remote_url,
+    )
+    if authorization["status"] != "ALLOW":
+        raise ValueError(authorization["reason"])
+
+
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Regenerate and push the public workspace skeleton repo."
     )
@@ -272,6 +309,8 @@ def main() -> int:
         "--remote-url", default=REMOTE_URL,
         help=f"Public repository URL (default: {REMOTE_URL})",
     )
+    parser.add_argument("--record-id", required=True, help="Active external_write task record.")
+    parser.add_argument("--agent", default="codex", help="Registered publishing agent.")
     parser.add_argument(
         "--force-dirty", action="store_true",
         help="Allow sync even with uncommitted workspace changes.",
@@ -283,7 +322,19 @@ def main() -> int:
             "a local deployment and must be deleted after inspection."
         ),
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+
+    try:
+        require_managed_publish_authorization(
+            args.record_id, args.staging_dir, args.remote_url, args.agent
+        )
+    except ValueError as error:
+        print(f"[FAIL] managed publisher authorization: {error}", file=sys.stderr)
+        return 2
 
     print("=" * 54)
     print("  Public Workspace Sync")
