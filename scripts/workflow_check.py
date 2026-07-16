@@ -8,9 +8,11 @@ from typing import Any, Callable, Sequence
 
 try:
     from scripts.plan_change_surface import resolve_task
+    from scripts.task_records import active_registration
     from scripts.verify_change_scope import WORKSPACE_ROOT, verify_changes
 except ModuleNotFoundError:  # Direct execution
     from plan_change_surface import resolve_task
+    from task_records import active_registration
     from verify_change_scope import WORKSPACE_ROOT, verify_changes
 
 
@@ -31,6 +33,7 @@ def check_workflow(
     task_id: str,
     bindings: list[str],
     *,
+    record_id: str | None = None,
     include_staged: bool = True,
     include_untracked: bool = True,
     agent_id: str | None = None,
@@ -38,6 +41,15 @@ def check_workflow(
     command_runner: CommandRunner = run_command,
 ) -> dict[str, Any]:
     task = resolve_task(task_id, bindings)
+    registration: dict[str, Any] | None = None
+    registration_error: str | None = None
+    if record_id:
+        try:
+            registration = active_registration(record_id, "workspace_write")
+        except ValueError as error:
+            registration_error = str(error)
+    else:
+        registration_error = "--record-id is required for a mutating workspace task"
     verification = verify_changes(
         task_id,
         bindings,
@@ -46,6 +58,7 @@ def check_workflow(
         agent_id=agent_id,
         acting_skill=acting_skill,
         task_resolver=lambda *_: task,
+        additional_write_scope=[registration["path"]] if registration else [],
     )
     diff_checks = [command_runner(["git", "diff", "--check"])]
     if include_staged:
@@ -61,6 +74,8 @@ def check_workflow(
 
     errors = list(verification.get("errors", []))
     warnings = list(verification.get("warnings", []))
+    if registration_error:
+        errors.append(registration_error)
     if not diff_check_passed:
         errors.append(
             diff_check_output or "git diff --check failed"
@@ -71,6 +86,8 @@ def check_workflow(
     return {
         "status": status,
         "task_id": task_id,
+        "record_id": record_id,
+        "registration": registration,
         "branch": verification.get("branch"),
         "agent_id": agent_id,
         "acting_skill": acting_skill,
@@ -111,6 +128,7 @@ def check_workflow(
             "read Git change state",
             "verified task write scope",
             "ran git diff --check",
+            "checked active task registration",
         ],
         "write_actions_performed": [],
     }
@@ -119,6 +137,7 @@ def check_workflow(
 def render_text(payload: dict[str, Any]) -> None:
     print(f"Workflow check: {payload['status']}")
     print(f"Task: {payload['task_id']}")
+    print(f"Task record: {payload.get('record_id') or 'missing'}")
     print(f"Branch: {payload['branch']}")
     if payload.get("agent_id"):
         print(f"Agent: {payload['agent_id']}")
@@ -149,6 +168,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Run a read-only pre-commit workflow check for one task."
     )
     parser.add_argument("task_id")
+    parser.add_argument("--record-id", required=True)
     parser.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument("--strict", action="store_true")
@@ -173,6 +193,7 @@ def main() -> int:
         payload = check_workflow(
             args.task_id,
             args.bind,
+            record_id=args.record_id,
             include_staged=args.include_staged,
             include_untracked=args.include_untracked,
             agent_id=args.agent,

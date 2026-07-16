@@ -1,5 +1,14 @@
 $ErrorActionPreference = "Stop"
 
+try {
+    [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+    [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+    $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+}
+catch {
+    # Encoding setup must never break a Claude Code hook.
+}
+
 function Get-StateDir {
     return (Join-Path $env:TEMP "claude-code-notifications")
 }

@@ -1,0 +1,141 @@
+schema_version: "0.1"
+purpose: "Low-status registry for potential workspace integration improvements that are not active todo items."
+
+rules:
+  - "Use this file for reusable improvement options that are plausible but not ready to become PROJECT_CONTEXT/todo/ or enforceable policy."
+  - "Check it when a new issue resembles a previously noticed integration gap."
+  - "Promote an option to task routing, shared policy, tooling, or todo only when current evidence makes it actionable."
+  - "Keep entries brief; this is a retrieval aid, not a design document."
+
+statuses:
+  candidate: "Worth remembering; no committed implementation plan yet."
+  active: "Being implemented in the current task."
+  implemented: "Implemented in workspace rules, routing, docs, or tooling."
+  rejected: "Considered and intentionally not pursued."
+
+options:
+  - id: "OPT-20260703-001"
+    title: "Markdown zh-CN companion synchronization"
+    status: "implemented"
+    trigger_when:
+      - "A Markdown usage guide, prompt template, or project-context doc has a same-name .zh-CN.md companion."
+      - "A developer notices that an English doc update left a Chinese companion stale."
+    current_resolution:
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml tracks registered pairs and watched directories."
+      - "AGENTS.md requires checking that registry for Markdown edits."
+      - "scripts/check_doc_pairs.py reports changed registered primaries whose companions were not changed."
+    related_files:
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml"
+      - "scripts/check_doc_pairs.py"
+
+  - id: "OPT-20260703-002"
+    title: "Capture direct developer adjustments before they become residual drift"
+    status: "implemented"
+    trigger_when:
+      - "The user or a developer says a rule should be remembered for future work."
+      - "A useful adjustment exists only in conversation or a one-off edit, with no route or policy home."
+    current_resolution:
+      - "AGENTS.md instructs agents to encode reusable guidance in the smallest owning layer or record it here."
+      - "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml keeps low-status candidates outside the active todo list."
+      - "PROJECT_CONTEXT/knowledge_registry.yaml registers this file for bounded retrieval."
+    related_files:
+      - "AGENTS.md"
+      - "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml"
+      - "PROJECT_CONTEXT/knowledge_registry.yaml"
+
+  - id: "OPT-20260703-003"
+    title: "First-class conversational character-generator intake"
+    status: "candidate"
+    trigger_when:
+      - "Users provide character build information in chat and should not edit JSON directly."
+      - "A build still requires an agent-created temporary intake file to call `build_character.py --intake`."
+    potential_resolution:
+      - "Add a supported CLI or agent-facing wrapper that accepts structured conversational intake directly and writes private plans only as an internal implementation detail."
+      - "Keep required-field checks, optional-field warnings, and safe defaults as the public contract rather than exposing the private JSON shape."
+    related_files:
+      - "packages/character-system/engineering/generation/character-generator/scripts/build_character.py"
+      - "packages/character-system/engineering/generation/character-generator/scripts/intake_plan.py"
+      - "packages/character-system/engineering/generation/character-generator/docs/interface_design.md"
+
+  - id: "OPT-20260703-004"
+    title: "Generated character promotion path from ignored draft to maintained runtime skill"
+    status: "candidate"
+    trigger_when:
+      - "A generated character under `character-generator/characters/` becomes stable enough for runtime use or style maintenance."
+      - "The user wants to tune a generated character without losing changes on regeneration."
+    potential_resolution:
+      - "Define a reviewable promotion workflow from ignored generated output to `packages/character-system/runtime/characters/<id>`."
+      - "After promotion, register manifest exposure and route future tuning through style-doctor and character-maintainer instead of regenerating over manual patches."
+      - "Keep private raw corpus and unreviewed generated drafts out of Git until privacy review passes."
+    related_files:
+      - "packages/character-system/engineering/generation/character-generator/.gitignore"
+      - "packages/character-system/runtime/characters/"
+      - "workspace_manifest.yaml"
+      - "packages/character-system/shared/character_skill_spec.md"
+
+  - id: "OPT-20260703-005"
+    title: "Dedicated friend-chat task contract instead of overloading discussion"
+    status: "candidate"
+    trigger_when:
+      - "A character is mainly intended for natural friend chat rather than generic bounded discussion."
+      - "Generated prompts need to distinguish casual companionship, critique, reflection, and ordinary discussion."
+    potential_resolution:
+      - "Evaluate whether `friend_chat` should become a first-class `target_tasks` enum or a structured sub-mode of `discussion`."
+      - "Update schemas, templates, validation cases, and task routing only if repeated generated characters need this distinction."
+    related_files:
+      - "packages/character-system/engineering/generation/character-generator/schemas/character_config.schema.json"
+      - "packages/character-system/engineering/generation/character-generator/templates/prompt_discussion.template.md"
+      - "packages/character-system/engineering/generation/character-generator/templates/task_recipes.template.md"
+      - "packages/character-system/engineering/generation/character-generator/tests/"
+
+  - id: "OPT-20260703-006"
+    title: "Machine-readable source README contract for corpus planning"
+    status: "candidate"
+    trigger_when:
+      - "A source README contains rules such as speaker identity, context note handling, worklist expansion, or normalization preferences."
+      - "The generator relies on generic heuristics instead of a source-local machine-readable contract."
+    potential_resolution:
+      - "Define an optional small YAML frontmatter/block for source README files that declares source role, speaker rules, context-note policy, worklist expansion, and privacy notes."
+      - "Keep prose README useful for humans while letting generator ingest exact per-source rules without guessing from text."
+    related_files:
+      - "WORKSPACE_ENGINEERING/skill_engineering/personal_corpus_preparation.md"
+      - "packages/character-system/engineering/generation/character-generator/scripts/ingest_corpus.py"
+      - "packages/character-system/engineering/generation/character-generator/docs/workflow.md"
+
+  - id: "OPT-20260703-007"
+    title: "Improve Chinese style extraction beyond naive character n-grams"
+    status: "candidate"
+    trigger_when:
+      - "Generated style references show rough high-frequency fragments or topic candidates that are artifacts of Chinese tokenization."
+      - "Multiple Chinese character builds need better signal separation between style, topic, and formatting residue."
+    potential_resolution:
+      - "Add a lightweight Chinese segmentation or phrase-filtering layer, or make high-frequency term reporting less prominent until validated."
+      - "Keep privacy-safe summaries and avoid adding heavyweight dependencies unless repeated builds justify them."
+    related_files:
+      - "packages/character-system/engineering/generation/character-generator/scripts/corpus_stats.py"
+      - "packages/character-system/engineering/generation/character-generator/scripts/extract_style.py"
+      - "packages/character-system/engineering/generation/character-generator/templates/style_profile.template.md"
+
+  - id: "OPT-20260703-008"
+    title: "Separate platform skill discovery surfaces to avoid cross-platform leakage"
+    status: "candidate"
+    trigger_when:
+      - "OpenCode `/skill` lists skills that were intended only for Claude or path-based inspection."
+      - "Generated character drafts under `character-generator/characters/` appear as runnable platform skills before runtime promotion."
+      - "A platform scans another platform's projection root, such as OpenCode discovering `.claude/skills/**/SKILL.md`."
+    observed_issue:
+      - "OpenCode 1.17.13 discovers project/global skill roots including `.claude/skills` and recursively scans for `SKILL.md`."
+      - "`opencode debug skill` showed `character-generator`, `character-maintainer`, `writera-style`, and `zf-style` through `${WORKSPACE_ROOT}/.claude/skills/...` even though only `style-doctor` and `zyc` were configured in the OpenCode skill root."
+      - "`zf-style` was discovered from `${WORKSPACE_ROOT}/.claude/skills/character-generator/characters/zf/SKILL.md`; this does not mean zf has been promoted to runtime, only that a generated draft was visible through a scanned projection tree."
+    potential_resolution:
+      - "If this becomes disruptive, move Claude projection roots outside `${WORKSPACE_ROOT}` or configure OpenCode to avoid Claude-compatible skill discovery when working in this repo."
+      - "Consider keeping generated character drafts out of any platform-scanned projection tree until they are promoted to runtime."
+      - "Alternatively, document this as acceptable low-risk visibility while preserving authority boundaries through manifest roles and OpenCode governance."
+    current_decision:
+      - "No immediate fix. The user judged the current behavior acceptable for now; record the issue for future platform-exposure cleanup."
+    related_files:
+      - "workspace_manifest.yaml"
+      - ".claude/skills/"
+      - "opencode.json"
+      - ".opencode/plugins/workspace-governance.js"
+      - "packages/character-system/engineering/generation/character-generator/characters/"

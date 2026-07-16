@@ -9,6 +9,8 @@ governance, manifests, projections, or runtime character files. Character
 drift routes through style-doctor, then diagnosis/handoff, then
 character-maintainer. When structural work is needed, create an agent request
 for Codex or Claude. These rules apply only while this project config is active.
+This host has no per-write task-record adapter, so all writes are fail-closed
+until that adapter can require an active WORKSPACE_TASK_RECORD.
 """
 
 [skills]
@@ -19,20 +21,7 @@ paths = [
 
 [permissions]
 mode = "deny"
-allow = [
-  "write_file(packages/character-system/reports/runtime-loop/diagnoses/*)",
-  "write_file(packages/character-system/reports/runtime-loop/handoffs/*)",
-  "write_file(reports/reasonix/*)",
-  "write_file(reports/agent-requests/*)",
-  "edit_file(packages/character-system/reports/runtime-loop/diagnoses/*)",
-  "edit_file(packages/character-system/reports/runtime-loop/handoffs/*)",
-  "edit_file(reports/reasonix/*)",
-  "edit_file(reports/agent-requests/*)",
-  "multi_edit(packages/character-system/reports/runtime-loop/diagnoses/*)",
-  "multi_edit(packages/character-system/reports/runtime-loop/handoffs/*)",
-  "multi_edit(reports/reasonix/*)",
-  "multi_edit(reports/agent-requests/*)",
-]
+allow = []
 deny = [
   "write_file(workspace_manifest.yaml)",
   "write_file(AGENTS.md)",

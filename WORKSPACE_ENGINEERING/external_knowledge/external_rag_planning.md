@@ -510,7 +510,7 @@ Design (do not implement):
 | File | Change |
 |------|--------|
 | `PROJECT_CONTEXT/knowledge_registry.yaml` | Add topic for `external_knowledge_planning` |
-| `PROJECT_CONTEXT/todo.md` | Add P2 entry for external knowledge evaluation |
+| `PROJECT_CONTEXT/todo/workspace-optimization.md` | Add P2 entry for external knowledge evaluation |
 | `PROJECT_CONTEXT/task_ledger.md` | Record this planning task |
 | `PROJECT_CONTEXT/current_status.md` | Add note that RAG planning is in evaluation |
 | `WORKSPACE_ENGINEERING/README.md` | Add `external_knowledge/` to book structure |
@@ -625,7 +625,7 @@ Token savings should be measured empirically (using the existing
    variant（~30分钟）。
 2. **为 10–15 个高频 task-id 添加 `use_when_zh` 注释**（~20分钟）。
 3. **在 `AGENTS.md` 中添加 task suggest 兜底指令**（~5分钟）。
-4. **在 `PROJECT_CONTEXT/todo.md` 中添加 P2: 外部知识库评估**。
+4. **在 `PROJECT_CONTEXT/todo/workspace-optimization.md` 中添加 P2: 外部知识库评估**。
 5. **完成以上 P0 步骤后，标记本文为 `Validated locally` 状态。**
 
 ---

@@ -20,6 +20,24 @@ Related skills may be grouped under `packages[]`; unrelated skills may live
 under `skills/`. Package and skill source paths remain workspace-relative and
 must not encode platform ownership.
 
+## External Skill Lifecycle
+
+Raw external skill repositories are research inputs, not workspace source. Their
+root is declared by `workspace_manifest.yaml -> external_roots.raw_skills` and
+remains outside this Git tree.
+
+`external-skills/` is a tracked curation layer for skills that have been
+reviewed and adapted for this workspace. It is intentionally distinct from
+`skills/`: `skills/` contains workspace-native standalone skills, while
+`external-skills/<function>/<skill-id>/` contains adapted external skills.
+Do not place raw clones in either source layer.
+
+Every newly discovered raw skill must first be recorded in
+`PROJECT_CONTEXT/todo/external-skills.md`. Before an adapted skill is treated
+as usable, record provenance and license notes, applicability limits, local
+adaptation decisions, validation results, manifest registration, and any
+platform exposure. Discovery alone never grants runtime exposure.
+
 ## Platform Directories
 
 Platform directories are declared by:
@@ -70,6 +88,26 @@ An execution mode grants no additional role authority. For example, `record_writ
 
 ## Agent Governance
 
+## Task Registration Before Mutation
+
+Every workspace-source mutation and every external-environment mutation that
+is initiated through this workspace requires an active task outcome record.
+Create it before the first mutation with `workspace records start`; declare
+`workspace_write`, and also declare `external_write` when applicable. Pure
+read-only work is exempt.
+
+The record ID is distinct from the routed task ID. Pass it to every write gate:
+
+```powershell
+workspace agent check --agent <agent> --path <target> --record-id <TASK-ID>
+workspace workflow check <route> --record-id <TASK-ID>
+```
+
+The workflow check must run while the record is active, before it is finalized.
+Adapters that can intercept tool writes must require the same ID; an adapter
+without a per-write interception seam must fail closed for mutations or be
+documented as an unsupported write path.
+
 Skill authority and agent authority are separate checks. A skill may allow
 `record_write`, but the invoking agent must also be permitted to write the
 target workspace surface.
@@ -87,7 +125,8 @@ shared/agent_governance_policy.md
 shared/agent_governance.yaml
 ```
 
-Use `workspace agent check` before an agent writes outside its normal role.
+Use `workspace agent check --record-id <TASK-ID>` before an agent writes
+outside its normal role.
 Denied structural work should become a change request, not an improvised
 registration edit.
 

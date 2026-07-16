@@ -41,6 +41,7 @@ REQUIRED_CLAUDE_BOUNDARY_PATHS = (
 )
 CLAUDE_MODEL_ROUTING_POLICY = "shared/claude/policies/model-routing-policy.md"
 CLAUDE_MODEL_ROUTING_TOGGLE = ".claude/model-routing-advice.json"
+CLAUDE_MODEL_ROUTING_LOCAL_TOGGLE = ".claude/model-routing-advice.local.json"
 HERMES_HOME = Path(os.environ.get("HERMES_HOME", r"${DATA_ROOT}/hermes"))
 HERMES_GUARD_SCRIPT = SCRIPTS_DIR / "hermes_workspace_guard.py"
 
@@ -216,8 +217,10 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
     claude_path = root / "CLAUDE.md"
     policy_path = root / CLAUDE_MODEL_ROUTING_POLICY
     toggle_path = root / CLAUDE_MODEL_ROUTING_TOGGLE
+    local_toggle_path = root / CLAUDE_MODEL_ROUTING_LOCAL_TOGGLE
     findings: list[str] = []
     toggle_enabled: bool | None = None
+    local_toggle_enabled: bool | None = None
     try:
         claude_text = claude_path.read_text(encoding="utf-8-sig")
         policy_text = policy_path.read_text(encoding="utf-8-sig")
@@ -233,6 +236,15 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
     except (OSError, ValueError) as exc:
         findings.append(f"model-routing toggle could not be read: {exc}")
         toggle = {}
+    try:
+        local_toggle = (
+            json.loads(local_toggle_path.read_text(encoding="utf-8-sig"))
+            if local_toggle_path.exists()
+            else {}
+        )
+    except (OSError, ValueError) as exc:
+        findings.append(f"model-routing local toggle could not be read: {exc}")
+        local_toggle = {}
 
     if toggle:
         if toggle.get("interface_version") != 1:
@@ -241,22 +253,39 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
             findings.append("model-routing toggle enabled field must be boolean")
         else:
             toggle_enabled = toggle["enabled"]
+    if local_toggle:
+        if local_toggle.get("interface_version") != 1:
+            findings.append("model-routing local toggle interface_version must be 1")
+        if not isinstance(local_toggle.get("enabled"), bool):
+            findings.append("model-routing local toggle enabled field must be boolean")
+        else:
+            local_toggle_enabled = local_toggle["enabled"]
+
+    effective_toggle_enabled = (
+        local_toggle_enabled if local_toggle_enabled is not None else toggle_enabled
+    )
 
     normalized_claude = " ".join(claude_text.split())
     normalized_policy = " ".join(policy_text.split())
 
-    if f"@{CLAUDE_MODEL_ROUTING_POLICY}" not in claude_text:
-        findings.append("CLAUDE.md does not include the shared model-routing policy")
+    if f"@{CLAUDE_MODEL_ROUTING_POLICY}" in claude_text:
+        findings.append("CLAUDE.md statically imports the shared model-routing policy")
     if "model-routing guidance as a visible recommendation only" not in normalized_claude:
         findings.append("CLAUDE.md does not state that model routing is recommendation-only")
     if CLAUDE_MODEL_ROUTING_TOGGLE not in normalized_claude:
         findings.append("CLAUDE.md does not document the model-routing advice toggle")
+    if CLAUDE_MODEL_ROUTING_LOCAL_TOGGLE not in normalized_claude:
+        findings.append("CLAUDE.md does not document the model-routing local override")
+    if "Flash sufficient" in normalized_claude or "Recommend Pro" in normalized_claude:
+        findings.append("CLAUDE.md contains static model-routing output markers")
 
     required_policy_markers = {
         "## 执行时机（强制）": "execution timing section is missing",
         "## Manual Toggle": "manual toggle section is missing",
         CLAUDE_MODEL_ROUTING_TOGGLE: "manual toggle path is missing",
+        CLAUDE_MODEL_ROUTING_LOCAL_TOGGLE: "manual local override path is missing",
         '"enabled": false': "manual toggle disabled state is missing",
+        "--scope tracked": "tracked default update command is missing",
         "advice injection and pre-tool enforcement": "manual toggle boundary is missing",
         "## First Response Format": "first response format section is missing",
         "same Claude Code session": "same-session reassessment rule is missing",
@@ -271,8 +300,13 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
         "prompt_registry.yaml": "workspace registry conflict Pro example is missing",
         "任务复杂度评估：Flash sufficient": "low-risk first response format is missing",
         "任务复杂度评估：Recommend Pro": "high-risk first response format is missing",
+        "Recommend Pro deferred": "late-stage deferred Pro format is missing",
+        "Recommend Pro active": "active Pro format is missing",
+        "current session is already using Pro": "active Pro continuation rule is missing",
+        "remaining work is about 20% or less": "late-stage remaining-work rule is missing",
         "pause after the visible recommendation": "high-risk model recommendation pause is missing",
         "continue with the current model": "current-model continuation rule is missing",
+        "Pro follow-up": "deferred Pro final follow-up rule is missing",
         "权限边界：模型建议不改变 write scope": "model recommendation boundary message is missing",
         "## Authority Boundary": "authority boundary section is missing",
         "It must never be satisfied by editing LiteLLM configuration": (
@@ -297,9 +331,14 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
         "PASS",
         (
             "Claude model-routing recommendations are "
-            f"{'enabled' if toggle_enabled is not False else 'disabled by toggle'} and non-authorizing."
+            f"{'enabled' if effective_toggle_enabled is not False else 'disabled by toggle'} and non-authorizing."
         ),
-        {"toggle_enabled": toggle_enabled},
+        {
+            "toggle_enabled": effective_toggle_enabled,
+            "tracked_toggle_enabled": toggle_enabled,
+            "local_toggle_enabled": local_toggle_enabled,
+            "static_prompt_layer_clean": True,
+        },
     )
 
 
@@ -568,6 +607,8 @@ def check_tests(
             "discover",
             "-s",
             str(SCRIPTS_DIR / "tests"),
+            "-t",
+            str(WORKSPACE_ROOT),
             "-p",
             "test_*.py",
         ]

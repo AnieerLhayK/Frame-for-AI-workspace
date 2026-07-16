@@ -36,11 +36,19 @@ workspace claude model-advice on
 workspace claude model-advice off
 ```
 
-The low-level switch file is:
+The tracked default switch file is:
 
 ```text
 ${WORKSPACE_ROOT}\.claude\model-routing-advice.json
 ```
+
+The machine-local override is:
+
+```text
+${WORKSPACE_ROOT}\.claude\model-routing-advice.local.json
+```
+
+The local override is ignored by Git and wins over the tracked default.
 
 Default state:
 
@@ -52,13 +60,23 @@ Default state:
 }
 ```
 
-`workspace claude model-advice off` sets `"enabled": false`. When disabled,
-Claude Code should not print model-tier assessments and the hook will not pause
-or block tool use for model advice. This does not change the active model,
+`workspace claude model-advice off` writes the local override with
+`"enabled": false`. When disabled, Claude Code should not print model-tier
+assessments, the hook will not inject routing context, and the hook will not
+pause or block tool use for model advice. This does not change the active model,
 LiteLLM, provider credentials, plugins, permissions, or Git rules.
 
-`workspace claude model-advice on` sets `"enabled": true` and restores the
-visible assessment and Pro pause behavior.
+`workspace claude model-advice on` writes the local override with
+`"enabled": true` and restores the visible assessment and Pro pause behavior.
+Use `--scope tracked` only when intentionally changing the repository default.
+
+`status` reports both layers:
+
+- `hook injection/enforcement`: whether the Claude hook will inject or block.
+- `static CLAUDE.md prompt layer`: whether static project instructions still
+  contain routing templates.
+- `Fully off`: `yes` only when the effective toggle is OFF, the hook is silent,
+  and `CLAUDE.md` has no static routing template.
 
 For another Claude Code project, use the same interface with an explicit root:
 
@@ -70,8 +88,10 @@ workspace claude model-advice off --project-root D:\path\to\project
 
 The CLI can create or update that project's toggle file, but a project also
 needs its own `.claude/settings.json` hook, model-routing hook script,
-`CLAUDE.md` rule, and policy reference before the switch affects Claude Code
-behavior. `status` reports those integration checks explicitly.
+and `CLAUDE.md` rule before the switch affects Claude Code behavior. Do not
+statically import the detailed routing policy from `CLAUDE.md`; the hook should
+inject the detailed policy only when the toggle is ON. `status` reports those
+integration checks explicitly.
 
 ## Start In The CNN Project
 

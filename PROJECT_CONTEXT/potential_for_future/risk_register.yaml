@@ -1,0 +1,73 @@
+schema_version: "0.1"
+purpose: "Low-status registry for potential structural, privacy, publication, and migration risks."
+
+rules:
+  - "Record a risk here when it is reusable and not yet an active incident or task."
+  - "Each entry needs a trigger, impact, current handling, and a clear owner or related path."
+  - "Promote a risk to an active task or enforceable policy when evidence makes action necessary."
+  - "Do not store private corpus excerpts, credentials, or volatile runtime logs."
+
+statuses:
+  candidate: "Known possibility; monitor until a trigger occurs."
+  observed: "Evidence exists; mitigation is not yet complete."
+  mitigated: "A durable control exists; verify it when the surrounding system changes."
+  accepted: "The tradeoff is intentional and documented."
+  retired: "The risk no longer applies or has moved to a more authoritative register."
+
+risks:
+  - id: "RISK-20260715-001"
+    title: "Public projection accidentally includes corpus-preparation tooling"
+    status: "mitigated"
+    trigger_when:
+      - "The Chatty public publisher recursively copies packages/character-system/engineering."
+      - "A new private or local-only engineering tool is added below that root."
+    impact:
+      - "Private path assumptions or local corpus-processing behavior can enter a public repository."
+    current_handling:
+      - "The Chatty publisher explicitly excludes corpus-preparation/qq-raw-material-filter."
+      - "The generated public projection checker rejects the excluded path."
+    related_files:
+      - "scripts/publish_chatty_ch_system.py"
+      - "scripts/publish_check_chatty_ch_system.py"
+
+  - id: "RISK-20260715-002"
+    title: "Subtree prefix changes can break standalone remote history"
+    status: "mitigated"
+    trigger_when:
+      - "A workspace-owned tool changes its local directory while its remote is published as a subtree."
+    impact:
+      - "A force push can disconnect or rewrite the remote repository history."
+    current_handling:
+      - "qq-chat-raw-filter uses a generated root projection and normal remote commits."
+      - "The sync script regenerates from the workspace source and does not use git subtree."
+    related_files:
+      - "scripts/publish_qq_raw_filter.py"
+      - "scripts/sync_qq_raw_filter_repo.py"
+
+  - id: "RISK-20260715-003"
+    title: "Path references drift after workspace package moves"
+    status: "candidate"
+    trigger_when:
+      - "A package or tool is moved without running repository-wide reference and CLI checks."
+    impact:
+      - "Documentation, task routing, tests, and publication commands can point to a deleted source."
+    current_handling:
+      - "Treat source moves as explicit migration tasks with pre-move and post-move reference scans."
+    related_files:
+      - "workspace_manifest.yaml"
+      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "shared/session_continuity_policy.md"
+
+  - id: "RISK-20260715-004"
+    title: "Concurrent task records contaminate migration baselines"
+    status: "observed"
+    trigger_when:
+      - "Another session creates an active task record while a migration is being staged."
+    impact:
+      - "A supposedly clean baseline contains unrelated untracked records or scope evidence."
+    current_handling:
+      - "Preserve the concurrent record and keep it out of the migration commit unless its owner explicitly includes it."
+      - "Run status and scope checks again immediately before validation and commit."
+    related_files:
+      - "PROJECT_CONTEXT/task_records/"
+      - "AGENTS.md"

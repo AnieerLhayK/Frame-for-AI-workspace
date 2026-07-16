@@ -2,7 +2,16 @@ $ErrorActionPreference = "Stop"
 
 $FlashMarker = "Flash sufficient"
 $ProMarker = "Recommend Pro"
+$DeferredProMarker = "Recommend Pro deferred"
 $AssessmentMarkers = @($FlashMarker, $ProMarker)
+$PassThroughTools = @("TaskOutput")
+$ProAlreadyActiveMarkers = @(
+    "already using Pro",
+    "already on Pro",
+    "current session is already using Pro",
+    "Pro already active",
+    "Recommend Pro active"
+)
 $ContinueMarkers = @(
     "continue",
     "continue anyway",
@@ -19,8 +28,17 @@ function Get-ProjectRoot() {
     return (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
 }
 
+function Get-ModelAdviceConfigPath() {
+    $projectRoot = Get-ProjectRoot
+    $localPath = Join-Path $projectRoot ".claude\model-routing-advice.local.json"
+    if (Test-Path -LiteralPath $localPath) {
+        return $localPath
+    }
+    return (Join-Path $projectRoot ".claude\model-routing-advice.json")
+}
+
 function Test-ModelAdviceEnabled() {
-    $configPath = Join-Path (Get-ProjectRoot) ".claude\model-routing-advice.json"
+    $configPath = Get-ModelAdviceConfigPath
     if (-not (Test-Path -LiteralPath $configPath)) {
         return $true
     }
@@ -53,6 +71,13 @@ $ContinueMarkers += @(
     (New-TextFromCodepoints @(0x5269, 0x4f59, 0x4e0d, 0x591a))
 )
 
+$ProAlreadyActiveMarkers += @(
+    (New-TextFromCodepoints @(0x5df2, 0x7ecf, 0x4f7f, 0x7528, 0x20, 0x50, 0x72, 0x6f)),
+    (New-TextFromCodepoints @(0x5df2, 0x7ecf, 0x662f, 0x20, 0x50, 0x72, 0x6f)),
+    (New-TextFromCodepoints @(0x5f53, 0x524d, 0x20, 0x73, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x20, 0x5df2, 0x7ecf, 0x4f7f, 0x7528, 0x20, 0x50, 0x72, 0x6f)),
+    (New-TextFromCodepoints @(0x5f53, 0x524d, 0x6a21, 0x578b, 0x5df2, 0x662f, 0x20, 0x50, 0x72, 0x6f))
+)
+
 $AssessmentContext = @(
     'Before responding to this user request, output the workspace model-tier assessment visibly.'
     ''
@@ -65,10 +90,16 @@ $AssessmentContext = @(
     '- If the prompt mentions workspace health failures, workflow check out-of-scope, stale reports, or multi-cause diagnosis, classify it as Recommend Pro.'
     '- If the prompt mentions Git merge conflicts, conflict resolution, or merging long-lived branches, classify it as Recommend Pro.'
     '- Example: a long-lived branch merged into main with conflicts in task_ledger.md, todo.md, or prompt_registry.yaml is Recommend Pro, even if the first action is git status/read-only inspection.'
-    '- Use the exact low-risk or high-risk First Response Format from shared/claude/policies/model-routing-policy.md.'
-    '- Low-risk responses must contain: Flash sufficient.'
-    '- High-risk responses must contain: Recommend Pro and then pause for the user to switch model or explicitly continue with the current model.'
+    '- Low-risk responses must be one sentence and contain: Flash sufficient.'
+    '- Low-risk format: Task complexity assessment: Flash sufficient. Reason: <short reason>.'
+    '- High-risk responses must be a visible quote block and contain: Recommend Pro.'
+    '- High-risk format line 1: > Task complexity assessment: Recommend Pro'
+    '- High-risk format line 2: > Reason: <specific reason>'
+    '- High-risk format line 3: > Model advice: switch to `deepseek-v4-pro`; pause until the user switches, says already switched, or explicitly continues with the current model / ignores the advice.'
+    '- High-risk format line 4: > Authority boundary: model advice does not change write scope, Git checks, or workspace governance.'
+    '- In short: pause for the user after an initial Recommend Pro assessment.'
     '- Do not start tools after Recommend Pro unless the user says to continue/current model/ignore the recommendation/already switched.'
+    '- If a Pro signal appears late and the remaining work is about 20% or less, you may use Recommend Pro deferred and continue, then recommend a Pro follow-up in the final response.'
     '- A model recommendation is advisory only and does not change permissions.'
 ) -join [Environment]::NewLine
 
@@ -103,6 +134,16 @@ function Get-ContentText($Content) {
 
 function Get-AssessmentKind($Content) {
     $text = Get-ContentText $Content
+    if ($text.Contains($DeferredProMarker)) {
+        return "deferred-pro"
+    }
+    if ($text.Contains($ProMarker)) {
+        foreach ($marker in $ProAlreadyActiveMarkers) {
+            if ($text.IndexOf($marker, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                return "pro-active"
+            }
+        }
+    }
     if ($text.Contains($ProMarker)) {
         return "pro"
     }
@@ -215,6 +256,10 @@ if ($eventName -eq "UserPromptSubmit") {
 }
 
 if ($eventName -eq "PreToolUse") {
+    $toolName = [string]$payload.tool_name
+    if ($PassThroughTools -contains $toolName) {
+        exit 0
+    }
     $transcriptPath = [string]$payload.transcript_path
     $routingState = Get-ModelRoutingStateAfterLastUser $transcriptPath
     if ($routingState.user_allows_current_model) {
@@ -223,7 +268,12 @@ if ($eventName -eq "PreToolUse") {
     if ($routingState.assessment -eq "flash") {
         exit 0
     }
-    $toolName = [string]$payload.tool_name
+    if ($routingState.assessment -eq "deferred-pro") {
+        exit 0
+    }
+    if ($routingState.assessment -eq "pro-active") {
+        exit 0
+    }
     if ($routingState.assessment -eq "pro") {
         [Console]::Error.WriteLine(
             "Blocked: Recommend Pro was issued. Pause and ask the user to switch model, say already switched, or explicitly continue with the current model before using tool '$toolName'."

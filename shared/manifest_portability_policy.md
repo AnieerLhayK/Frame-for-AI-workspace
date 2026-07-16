@@ -11,6 +11,7 @@ This policy defines how the workspace should remain recoverable when local direc
 - platform projection link paths
 - shared projection paths
 - external Claude Code and OpenCode session-store roots
+- local external research roots declared under `external_roots`
 
 These paths describe the current machine deployment. They should remain centralized in the manifest and should not spread back into skill docs or source files.
 

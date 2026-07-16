@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.1",
+  "task_id": "TASK-20260715-009",
+  "task_type": "raw_material_filter_tooling",
+  "started_at": "2026-07-15T16:35:56Z",
+  "ended_at": "2026-07-15T16:41:02Z",
+  "status": "successful",
+  "registration": {
+    "operations": [
+      "workspace_write"
+    ]
+  },
+  "validation": {
+    "status": "passed",
+    "commands": [
+      "python -m pytest tests -q (from package directory)",
+      "python -m pytest scripts/tests/test_publish_chatty_ch_system.py scripts/tests/test_publish_qq_raw_filter.py scripts/tests/test_sync_qq_raw_filter_repo.py -q",
+      "python scripts/publish_qq_raw_filter.py --out-dir ${DATA_ROOT}/codex/cache/staging/qq-filter-review",
+      "python scripts/publish_check_qq_raw_filter.py --dir ${DATA_ROOT}/codex/cache/staging/qq-filter-review",
+      "git diff --check"
+    ],
+    "evidence": [
+      "2026-07-16: package-local `python -m pytest tests -q` passed (23 tests).",
+      "2026-07-16: projection and sync-tool tests passed (9 tests).",
+      "2026-07-16: generated public boundary checker and publish checker both passed from ${DATA_ROOT}/codex/cache/staging/qq-filter-review.",
+      "2026-07-16: the sync tool rejected TASK-20260715-009 before external staging because it lacks external_write, proving the new gate is fail-closed."
+    ]
+  },
+  "human_edit_rounds": 0,
+  "tokens": {
+    "estimated": 0,
+    "actual": null,
+    "saved": null,
+    "currency_cost": null
+  },
+  "usability": {
+    "status": "usable",
+    "evidence": []
+  },
+  "notes": []
+}

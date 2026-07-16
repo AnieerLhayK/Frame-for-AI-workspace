@@ -1,8 +1,9 @@
-# BEGINNER_GUIDE - governed-skill-workspace-template
+# BEGINNER_GUIDE - Frame-for-AI-workspace
 
-This repository is a public skeleton for building a governed AI workspace. It
-keeps the workspace's own structure visible: task routing, knowledge lookup,
-agent boundaries, report checks, and explainable CLI entrypoints.
+This repository is a public framework template for building a governed AI
+workspace. It keeps the workspace's own structure visible: task routing,
+knowledge lookup, agent boundaries, report checks, and explainable CLI
+entrypoints. It contains no bundled character-system or existing skills.
 
 ## Quick Start
 
@@ -10,7 +11,7 @@ Clone your fork, then run the conservative first-run helper:
 
 ```bash
 git clone <your-fork-url>
-cd governed-skill-workspace-template
+cd Frame-for-AI-workspace
 python scripts/setup_public_workspace.py
 ```
 
@@ -38,8 +39,9 @@ python scripts/workspace_cli.py agent list
 python scripts/workspace_cli.py health
 ```
 
-These commands show the environment's own basic functions before you add your
-own skills or platform integrations.
+These commands show the framework's own basic functions before you add your
+own skills under `skills/` or separately reviewed external skills under
+`external-skills/`.
 
 ## What To Configure Manually
 

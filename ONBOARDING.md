@@ -1,6 +1,6 @@
-# ONBOARDING — Getting Started with governed-skill-workspace-template
+# ONBOARDING — Getting Started with Frame-for-AI-workspace
 
-This template provides a complete governed-skill-workspace architecture.
+This template provides the framework for a governed AI workspace.
 Follow these steps to set it up in your local environment. For the shortest
 beginner path, start with `BEGINNER_GUIDE.md`.
 
@@ -14,7 +14,7 @@ beginner path, start with `BEGINNER_GUIDE.md`.
 
 ```bash
 git clone <your-fork-url>
-cd governed-skill-workspace-template
+cd Frame-for-AI-workspace
 ```
 
 ## Step 2: Configure Template Variables
@@ -35,7 +35,7 @@ Or run the conservative helper:
 python scripts/setup_public_workspace.py
 ```
 
-The helper prepares only the workspace skeleton's own basic functions. It does
+The helper prepares only the framework's own basic functions. It does
 not configure provider credentials, AI-platform plugins, or external model
 settings.
 
@@ -69,6 +69,8 @@ python scripts/workspace_cli.py agent list
 ## Step 5: Register Your Own Skills
 
 See `workspace_manifest.yaml` → `skills[]` for the skill declaration format.
+The public template has no bundled skills. Add your own under `skills/`, then
+register them in `workspace_manifest.yaml` under `skills[]`.
 Each skill needs:
 1. A unique `id`
 2. A `role` (governance, production, maintenance, feedback_diagnosis, runtime_character)

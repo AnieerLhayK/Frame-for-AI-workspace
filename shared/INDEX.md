@@ -21,6 +21,8 @@ to their package-local shared directory.
 - `shared/schemas/agent_registration.schema.json`: registration contract shape.
 - `shared/delivery_output_policy.md`: separates external deliverables from
   repository artifacts and transient staging files.
+- `shared/git_integration_policy.md`: conservative merge preflight, stop
+  conditions, post-merge validation, and rollback guidance.
 
 ## Package Protocols
 

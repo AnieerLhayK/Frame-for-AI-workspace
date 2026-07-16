@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.1",
+  "task_id": "TASK-20260715-008",
+  "task_type": "report_regeneration",
+  "started_at": "2026-07-15T13:02:13Z",
+  "ended_at": "2026-07-15T13:02:26Z",
+  "status": "successful",
+  "registration": {
+    "operations": [
+      "workspace_write"
+    ]
+  },
+  "validation": {
+    "status": "passed",
+    "commands": [
+      "python scripts/validate_manifest.py",
+      "python scripts/validate_protocols.py",
+      "git diff --check"
+    ],
+    "evidence": []
+  },
+  "human_edit_rounds": 0,
+  "tokens": {
+    "estimated": 150,
+    "actual": null,
+    "saved": null,
+    "currency_cost": null
+  },
+  "usability": {
+    "status": "usable",
+    "evidence": []
+  },
+  "notes": []
+}

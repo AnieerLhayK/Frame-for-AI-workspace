@@ -1,0 +1,21 @@
+schema_version: "0.1"
+purpose: "Registry of external project roots that are known to this workspace but remain outside the workspace source tree and manifest skill registry."
+
+projects:
+  math-modeling:
+    display_name: "数学建模"
+    local_path: "${WORKSPACE_ROOT}/projects/数学建模"
+    codex_project_id: "${WORKSPACE_ROOT}\\projects\\数学建模"
+    boundary: "external_project"
+    status: "active"
+    registered_at: "2026-07-04T11:23:03+08:00"
+    git:
+      default_branch: "main"
+      remote_name: "origin"
+      remote_url: "git@github.com:AnieerLhayK/math-modeling.git"
+      github_url: "https://github.com/AnieerLhayK/math-modeling"
+      visibility: "private"
+    notes:
+      - "This is a separate durable source tree under ${WORKSPACE_ROOT}/projects, not a top-level workspace package."
+      - "Do not add this project to workspace_manifest.yaml unless its boundary changes into a workspace-owned skill/package."
+      - "The project resource directory is local-only and ignored by its own Git repository."

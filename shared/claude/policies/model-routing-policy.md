@@ -37,14 +37,22 @@ governance rule.
 
 ## Manual Toggle
 
-The workspace-level model advice integration is controlled by
-`.claude/model-routing-advice.json`.
+The workspace-level model advice integration is controlled by a tracked default
+and an optional machine-local override:
+
+- `.claude/model-routing-advice.json` is the tracked project default.
+- `.claude/model-routing-advice.local.json` is ignored by Git and overrides the
+  tracked default on one machine.
 
 - `"enabled": true` means the visible assessment and Pro pause behavior are
   active.
 - `"enabled": false` means Claude Code should not output model-tier assessments,
   should not pause for model advice, and should behave as if this integration is
   absent.
+
+`workspace claude model-advice on|off` writes the local override by default, so
+day-to-day switching does not dirty the Git worktree. Use `--scope tracked` only
+when intentionally changing the project default.
 
 This toggle only controls advice injection and pre-tool enforcement. It does not
 change the active model, LiteLLM, provider credentials, environment variables,
@@ -116,7 +124,7 @@ or long-lived branch merge conflict planning are Pro-class tasks even when the
 first requested action is only to inspect or explain.
 
 For this workspace, a long-lived branch merged into `main` with conflicts in
-`PROJECT_CONTEXT/task_ledger.md`, `PROJECT_CONTEXT/todo.md`, or
+`PROJECT_CONTEXT/task_ledger.md`, `PROJECT_CONTEXT/todo/README.md`, or
 `USAGE_GUIDES/prompt_registry.yaml` is explicitly Pro-class conflict planning.
 
 ## Decision Flow
@@ -138,6 +146,13 @@ Before starting a complex task:
 6. If the user already confirmed current-model continuation, already switched,
    or the remaining work is plainly small and low-risk, continue without
    repeating a blocking pause.
+7. If the current session is already using Pro, state that the task meets Pro
+   criteria and continue without pausing.
+8. If a Pro-class signal appears only after the task is already materially
+   underway, estimate whether the remaining work is about 20% or less. If the
+   remaining work is small, locally bounded, and has no new irreversible,
+   permission-expanding, security-sensitive, or high-risk write step left, use
+   the deferred Pro format instead of stopping immediately.
 
 The pause is a user-control point, not a permission gate. Existing project
 safety, authorization, and review gates still apply independently of model tier.
@@ -189,11 +204,41 @@ For high-complexity or high-risk tasks, use a visible quote block:
 > 权限边界：模型建议不改变 write scope、Git 检查或 workspace governance。
 ```
 
+For late-stage Pro signals, when the task is already in progress and roughly
+20% or less remains, use this visible quote block instead of pausing:
+
+```text
+> 任务复杂度评估：Recommend Pro deferred
+> 原因：<具体原因>
+> 继续理由：剩余工作约 20% 或更少，且没有新的高风险/不可逆步骤。
+> 后续建议：本轮完成后，建议下一轮切换到 `deepseek-v4-pro` 做复核、优化或衔接后续任务。
+> 权限边界：模型建议不改变 write scope、Git 检查或 workspace governance。
+```
+
+Use `Recommend Pro deferred` only for late-stage continuation. Do not use it as
+the first response to avoid a warranted initial pause. If the remaining work is
+substantial, uncertain, irreversible, security-sensitive, or permission-changing,
+pause with the normal `Recommend Pro` format.
+
+For Pro-class tasks when the current session is already using Pro, use this
+visible quote block and continue without pausing:
+
+```text
+> 任务复杂度评估：Recommend Pro active
+> 原因：<具体原因>
+> 模型状态：current session is already using Pro；无需暂停切换。
+> 权限边界：模型建议不改变 write scope、Git 检查或 workspace governance。
+```
+
 Do not describe Pro as mandatory when it is only a recommendation. If the
 current session is already using Pro, state that the task meets the Pro criteria
 and continue within the user's existing authorization. If the user explicitly
 continues with the current model, treat that as an advisory override for the
 current task only and continue within the same authorization boundaries.
+
+When `Recommend Pro deferred` is used, the final response should remind the user
+that the completed work may merit a Pro follow-up for review, optimization, or
+the next connected task.
 
 Do not claim that a model switch occurred unless actual model selection is
 directly observable. A recommendation is not evidence of a switch.

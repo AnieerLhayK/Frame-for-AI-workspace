@@ -8,6 +8,8 @@
 - OpenCode loading root: `workspace_manifest.yaml -> platform_roots.opencode`
 - Hermes loading root: `workspace_manifest.yaml -> platform_roots.hermes`
 - Skill projection links: `workspace_manifest.yaml -> projections[]`
+- Raw external skill research root: `workspace_manifest.yaml -> external_roots.raw_skills`
+- Curated adapted external skill root: `workspace_manifest.yaml -> external_roots.adapted_skills`
 - Core skills:
   - `skills/disk-scan-reporter`
   - `skills/windows-ai-storage-governor`
@@ -15,6 +17,17 @@
   - `packages/character-system/engineering/maintenance/character-maintainer`
   - `packages/character-system/engineering/diagnosis/style-doctor`
   - `packages/character-system/runtime/characters/zyc`
+- Curated external skills currently exposed to Codex and Claude Code:
+  `grill-me`, `grilling`, `handoff`, `diagnosing-bugs`, `tdd`, `code-review`,
+  `codebase-design`, and `writing-great-skills`.
+- Known external project roots are tracked separately in
+  `PROJECT_CONTEXT/external_projects.yaml`; they are not workspace packages or
+  skill projections.
+- Registered external project: `math-modeling` at
+  `${WORKSPACE_ROOT}/projects/数学建模`, private remote
+  `git@github.com:AnieerLhayK/math-modeling.git`.
+- Claude Code local launcher alias `math-modeling` maps to
+  `${WORKSPACE_ROOT}/projects/数学建模` in the machine-local Claude project registry.
 - Skill contracts now separate `role`, `authority`, `execution_modes`, and `exposures[]`.
 - `platform` and `projection_path` remain temporary compatibility aliases for the first declared exposure.
 - Related character skills are grouped by lifecycle role under
@@ -41,7 +54,8 @@
   root `shared/` contains workspace-global governance only.
 - Task routing layer established with `PROJECT_CONTEXT/task_registry.yaml` to reduce broad context loading before maintenance work.
 - Context budget layer established with `PROJECT_CONTEXT/context_budget.md` to control expansion beyond required task context.
-- Task ledger established with `PROJECT_CONTEXT/task_ledger.md` to preserve recent maintenance decisions without rereading broad context.
+- Task ledger is partitioned under `PROJECT_CONTEXT/task_ledger/YYYY/MM.md` to preserve maintenance decisions without rereading broad context.
+- Task outcomes have a separate tracked fact layer under `PROJECT_CONTEXT/task_records/`; `workspace records` validates and summarizes success, validation, edits, duration, token fields, and usability.
 - Prompt registry established with `USAGE_GUIDES/prompt_registry.yaml` to resolve reusable prompt ids before regenerating meta-prompts.
 - Task/prompt resolver established with `scripts/resolve_task_context.py`; it emits a bounded task view and avoids rereading full routing registries by default.
 - Context token meter established with per-task overrides, optional `tiktoken` support, a dependency-free heuristic fallback, and warning-first enforcement.
@@ -216,6 +230,14 @@ would improve workspace maintenance is recorded under
 - External business projects must not be created as new workspace top-level
   directories. `workspace health` treats a root `claude/` project directory as
   a boundary failure.
+- Raw external skill snapshots are kept under the resolved
+  `workspace_manifest.yaml -> external_roots.raw_skills` path and are not
+  workspace source or platform projections. Adapted candidates are
+  tracked under `external-skills/<function>/` only after the compatibility queue
+  records provenance, applicability, adaptation, validation, and registration.
+- Every newly discovered raw skill must be added to
+  `PROJECT_CONTEXT/todo/external-skills.md` before evaluation, so research
+  sources cannot silently disappear from the future-work queue.
 
 ## Important Caution
 

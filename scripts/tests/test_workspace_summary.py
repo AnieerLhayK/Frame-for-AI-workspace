@@ -48,6 +48,16 @@ class WorkspaceSummaryTests(unittest.TestCase):
         self.assertEqual(entries[0]["id"], "TASK-20260613-002")
         self.assertEqual(entries[0]["commit"], "abc1234")
 
+    def test_parse_recent_ledger_reads_newest_day_first(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "2026" / "06").mkdir(parents=True)
+            (root / "2026" / "07").mkdir()
+            (root / "2026" / "06" / "01.md").write_text("### TASK-20260601-001 - Old\n\n- Date: 2026-06-01\n", encoding="utf-8")
+            (root / "2026" / "07" / "01.md").write_text("### TASK-20260701-001 - New\n\n- Date: 2026-07-01\n", encoding="utf-8")
+            entries = parse_recent_ledger(root, limit=1)
+        self.assertEqual(entries[0]["id"], "TASK-20260701-001")
+
     @patch("scripts.workspace_summary.git_output")
     def test_workspace_tag_state_uses_manifest_version_tag(self, git_output) -> None:
         git_output.side_effect = ["v1.1.0", "6"]

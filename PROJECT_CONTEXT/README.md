@@ -37,9 +37,12 @@
 - `skills/`: standalone skills with no package-local business protocol dependency.
 - `PROJECT_CONTEXT/task_registry.yaml`: task routing layer that limits required context before broad discovery.
 - `PROJECT_CONTEXT/context_budget.md`: context budget layer that controls when to expand beyond required files.
-- `PROJECT_CONTEXT/task_ledger.md`: lightweight maintenance ledger; read the latest 5 entries before reconstructing history.
+- `PROJECT_CONTEXT/task_ledger/`: lightweight maintenance ledger, partitioned by year/month; read its newest entries before reconstructing history.
+- `PROJECT_CONTEXT/task_records/`: tracked, machine-readable task-outcome facts.
 - `PROJECT_CONTEXT/change_surface_policy.md`: decision rules for comparing alternative writable file sets.
 - `PROJECT_CONTEXT/knowledge_registry.yaml`: topic index for current context, enforceable policy, and reusable engineering knowledge.
+- `PROJECT_CONTEXT/doc_pair_registry.yaml`: lightweight registry for Markdown files or directories whose same-name `.zh-CN.md` companions should be checked when edited.
+- `PROJECT_CONTEXT/potential_for_future/`: low-status registries for potential improvements and risks that are not active todo items or enforceable policy.
 
 ## Recommended Reading Order For New Sessions
 
@@ -53,6 +56,8 @@
 8. Expand optional context only from evidence.
 9. When several plausible owning layers remain, run `python scripts/workspace_cli.py changes plan <task-id> --intent <intent>`.
 10. Use `python scripts/workspace_cli.py knowledge find "<topic>"` when a needed knowledge entry is not already routed by the task.
+11. For Markdown edits, check `PROJECT_CONTEXT/doc_pair_registry.yaml` instead of scanning broadly for translation companions.
+12. When a reusable improvement or structural risk is noticed but not yet actionable, check or update `PROJECT_CONTEXT/potential_for_future/`.
 
 ## Minimum Maintenance Workflow
 
@@ -63,7 +68,7 @@ Every future maintenance pass should:
 3. Resolve paths through `workspace_manifest.yaml`.
 4. Resolve the task with `scripts/resolve_task_context.py`.
 5. Apply the returned token budget before expanding context.
-6. Read recent `PROJECT_CONTEXT/task_ledger.md` entries when continuity matters.
+6. Read recent `PROJECT_CONTEXT/task_ledger/` entries when continuity matters.
 7. Load the task's required context before optional context.
 8. Edit the narrowest owning layer.
 9. Run the relevant validation or dry-run.
@@ -80,6 +85,7 @@ Update `PROJECT_CONTEXT/` when:
 - known risks change;
 - a new validation layer or operating loop is added;
 - a new skill/package boundary is introduced;
+- a new lightweight routing, pair-sync, or improvement-options registry is added;
 - a future session needs clear handoff context.
 
 ## What Not To Put Here
@@ -92,4 +98,4 @@ Do not put:
 - runtime packet instances that belong in `packages/character-system/reports/runtime-loop/`;
 - machine-readable registry data that belongs in the manifest or protocol manifest.
 
-Do not use `PROJECT_CONTEXT/task_ledger.md` as a replacement for reports or Git history. It is an index of remembered decisions, not the evidence itself.
+Do not use `PROJECT_CONTEXT/task_ledger/` as a replacement for reports or Git history. It is an index of remembered decisions, not the evidence itself.

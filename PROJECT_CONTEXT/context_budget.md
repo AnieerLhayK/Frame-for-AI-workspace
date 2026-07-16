@@ -81,10 +81,10 @@ Do not read these by default:
 - `packages/character-system/reports/runtime-loop/` except ledgers/templates required for a runtime-loop task
 - generated character outputs such as `packages/character-system/engineering/generation/character-generator/characters/`
 - large skill reference folders not named by the task
-- older `PROJECT_CONTEXT/task_ledger.md` entries beyond the latest 5
+- task-ledger months older than the current continuity window
 - platform data roots such as `${DATA_ROOT}/`
 - tool install roots such as `${WORKSPACE_ROOT}/tools/`
-- gitignored external skill drops such as `external-skills/`
+- raw external skill repositories under `workspace_manifest.yaml -> external_roots.raw_skills`
 - gitignored local MCP payloads such as `mcp/servers/`, `mcp/downloads/`, and
   `mcp/logs/`
 
@@ -145,7 +145,7 @@ After edits:
 
 1. Run focused validation from the task registry.
 2. Run `git diff --check`.
-3. Append or update `PROJECT_CONTEXT/task_ledger.md` when the task materially changes workspace maintenance state.
+3. Add the human decision note to the appropriate `PROJECT_CONTEXT/task_ledger/YYYY/MM/DD.md` file when the task materially changes workspace maintenance state.
 4. Summarize changed files and whether the work should be committed.
 
 ## Conflict Rules

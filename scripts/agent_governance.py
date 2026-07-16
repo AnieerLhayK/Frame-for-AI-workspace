@@ -9,6 +9,11 @@ from typing import Any
 
 import yaml
 
+try:
+    from scripts.task_records import active_registration
+except ModuleNotFoundError:  # Direct execution
+    from task_records import active_registration
+
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = WORKSPACE_ROOT / "shared" / "agent_governance.yaml"
@@ -1337,6 +1342,7 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--agent", required=True)
     check.add_argument("--operation", choices=("read", "write"), default="write")
     check.add_argument("--path", required=True)
+    check.add_argument("--record-id")
     check.add_argument("--skill")
     check.add_argument("--lease")
     check.add_argument("--format", choices=("text", "json"), default="text")
@@ -1379,6 +1385,24 @@ def main() -> int:
             payload = doctor_payload(policy, registry, manifest, args.agent_id)
         elif args.command == "check":
             lease = load_yaml(Path(args.lease)) if args.lease else None
+            registration = None
+            registration_error = None
+            if args.operation == "write":
+                target = classify_path(policy, manifest, args.path)
+                if not args.record_id:
+                    registration_error = "--record-id is required for a write check"
+                else:
+                    try:
+                        registration = active_registration(
+                            args.record_id,
+                            (
+                                "external_write"
+                                if target["surface"] == "external_environment"
+                                else "workspace_write"
+                            ),
+                        )
+                    except ValueError as error:
+                        registration_error = str(error)
             payload = check_access(
                 policy,
                 manifest,
@@ -1389,6 +1413,15 @@ def main() -> int:
                 lease=lease,
                 registry=registry,
             )
+            if registration:
+                payload["task_registration"] = registration
+            if registration_error:
+                payload["status"] = "DENY"
+                payload["reason"] = f"task registration denied: {registration_error}"
+                payload["next_action"] = (
+                    "Start an active task record with the required operation, "
+                    "then pass it through --record-id."
+                )
         elif args.command == "request":
             payload = create_request(
                 policy,

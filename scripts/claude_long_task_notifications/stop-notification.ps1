@@ -6,6 +6,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+try {
+    [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+    [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+    $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+}
+catch {
+    # Encoding setup must never break a Claude Code hook.
+}
+
 function Get-StateDir {
     return (Join-Path $env:TEMP "claude-code-notifications")
 }
@@ -180,13 +189,18 @@ try {
         $nodeScript = Join-Path $PSScriptRoot "hermes-mcp-client.js"
         $nodePath = (Get-Command "node.exe" -ErrorAction SilentlyContinue).Source
         if ($nodePath -and (Test-Path -LiteralPath $nodeScript)) {
+            $messageFile = Join-Path $stateDir ("message-{0}.txt" -f (ConvertTo-SafeFileName $sessionId))
             try {
-                & $nodePath $nodeScript --minutes $minutes --target $Target --message $message | Out-Null
+                [System.IO.File]::WriteAllText($messageFile, $message, [System.Text.UTF8Encoding]::new($false))
+                & $nodePath $nodeScript --minutes $minutes --target $Target --message-file $messageFile | Out-Null
                 Write-HookLog ("hermes-finished target={0} exit={1}" -f $Target, $LASTEXITCODE)
             }
             catch {
                 Write-HookLog ("hermes-failed target={0} error={1}" -f $Target, $_.Exception.Message)
                 # Hermes notification failure is logged by the Node client.
+            }
+            finally {
+                Remove-Item -LiteralPath $messageFile -Force -ErrorAction SilentlyContinue
             }
         }
         else {

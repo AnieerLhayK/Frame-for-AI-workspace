@@ -59,7 +59,19 @@ if (-not (Test-Within $cwd $projectRoot)) {
     Deny-WrongProject "Blocked: Claude cwd is outside the governed workspace root: $cwd" $projectRoot
 }
 
+function Require-ActiveTaskRecord([string]$ProjectRoot) {
+    $recordId = [string]$env:WORKSPACE_TASK_RECORD
+    if ([string]::IsNullOrWhiteSpace($recordId)) {
+        Deny "Blocked: set WORKSPACE_TASK_RECORD to an active workspace record before mutating this workspace."
+    }
+    & python (Join-Path $ProjectRoot "scripts\task_records.py") require $recordId --operation workspace_write | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Deny "Blocked: WORKSPACE_TASK_RECORD is not active or is not registered for workspace writes."
+    }
+}
+
 if ($toolName -in @("Write", "Edit", "MultiEdit", "NotebookEdit")) {
+    Require-ActiveTaskRecord $projectRoot
     $rawPath = if ($toolInput.file_path) { $toolInput.file_path } else { $toolInput.notebook_path }
     if ($rawPath) {
         $target = Resolve-GuardPath ([string]$rawPath) $cwd
@@ -73,6 +85,7 @@ if ($toolName -eq "Bash") {
     $command = [string]$toolInput.command
     $mutating = "(?i)(?:^|[;&|]\s*)(?:mkdir|md|rmdir|rm|del|erase|copy|cp|move|mv|new-item|remove-item|move-item|copy-item|set-content|add-content|out-file)\b|\b(?:set-content|add-content|out-file|writealltext|appendalltext)\b"
     if ($command -match $mutating) {
+        Require-ActiveTaskRecord $projectRoot
         foreach ($match in [regex]::Matches($command, "(?i)(?<path>[A-Z]:[\\/][^\s`"';&|]+)")) {
             $target = Resolve-GuardPath $match.Groups["path"].Value $cwd
             if (-not (Test-WorkspaceTarget $target $projectRoot $policy)) {

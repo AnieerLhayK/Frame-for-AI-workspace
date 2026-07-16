@@ -12,7 +12,7 @@ default_rules:
     - "Use scripts/resolve_task_context.py --list when the exact task id is unknown."
     - "Resolve the exact task through scripts/resolve_task_context.py before broad discovery."
     - "Treat the resolver output as the bounded task registry and prompt registry view."
-    - "Read the latest 5 entries in PROJECT_CONTEXT/task_ledger.md when continuity or previous decisions matter."
+    - "Read the latest 5 entries in PROJECT_CONTEXT/task_ledger/README.md when continuity or previous decisions matter."
     - "Load only the resolver-declared required context first."
     - "Expand optional context only from evidence and measure it with --include-optional."
   git_guard:
@@ -132,7 +132,7 @@ default_rules:
     - "archive*/"
     - "archives/"
     - "backups/"
-    - "external-skills/"
+    - "${WORKSPACE_ROOT}/research/skills/"
     - "mcp/servers/"
     - "mcp/downloads/"
     - "mcp/logs/"
@@ -145,7 +145,7 @@ default_rules:
     token_meter:
       encoding: "o200k_base"
       enforcement: "warn"
-      required_warn_tokens: 8000
+      required_warn_tokens: 10000
       expanded_warn_tokens: 16000
       hard_max_tokens: null
       max_file_bytes: 2097152
@@ -165,7 +165,7 @@ default_rules:
         - "task_registry_update"
         - "prompt_usage_update"
   task_ledger:
-    path: "PROJECT_CONTEXT/task_ledger.md"
+    path: "PROJECT_CONTEXT/task_ledger/"
     read_recent_entries: 5
     append_when:
       - "source-of-truth boundaries change"
@@ -260,6 +260,7 @@ tasks:
       - "reasonix.toml"
       - "opencode.json"
       - ".opencode/plugins/workspace-governance.js"
+      - "reasonix.toml"
       - "scripts/verify_change_scope.py"
       - "scripts/workflow_check.py"
       - "scripts/workspace_health.py"
@@ -286,8 +287,8 @@ tasks:
       - "AGENTS.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/current_status.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
-      - "PROJECT_CONTEXT/todo.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
+      - "PROJECT_CONTEXT/todo/README.md"
       - "shared/agent_governance_policy.md"
       - "shared/agent_governance.yaml"
       - "shared/agent_registry.yaml"
@@ -305,6 +306,8 @@ tasks:
       - "scripts/tests/test_platform_agent_guards.py"
       - "scripts/tests/test_verify_change_scope.py"
       - "scripts/tests/test_workflow_check.py"
+      - "scripts/tests/test_platform_agent_guards.py"
+      - "scripts/tests/test_workspace_cli.py"
       - "scripts/tests/test_workspace_cli.py"
       - "scripts/tests/test_workspace_health.py"
       - "USAGE_GUIDES/QUICK_START/agent_governance.md"
@@ -336,11 +339,14 @@ tasks:
       - "更新当前状态、待办优先级、交接记录或已完成任务元数据，不改变工作区行为"
     required:
       - "PROJECT_CONTEXT/current_status.md"
-      - "PROJECT_CONTEXT/todo.md"
+      - "PROJECT_CONTEXT/todo/README.md"
+      - "PROJECT_CONTEXT/todo/external-skills.md"
     optional:
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "PROJECT_CONTEXT/session_handoff.md"
       - "PROJECT_CONTEXT/README.md"
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml"
+      - "PROJECT_CONTEXT/potential_for_future/"
     ignore:
       - "reports/"
       - "private corpus material"
@@ -353,9 +359,12 @@ tasks:
     ledger: true
     write_scope:
       - "PROJECT_CONTEXT/current_status.md"
-      - "PROJECT_CONTEXT/todo.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/todo/README.md"
+      - "PROJECT_CONTEXT/todo/external-skills.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "PROJECT_CONTEXT/session_handoff.md"
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml"
+      - "PROJECT_CONTEXT/potential_for_future/"
     validation:
       - "python scripts/resolve_task_context.py project_memory_maintenance --format json"
       - "python scripts/workspace_cli.py summary --format json"
@@ -371,7 +380,7 @@ tasks:
       - "AGENTS.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "scripts/resolve_task_context.py"
       - "scripts/tests/test_resolve_task_context.py"
       - "scripts/tests/test_startup_context_policy.py"
@@ -379,7 +388,7 @@ tasks:
       - "README.md"
       - "PROJECT_CONTEXT/README.md"
       - "PROJECT_CONTEXT/current_status.md"
-      - "PROJECT_CONTEXT/todo.md"
+      - "PROJECT_CONTEXT/todo/README.md"
     ignore:
       - "reports/"
       - "private corpus material"
@@ -434,7 +443,7 @@ tasks:
     ledger: true
     write_scope:
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "README.md"
       - "scripts/workspace_cli.py"
       - "scripts/*_model_advice.py"
@@ -482,7 +491,7 @@ tasks:
     ledger: true
     write_scope:
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "scripts/workspace_cli.py"
       - "scripts/workspace_health.py"
@@ -542,7 +551,7 @@ tasks:
       expanded_warn_tokens: 16000
     write_scope:
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "README.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "scripts/skill_lifecycle.py"
@@ -581,6 +590,9 @@ tasks:
       - "scripts/publish_public.py"
       - "scripts/publish_check.py"
       - "scripts/sync_public_repo.py"
+      - "scripts/publish_chatty_ch_system.py"
+      - "scripts/publish_check_chatty_ch_system.py"
+      - "scripts/sync_chatty_ch_system_repo.py"
       - "scripts/tests/test_workspace_cli.py"
       - "WORKSPACE_ENGINEERING/PUBLISH.md"
     ignore:
@@ -598,7 +610,7 @@ tasks:
       expanded_warn_tokens: 28000
     write_scope:
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "packages/character-system/distribution/"
       - "packages/character-system/runtime/characters/zyc/SKILL.md"
       - "packages/character-system/runtime/characters/zyc/README.md"
@@ -608,6 +620,10 @@ tasks:
       - "scripts/publish_check.py"
       - "scripts/sync_public_repo.py"
       - "scripts/tests/test_publish_public.py"
+      - "scripts/publish_chatty_ch_system.py"
+      - "scripts/publish_check_chatty_ch_system.py"
+      - "scripts/sync_chatty_ch_system_repo.py"
+      - "scripts/tests/test_publish_chatty_ch_system.py"
       - "scripts/tests/test_workspace_cli.py"
       - "WORKSPACE_ENGINEERING/PUBLISH.md"
     validation:
@@ -622,8 +638,67 @@ tasks:
       - "publish_public.py explicit staging-dir smoke check under the tool staging directory"
       - "publish_check.py verification against the generated staging directory"
       - "python scripts/sync_public_repo.py --dry-run --skip-tests"
+      - "python -m pytest -q scripts/tests/test_publish_chatty_ch_system.py"
+      - "publish_chatty_ch_system.py explicit staging-dir smoke check under the tool staging directory"
+      - "publish_check_chatty_ch_system.py verification against the generated staging directory"
+      - "python scripts/sync_chatty_ch_system_repo.py --dry-run --skip-tests"
       - "python scripts/workspace_cli.py changes verify skill_release_packaging --strict"
       - "python scripts/workspace_cli.py workflow check skill_release_packaging"
+      - "git diff --check"
+
+  raw_material_filter_tooling:
+    use_when:
+      - "Changing qq-chat-raw-filter source, package metadata, tests, CI, README, or generated public-projection publishing support under packages/character-system/engineering/corpus-preparation/qq-raw-material-filter."
+      - "Preparing the qq-chat-raw-filter public repository to install, test, or run in GitHub Actions."
+    use_when_zh:
+      - "修改 packages/character-system/engineering/corpus-preparation/qq-raw-material-filter 下的 qq-chat-raw-filter 源码、包元数据、测试、CI、README 或公开投影发布支持"
+    required:
+      - "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/README.md"
+      - "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/pyproject.toml"
+      - "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/qce_block_filter.py"
+      - "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/qq_raw_filter/"
+      - "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/tests/"
+    optional:
+      - "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/.github/workflows/"
+      - "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/requirements.txt"
+      - "scripts/publish_qq_raw_filter.py"
+      - "scripts/publish_check_qq_raw_filter.py"
+      - "scripts/qq_raw_filter_public_checks.py"
+      - "scripts/sync_qq_raw_filter_repo.py"
+      - "scripts/tests/test_publish_qq_raw_filter.py"
+      - "scripts/tests/test_sync_qq_raw_filter_repo.py"
+      - "PROJECT_CONTEXT/task_records/2026/07/15/TASK-20260715-007.json"
+      - "PROJECT_CONTEXT/task_registry.yaml"
+    ignore:
+      - "private QQ raw exports"
+      - "raw material output buckets"
+      - "external lexicon data directories"
+      - "unrelated workspace tooling"
+    prompt:
+      - "task_routing"
+    tool_profile: "workspace_maintenance"
+    ledger: true
+    write_scope:
+      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
+      - "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/"
+      - "scripts/publish_qq_raw_filter.py"
+      - "scripts/publish_check_qq_raw_filter.py"
+      - "scripts/qq_raw_filter_public_checks.py"
+      - "scripts/sync_qq_raw_filter_repo.py"
+      - "scripts/tests/test_publish_qq_raw_filter.py"
+      - "scripts/tests/test_sync_qq_raw_filter_repo.py"
+      - "PROJECT_CONTEXT/task_records/2026/07/15/TASK-20260715-007.json"
+    validation:
+      - "python scripts/resolve_task_context.py raw_material_filter_tooling"
+      - "python -m pytest tests -q (from packages/character-system/engineering/corpus-preparation/qq-raw-material-filter)"
+      - "python -m pip install -e . (from packages/character-system/engineering/corpus-preparation/qq-raw-material-filter)"
+      - "qce-block-filter --help"
+      - "python -m qq_raw_filter._cli --help"
+      - "python scripts/workspace_cli.py changes verify raw_material_filter_tooling --strict"
+      - "python scripts/workspace_cli.py workflow check raw_material_filter_tooling --record-id TASK-YYYYMMDD-###"
+      - "python scripts/publish_qq_raw_filter.py --out-dir %AI_TOOL_STAGING_DIR%/qq-chat-raw-filter"
+      - "python scripts/publish_check_qq_raw_filter.py --dir %AI_TOOL_STAGING_DIR%/qq-chat-raw-filter --skip-tests"
       - "git diff --check"
 
   workspace_health_tooling:
@@ -655,7 +730,7 @@ tasks:
     write_scope:
       - "README.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "scripts/workspace_health.py"
       - "scripts/tests/test_workspace_health.py"
@@ -694,7 +769,7 @@ tasks:
     write_scope:
       - "README.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "scripts/workspace_launcher.py"
       - "scripts/tests/test_workspace_launcher.py"
@@ -731,6 +806,8 @@ tasks:
       - "PROJECT_CONTEXT/current_status.md"
       - "PROJECT_CONTEXT/session_handoff.md"
       - "USAGE_GUIDES/QUICK_START/claude_code.md"
+      - "scripts/claude_model_advice.py"
+      - "scripts/tests/test_claude_model_advice.py"
       - "machine-local Claude project registry and launcher scripts"
     ignore:
       - "external project implementation details"
@@ -750,6 +827,8 @@ tasks:
       - "shared/claude/policies/model-routing-policy.md"
       - "scripts/claude_long_task_notifications/"
       - "scripts/install_claude_long_task_notifications.ps1"
+      - "scripts/claude_model_advice.py"
+      - "scripts/tests/test_claude_model_advice.py"
       - "scripts/workspace_health.py"
       - "scripts/tests/test_workspace_health.py"
       - "explicitly approved machine-local Claude registry and launchers"
@@ -787,7 +866,7 @@ tasks:
     ledger: true
     write_scope:
       - "shared/"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
     validation:
       - "python scripts/validate_protocols.py"
       - "python scripts/resolve_task_context.py shared_policy_update"
@@ -820,7 +899,7 @@ tasks:
     write_scope:
       - "README.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "scripts/failure_check.py"
       - "scripts/tests/test_failure_check.py"
@@ -862,7 +941,7 @@ tasks:
       - "PROJECT_CONTEXT/change_surface_policy.md"
       - "PROJECT_CONTEXT/README.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "README.md"
       - "scripts/plan_change_surface.py"
       - "scripts/tests/test_plan_change_surface.py"
@@ -907,7 +986,7 @@ tasks:
       - "AGENTS.md"
       - "PROJECT_CONTEXT/change_surface_policy.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "PROJECT_CONTEXT/current_status.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "WORKSPACE_ENGINEERING/governance_patterns.md"
@@ -941,6 +1020,8 @@ tasks:
       - "scripts/tests/test_verify_change_scope.py"
       - "scripts/workflow_check.py"
       - "scripts/tests/test_workflow_check.py"
+      - "scripts/tests/test_platform_agent_guards.py"
+      - "scripts/tests/test_workspace_cli.py"
       - "scripts/workspace_cli.py"
       - "scripts/tests/test_workspace_cli.py"
     optional:
@@ -948,7 +1029,7 @@ tasks:
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "WORKSPACE_ENGINEERING/governance_patterns.md"
       - "PROJECT_CONTEXT/current_status.md"
-      - "PROJECT_CONTEXT/todo.md"
+      - "PROJECT_CONTEXT/todo/README.md"
     ignore:
       - "private corpus material"
       - "platform loading surfaces as editable source"
@@ -965,9 +1046,9 @@ tasks:
       - "AGENTS.md"
       - "PROJECT_CONTEXT/change_surface_policy.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "PROJECT_CONTEXT/current_status.md"
-      - "PROJECT_CONTEXT/todo.md"
+      - "PROJECT_CONTEXT/todo/README.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "WORKSPACE_ENGINEERING/governance_patterns.md"
       - "shared/agent_governance.yaml"
@@ -1024,7 +1105,7 @@ tasks:
       - "PROJECT_CONTEXT/README.md"
       - "PROJECT_CONTEXT/knowledge_registry.yaml"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "scripts/find_knowledge.py"
       - "scripts/tests/test_find_knowledge.py"
       - "scripts/workspace_cli.py"
@@ -1073,9 +1154,9 @@ tasks:
       - "WORKSPACE_ENGINEERING/"
       - "PROJECT_CONTEXT/knowledge_registry.yaml"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "PROJECT_CONTEXT/current_status.md"
-      - "PROJECT_CONTEXT/todo.md"
+      - "PROJECT_CONTEXT/todo/README.md"
       - "README.md"
       - "ARCHITECTURE.md"
       - "AGENTS.md"
@@ -1101,7 +1182,7 @@ tasks:
       - "AGENTS.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "USAGE_GUIDES/prompt_registry.yaml"
       - "scripts/resolve_task_context.py"
       - "scripts/tests/test_resolve_task_context.py"
@@ -1121,7 +1202,7 @@ tasks:
       - "AGENTS.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "README.md"
       - "scripts/resolve_task_context.py"
       - "scripts/tests/test_resolve_task_context.py"
@@ -1143,7 +1224,7 @@ tasks:
       - "workspace_manifest.yaml"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "ARCHITECTURE.md"
       - "shared/workspace_policy.md"
       - "shared/workspace_path_policy.md"
@@ -1191,16 +1272,19 @@ tasks:
     required:
       - "AGENTS.md"
       - "PROJECT_CONTEXT/README.md"
+      - "PROJECT_CONTEXT/README.zh-CN.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "ARCHITECTURE.md"
       - "workspace_manifest.yaml"
       - ".gitignore"
     optional:
       - "WORKSPACE_ENGINEERING/README.md"
       - "WORKSPACE_ENGINEERING/governance_patterns.md"
-      - "PROJECT_CONTEXT/todo.md"
+      - "PROJECT_CONTEXT/todo/README.md"
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml"
+      - "PROJECT_CONTEXT/potential_for_future/"
     ignore:
       - "reports/"
       - "packages/character-system/engineering/generation/character-generator/characters/"
@@ -1212,11 +1296,20 @@ tasks:
     write_scope:
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/README.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/README.zh-CN.md"
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml"
+      - "PROJECT_CONTEXT/potential_for_future/"
+      - "PROJECT_CONTEXT/knowledge_registry.yaml"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "AGENTS.md"
       - ".gitignore"
+      - "scripts/check_doc_pairs.py"
+      - "scripts/tests/test_check_doc_pairs.py"
     validation:
-      - "git status --short --untracked-files=all"
+      - "python -m unittest scripts.tests.test_check_doc_pairs"
+      - "python scripts/check_doc_pairs.py --validate-coverage"
+      - "python scripts/workspace_cli.py knowledge validate"
+      - "git diff --check"
 
   skill_metadata_update:
     use_when:
@@ -1324,7 +1417,8 @@ tasks:
     required:
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml"
       - "USAGE_GUIDES/README.md"
       - "USAGE_GUIDES/START_HERE.md"
       - "USAGE_GUIDES/prompt_registry.yaml"
@@ -1342,8 +1436,10 @@ tasks:
     ledger: true
     write_scope:
       - "USAGE_GUIDES/"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "packages/character-system/engineering/generation/character-generator/generator_prompt.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
     validation:
+      - "python scripts/check_doc_pairs.py --validate-coverage"
       - "git diff -- USAGE_GUIDES"
       - "all task prompt ids exist in USAGE_GUIDES/prompt_registry.yaml"
 
@@ -1357,7 +1453,7 @@ tasks:
       - "workspace_manifest.yaml"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "PROJECT_CONTEXT/current_status.md"
       - "ARCHITECTURE.md"
       - "USAGE_GUIDES/prompt_registry.yaml"
@@ -1442,7 +1538,7 @@ tasks:
     write_scope:
       - "README.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "shared/reporting_policy.md"
       - "scripts/report_status.py"
       - "scripts/tests/test_report_status.py"
@@ -1469,7 +1565,7 @@ tasks:
     optional:
       - "README.md"
       - "PROJECT_CONTEXT/knowledge_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "scripts/workspace_cli.py"
       - "scripts/tests/test_workspace_cli.py"
@@ -1485,7 +1581,7 @@ tasks:
     write_scope:
       - "README.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "USAGE_GUIDES/QUICK_START/workspace_cli.md"
       - "scripts/workspace_summary.py"
       - "scripts/tests/test_workspace_summary.py"
@@ -1496,6 +1592,43 @@ tasks:
       - "python scripts/workspace_cli.py summary"
       - "python scripts/workspace_cli.py summary --format json"
       - "python scripts/resolve_task_context.py governance_summary_tooling"
+      - "git diff --check"
+
+  ignore_policy_update:
+    use_when:
+      - "Splitting root .gitignore rules into independently owned subdirectory ignore files, or documenting where future ignore rules belong, while preserving matching semantics."
+    use_when_zh:
+      - "在保持匹配语义不变的前提下，将根 .gitignore 规则拆分到独立子目录的 ignore 文件。"
+    required:
+      - "AGENTS.md"
+      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "PROJECT_CONTEXT/context_budget.md"
+      - ".gitignore"
+      - "existing nested .gitignore files"
+    optional:
+      - "PROJECT_CONTEXT/task_ledger/README.md"
+      - "workspace_manifest.yaml"
+      - "shared/manifest_portability_policy.md"
+      - "shared/workspace_path_policy.md"
+    ignore:
+      - "private corpus material"
+      - "platform projections as editable source"
+      - "unrelated skill-specific ignore conventions"
+    prompt:
+      - "minimal_edit"
+    tool_profile: "workspace_maintenance"
+    ledger: true
+    write_scope:
+      - "AGENTS.md"
+      - ".gitignore"
+      - ".claude/"
+      - "mcp/"
+      - "reports/"
+      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
+    validation:
+      - "python -m unittest scripts.tests.test_check_doc_pairs"
+      - "python scripts/check_doc_pairs.py --validate-coverage"
       - "git diff --check"
 
   cleanup_migration:
@@ -1562,7 +1695,7 @@ tasks:
       - "PROJECT_CONTEXT/session_migrations.json"
       - "PROJECT_CONTEXT/current_status.md"
       - "PROJECT_CONTEXT/session_handoff.md"
-      - "PROJECT_CONTEXT/task_ledger.md"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
       - "scripts/session_continuity.py"
       - "scripts/tests/test_session_continuity.py"
       - "scripts/workspace_cli.py"
@@ -1572,4 +1705,75 @@ tasks:
       - "python -m unittest scripts.tests.test_session_continuity scripts.tests.test_workspace_cli"
       - "python scripts/workspace_cli.py sessions audit"
       - "python scripts/validate_manifest.py"
+      - "git diff --check"
+
+  task_outcome_records:
+    use_when:
+      - "Creating, validating, summarizing, or evolving structured task outcome records and their ledger integration."
+    use_when_zh:
+      - "创建、验证、汇总或演进结构化任务结果记录及其与任务台账的集成。"
+    required:
+      - "PROJECT_CONTEXT/task_records/README.md"
+      - "PROJECT_CONTEXT/task_records/schema.json"
+      - "PROJECT_CONTEXT/task_ledger/README.md"
+      - "scripts/task_records.py"
+      - "scripts/task_ledger.py"
+      - "scripts/workflow_check.py"
+      - "scripts/verify_change_scope.py"
+      - "scripts/agent_governance.py"
+      - "scripts/tests/test_task_records.py"
+      - "scripts/tests/test_workflow_check.py"
+      - "scripts/workspace_cli.py"
+      - "AGENTS.md"
+      - "shared/workspace_policy.md"
+      - "shared/agent_governance_policy.md"
+    optional:
+      - "scripts/workspace_summary.py"
+      - "scripts/tests/test_workspace_summary.py"
+      - "PROJECT_CONTEXT/task_registry.yaml"
+    ignore:
+      - "provider transcripts, credentials, raw prompts, and volatile tool logs"
+      - "generated reports unless a report task explicitly owns them"
+    prompt:
+      - "task_routing"
+    tool_profile: "workspace_maintenance"
+    ledger: true
+    write_scope:
+      - "PROJECT_CONTEXT/task_records/"
+      - "PROJECT_CONTEXT/task_ledger/"
+      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "PROJECT_CONTEXT/current_status.md"
+      - "PROJECT_CONTEXT/context_budget.md"
+      - "PROJECT_CONTEXT/README.md"
+      - "PROJECT_CONTEXT/README.zh-CN.md"
+      - "PROJECT_CONTEXT/task_ledger.md"
+      - "ARCHITECTURE.md"
+      - "USAGE_GUIDES/prompt_registry.yaml"
+      - "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.md"
+      - "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.zh-CN.md"
+      - "scripts/publish_public.py"
+      - "scripts/resolve_task_context.py"
+      - "scripts/task_records.py"
+      - "scripts/task_ledger.py"
+      - "scripts/workflow_check.py"
+      - "scripts/verify_change_scope.py"
+      - "scripts/agent_governance.py"
+      - "scripts/workspace_cli.py"
+      - "scripts/tests/test_workflow_check.py"
+      - "scripts/tests/test_platform_agent_guards.py"
+      - "scripts/tests/test_workspace_cli.py"
+      - "AGENTS.md"
+      - "shared/workspace_policy.md"
+      - "shared/agent_governance_policy.md"
+      - ".claude/hooks/workspace_boundary_guard.ps1"
+      - ".opencode/plugins/workspace-governance.js"
+      - "reasonix.toml"
+      - "scripts/workspace_summary.py"
+      - "scripts/tests/test_task_records.py"
+      - "scripts/tests/test_workspace_summary.py"
+    validation:
+      - "python -m unittest scripts.tests.test_task_records scripts.tests.test_workflow_check scripts.tests.test_workspace_summary scripts.tests.test_workspace_cli scripts.tests.test_agent_governance scripts.tests.test_platform_agent_guards"
+      - "python scripts/task_ledger.py validate"
+      - "python scripts/task_records.py validate"
+      - "python scripts/workspace_cli.py records summary"
       - "git diff --check"

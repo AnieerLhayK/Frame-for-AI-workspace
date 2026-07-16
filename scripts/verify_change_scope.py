@@ -248,6 +248,7 @@ def verify_changes(
     runner: GitRunner = run_git,
     task_resolver: TaskResolver = resolve_task,
     governance_policy: dict[str, Any] | None = None,
+    additional_write_scope: Sequence[str] = (),
 ) -> dict[str, Any]:
     task = task_resolver(task_id, bindings)
     governance_policy = governance_policy or load_governance_policy()
@@ -256,7 +257,10 @@ def verify_changes(
         include_untracked=include_untracked,
         runner=runner,
     )
-    write_scope = [str(value) for value in task["context"]["write_scope"]]
+    write_scope = [
+        *[str(value) for value in task["context"]["write_scope"]],
+        *[str(value) for value in additional_write_scope],
+    ]
     concrete_scopes = [
         scope for scope in write_scope if is_concrete_scope(scope)
     ]

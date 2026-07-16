@@ -67,9 +67,12 @@ topics:
       - path: "PROJECT_CONTEXT/session_handoff.md"
         layer: "project_context"
         purpose: "Continuation guidance for a new session."
-      - path: "PROJECT_CONTEXT/todo.md"
+      - path: "PROJECT_CONTEXT/todo/README.md"
         layer: "project_context"
         purpose: "Open follow-up work."
+      - path: "PROJECT_CONTEXT/todo/external-skills.md"
+        layer: "project_context"
+        purpose: "Raw external skill intake and compatibility queue."
 
   task_and_context_routing:
     title: "Task routing, context budget, and alternative change surfaces"
@@ -92,6 +95,18 @@ topics:
       - path: "PROJECT_CONTEXT/change_surface_policy.md"
         layer: "project_context"
         purpose: "How to compare multiple plausible file sets."
+      - path: "PROJECT_CONTEXT/doc_pair_registry.yaml"
+        layer: "project_context"
+        purpose: "Lightweight registry for Markdown files and directories with same-name zh-CN companions."
+      - path: "PROJECT_CONTEXT/potential_for_future/README.md"
+        layer: "project_context"
+        purpose: "Index for potential improvements and potential risks that are not active work."
+      - path: "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml"
+        layer: "project_context"
+        purpose: "Low-status registry for potential integration improvements that are not active todo items."
+      - path: "PROJECT_CONTEXT/potential_for_future/risk_register.yaml"
+        layer: "project_context"
+        purpose: "Low-status registry for potential structural, privacy, publication, and migration risks."
 
   developer_interfaces:
     title: "Developer-facing workspace commands"
@@ -167,6 +182,9 @@ topics:
       - path: "USAGE_GUIDES/REFERENCE/engineering/production-maintenance-relationships.md"
         layer: "usage_guides"
         purpose: "Boundaries between generation, diagnosis, and maintenance roles."
+      - path: "WORKSPACE_ENGINEERING/skill_engineering/personal_corpus_preparation.md"
+        layer: "workspace_engineering"
+        purpose: "Reusable method for preparing uneven personal corpora, source READMEs, and profile guidance before character generation."
 
   skill_workflows:
     title: "End-to-end skill engineering workflows"
@@ -208,12 +226,32 @@ topics:
       - path: "WORKSPACE_ENGINEERING/skill_engineering/skill_design_patterns.md"
         layer: "workspace_engineering"
         purpose: "Reusable skill role, boundary, and collaboration patterns."
+      - path: "WORKSPACE_ENGINEERING/skill_engineering/personal_corpus_preparation.md"
+        layer: "workspace_engineering"
+        purpose: "How to define source roles, normalization layers, and personal profiles for character-skill corpora."
       - path: "WORKSPACE_ENGINEERING/architecture_patterns.md"
         layer: "workspace_engineering"
         purpose: "Workspace and ecosystem architecture patterns."
       - path: "WORKSPACE_ENGINEERING/anti_patterns.md"
         layer: "workspace_engineering"
         purpose: "Known failure modes and safer alternatives."
+
+  personal_corpus_preparation:
+    title: "Personal corpus preparation for character skills"
+    aliases:
+      - "personal corpus"
+      - "private corpus"
+      - "corpus README"
+      - "character corpus"
+      - "personal profile"
+      - "source role"
+      - "个人语料"
+      - "语料 README"
+      - "角色语料"
+    entries:
+      - path: "WORKSPACE_ENGINEERING/skill_engineering/personal_corpus_preparation.md"
+        layer: "workspace_engineering"
+        purpose: "Reusable method for preparing uneven personal corpora, source READMEs, source roles, normalization layers, and profile guidance before character generation."
 
   prompt_engineering:
     title: "Prompt reuse, boundaries, and prompt-first workflows"
@@ -234,6 +272,35 @@ topics:
       - path: "USAGE_GUIDES/PROMPT_TEMPLATES/README.md"
         layer: "usage_guides"
         purpose: "Prompt template usage conventions."
+
+  workspace_optimization_options:
+    title: "Potential workspace integration improvements"
+    aliases:
+      - "optimization options"
+      - "potential improvements"
+      - "integration improvement"
+      - "rule gap"
+      - "future rule"
+      - "潜在优化"
+      - "优化选项"
+      - "规则缺口"
+      - "以后注意"
+    entries:
+      - path: "PROJECT_CONTEXT/potential_for_future/README.md"
+        layer: "project_context"
+        purpose: "Index for future improvement and risk categories."
+      - path: "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml"
+        layer: "project_context"
+        purpose: "Low-status candidates for future workspace integration improvements."
+      - path: "PROJECT_CONTEXT/potential_for_future/risk_register.yaml"
+        layer: "project_context"
+        purpose: "Potential risks to revisit when trigger conditions occur."
+      - path: "PROJECT_CONTEXT/doc_pair_registry.yaml"
+        layer: "project_context"
+        purpose: "Registered Markdown zh-CN companion sync expectations."
+      - path: "AGENTS.md"
+        layer: "documentation"
+        purpose: "Always-on guidance for Markdown companion sync and reusable future guidance capture."
 
   platform_exposure:
     title: "Platform skill discovery surfaces"

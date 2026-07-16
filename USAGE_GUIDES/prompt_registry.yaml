@@ -61,7 +61,7 @@ prompts:
       - "AGENTS.md"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md latest 5 entries"
+      - "PROJECT_CONTEXT/task_ledger/README.md latest 5 entries"
     ignore:
       - "reports/"
       - "platform loading surfaces unless explicitly named"
@@ -192,7 +192,7 @@ prompts:
       - "workspace_manifest.yaml"
       - "PROJECT_CONTEXT/task_registry.yaml"
       - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger.md latest 5 entries"
+      - "PROJECT_CONTEXT/task_ledger/README.md latest 5 entries"
       - "target docs that duplicate path facts"
     ignore:
       - "reports/ unless the task is report regeneration"

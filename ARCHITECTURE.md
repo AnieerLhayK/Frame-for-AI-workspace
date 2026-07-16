@@ -169,7 +169,7 @@ and lifecycle role, not platform ownership.
 - `packages/character-system/reports/runtime-loop/`: durable runtime drift tracking records and ledgers.
 - `scripts/`: validation, bootstrap, reporting, and link-check utilities.
 - `PROJECT_CONTEXT/session_migrations.json`: old-to-new source path mappings and external conversation backup evidence.
-- `PROJECT_CONTEXT/`: active task memory layer (task ledger, registry, status, todo, session handoff).
+- `PROJECT_CONTEXT/`: active task memory layer (partitioned task ledger, task records, registry, status, todo, session handoff).
 - `WORKSPACE_ENGINEERING/`: reusable AI workspace engineering reference, with Skill Engineering as a subdomain.
 - `ARCHITECTURE.md`: this file — workspace scope and physical architecture reference.
 

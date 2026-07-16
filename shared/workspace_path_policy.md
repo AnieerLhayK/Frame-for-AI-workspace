@@ -34,6 +34,17 @@ The manifest may also declare local external roots such as
 `output_roots.workspace`. Documentation should reference the manifest field
 instead of repeating the current machine path.
 
+External skill paths are resolved through `workspace_manifest.yaml`:
+
+- raw research inputs: `external_roots.raw_skills`;
+- curated adapted sources: `external_roots.adapted_skills`;
+- native standalone sources: `skills/`.
+
+Raw research inputs are outside the workspace source tree and are never a
+platform projection target. An adapted external skill must be copied or
+transformed into the curated workspace path, then registered in the manifest
+before it can be exposed.
+
 ## Projection Path Is Not Source Path
 
 Platform projection paths are compatibility surfaces for tools such as Codex and OpenCode. They may be junctions or symlinks.

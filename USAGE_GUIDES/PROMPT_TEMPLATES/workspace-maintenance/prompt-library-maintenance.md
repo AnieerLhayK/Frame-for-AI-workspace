@@ -13,8 +13,8 @@ Start here:
 - `USAGE_GUIDES/PROMPT_LIBRARY.md`
 - `USAGE_GUIDES/prompt_registry.yaml`
 - `USAGE_GUIDES/PROMPT_TEMPLATES/README.md`
-- `PROJECT_CONTEXT/todo.md`
-- latest entries in `PROJECT_CONTEXT/task_ledger.md`
+- `PROJECT_CONTEXT/todo/README.md`
+- latest entries in `PROJECT_CONTEXT/task_ledger/README.md`
 
 Goal:
 Add or refine prompt ids and copy-ready templates so common AI maintenance work

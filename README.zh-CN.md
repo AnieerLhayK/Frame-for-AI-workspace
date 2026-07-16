@@ -4,7 +4,10 @@
 
 ## 项目上下文
 
-新的人类或智能体会话应从 `ARCHITECTURE.md` 开始，然后阅读 `PROJECT_CONTEXT/README.md`、`PROJECT_CONTEXT/current_status.md` 和 `PROJECT_CONTEXT/todo.md`。
+新的人类或智能体会话应从 `ARCHITECTURE.md` 开始，然后阅读 `PROJECT_CONTEXT/README.md`、`PROJECT_CONTEXT/current_status.md` 和 `PROJECT_CONTEXT/todo/README.md`。
+
+外来 skill 采用两层管理。原始仓库放在
+`workspace_manifest.yaml -> external_roots.raw_skills` 下用于研究；经过审查和适配的 skill 放在受 Git 跟踪的 `external-skills/<function>/` 下，并且必须先登记到 manifest 才能暴露。每当发现新的原始 skill，首先登记到 `PROJECT_CONTEXT/todo/external-skills.md`。
 
 `PROJECT_CONTEXT/` 是活跃任务记忆层（任务台账、注册表、状态、待办事项）。它为当前工作提供方向，但不取代 `workspace_manifest.yaml`、`ARCHITECTURE.md`、`shared/`、`reports/` 或 `packages/character-system/reports/runtime-loop/`。
 

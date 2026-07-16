@@ -35,9 +35,12 @@
 - `skills/`：不依赖包内业务协议的独立技能。
 - `PROJECT_CONTEXT/task_registry.yaml`：任务路由层，在大范围发现之前限制所需上下文。
 - `PROJECT_CONTEXT/context_budget.md`：上下文预算层，控制何时扩展超出必需文件的范围。
-- `PROJECT_CONTEXT/task_ledger.md`：轻量级维护台账；在重建历史之前请先阅读最近的 5 条条目。
+- `PROJECT_CONTEXT/task_ledger/`：按年/月分区的轻量级维护台账；在重建历史之前请先阅读最新条目。
+- `PROJECT_CONTEXT/task_records/`：受跟踪、机器可读的任务结果事实。
 - `PROJECT_CONTEXT/change_surface_policy.md`：用于比较可替代可写文件集的决策规则。
 - `PROJECT_CONTEXT/knowledge_registry.yaml`：当前上下文、可执行政策和可复用工程知识的主题索引。
+- `PROJECT_CONTEXT/doc_pair_registry.yaml`：轻量级注册表，用于记录编辑 Markdown 时应同步检查的同名 `.zh-CN.md` 伴随文档。
+- `PROJECT_CONTEXT/potential_for_future/`：低优先级注册表目录，用于记录尚未成为活跃 todo 或强制策略的潜在优化与风险。
 
 ## 新会话推荐阅读顺序
 
@@ -51,6 +54,8 @@
 8. 仅根据证据扩展可选上下文。
 9. 当仍有多个合理的归属层时，运行 `python scripts/workspace_cli.py changes plan <task-id> --intent <intent>`。
 10. 当需要的知识条目尚未被任务路由时，使用 `python scripts/workspace_cli.py knowledge find "<topic>"`。
+11. 编辑 Markdown 时，检查 `PROJECT_CONTEXT/doc_pair_registry.yaml`，不要为了翻译伴随文档进行大范围扫描。
+12. 当发现可复用但尚未可执行的优化点或结构性风险时，检查或更新 `PROJECT_CONTEXT/potential_for_future/`。
 
 ## 最低维护工作流程
 
@@ -61,7 +66,7 @@
 3. 通过 `workspace_manifest.yaml` 解析路径。
 4. 使用 `scripts/resolve_task_context.py` 解析任务。
 5. 在扩展上下文之前应用返回的令牌预算。
-6. 在连续性相关时阅读最近的 `PROJECT_CONTEXT/task_ledger.md` 条目。
+6. 在连续性相关时阅读最近的 `PROJECT_CONTEXT/task_ledger/` 条目。
 7. 先加载任务的必需上下文，再加载可选上下文。
 8. 编辑最窄的归属层。
 9. 运行相关的验证或试运行。
@@ -78,6 +83,7 @@
 - 已知风险发生变化时；
 - 添加新的验证层或运行循环时；
 - 引入新的技能/包边界时；
+- 添加新的轻量路由、文档配对同步或优化选项注册表时；
 - 未来会话需要清晰的交接上下文时。
 
 ## 不应放入的内容
@@ -90,4 +96,4 @@
 - 本应属于 `packages/character-system/reports/runtime-loop/` 的运行时数据包实例；
 - 本应属于清单文件或协议清单的机器可读注册表数据。
 
-不要将 `PROJECT_CONTEXT/task_ledger.md` 用作报告或 Git 历史的替代品。它是有记录的决策索引，而不是证据本身。
+不要将 `PROJECT_CONTEXT/task_ledger/` 用作报告或 Git 历史的替代品。它是有记录的决策索引，而不是证据本身。

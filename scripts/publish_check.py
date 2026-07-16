@@ -4,7 +4,7 @@ publish_check.py — Verify a public-workspace staging directory is ready to pus
 
 Checks:
 1. No D:\AI, D:/AI, C:\Users\Z1377 absolute paths remain
-2. skills/ directory does not exist
+2. character-system does not exist and skills layers are empty
 3. Template files match expected list
 4. Beginner guide and conservative setup helper exist
 5. Essential scripts are functional
@@ -46,12 +46,19 @@ EXPECTED_DOCS: set[str] = {
 
 # Paths that must NOT exist
 FORBIDDEN_DIRS: set[str] = {
+    "packages/character-system",
+}
+
+REQUIRED_EMPTY_LAYERS: set[str] = {
     "skills",
+    "external-skills",
 }
 
 # Paths that MUST exist
 REQUIRED_PATHS: set[str] = {
     "workspace_manifest.yaml",
+    "skills/.gitkeep",
+    "external-skills/.gitkeep",
     "AGENTS.md",
     "CLAUDE.md",
     "ARCHITECTURE.md",
@@ -117,11 +124,41 @@ def check_forbidden_paths(root: Path) -> list[str]:
 
 
 def check_missing_dirs(root: Path) -> list[str]:
-    """Check that forbidden directories don't exist."""
+    """Check that private/product package directories don't exist."""
     issues: list[str] = []
     for d in FORBIDDEN_DIRS:
         if (root / d).is_dir():
             issues.append(f"  Forbidden directory exists: {d}/")
+    return issues
+
+
+def check_empty_layers(root: Path) -> list[str]:
+    """Ensure extension layers exist but contain no bundled skill files."""
+    issues: list[str] = []
+    for layer in REQUIRED_EMPTY_LAYERS:
+        path = root / layer
+        if not path.is_dir():
+            issues.append(f"  Missing public extension layer: {layer}/")
+            continue
+        entries = sorted(
+            entry.relative_to(path).as_posix()
+            for entry in path.rglob("*")
+            if entry.is_file()
+        )
+        if entries != [".gitkeep"]:
+            issues.append(
+                f"  Public extension layer is not empty: {layer}/ ({entries})"
+            )
+    return issues
+
+
+def check_no_bundled_skills(root: Path) -> list[str]:
+    """Reject skill manifests in the framework-only public projection."""
+    issues: list[str] = []
+    for skill_file in root.rglob("SKILL.md"):
+        if ".git" in skill_file.parts:
+            continue
+        issues.append(f"  Bundled skill manifest exists: {skill_file.relative_to(root).as_posix()}")
     return issues
 
 
@@ -326,6 +363,8 @@ def main() -> int:
     checks: list[tuple[str, list[str]]] = [
         ("Forbidden paths", check_forbidden_paths(root)),
         ("Forbidden directories", check_missing_dirs(root)),
+        ("Empty extension layers", check_empty_layers(root)),
+        ("Bundled skills", check_no_bundled_skills(root)),
         ("Required files", check_required_paths(root)),
         ("Templates", check_templates(root)),
         ("Documentation", check_docs(root)),

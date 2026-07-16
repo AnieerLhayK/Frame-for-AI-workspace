@@ -85,12 +85,14 @@ def build_parser() -> argparse.ArgumentParser:
             "      Show required context, write scope, validation, and token budget.\n"
             "  workspace preflight <task-id> [--bind name=value]\n"
             "      Resolve a task and fail when the required context budget is too high.\n"
+            "  workspace records start --task-type <task-id> --operation workspace_write\n"
+            "      Register a task before its first workspace mutation.\n"
             "  workspace knowledge find \"topic\"\n"
             "      Find the smallest registered reading entry points.\n"
             "  workspace explain path scripts/workspace_cli.py\n"
             "      Explain a path's layer, related tasks, topics, and likely tests.\n"
-            "  workspace workflow check <task-id>\n"
-            "      Verify current Git changes against task scope before validation.\n"
+            "  workspace workflow check <task-id> --record-id TASK-YYYYMMDD-001\n"
+            "      Verify registered work and current Git changes before finalization.\n"
             "  workspace claude model-advice status\n"
             "      Show whether Claude model advice is on, off, and fully integrated.\n"
             "\n"
@@ -149,6 +151,14 @@ def build_parser() -> argparse.ArgumentParser:
     summary.add_argument("--recent", type=int, default=5)
     summary.add_argument("--format", choices=("text", "json"), default="text")
 
+    merge = commands.add_parser("merge", help="Run conservative read-only merge preflight.")
+    merge.add_argument("target")
+    merge.add_argument("--head", default="HEAD")
+    merge.add_argument("--format", choices=("text", "json"), default="text")
+
+    records = commands.add_parser("records", help="Create, finalize, inspect, and summarize task outcomes.")
+    records.add_argument("args", nargs=argparse.REMAINDER)
+
     sessions = commands.add_parser("sessions", help="Audit conversation continuity after path migrations.")
     session_commands = sessions.add_subparsers(dest="action", required=True)
     session_audit = session_commands.add_parser(
@@ -183,6 +193,7 @@ def build_parser() -> argparse.ArgumentParser:
     agent_check.add_argument("--agent", required=True)
     agent_check.add_argument("--operation", choices=("read", "write"), default="write")
     agent_check.add_argument("--path", required=True)
+    agent_check.add_argument("--record-id")
     agent_check.add_argument("--skill")
     agent_check.add_argument("--lease")
     agent_check.add_argument("--format", choices=("text", "json"), default="text")
@@ -358,6 +369,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Resolve, verify scope, run git diff --check, and list validation.",
     )
     workflow_check.add_argument("task_id")
+    workflow_check.add_argument("--record-id", required=True)
     workflow_check.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
     workflow_check.add_argument("--format", choices=("text", "json"), default="text")
     workflow_check.add_argument("--strict", action="store_true")
@@ -479,6 +491,8 @@ def dispatch(args: argparse.Namespace) -> int:
                     args.path,
                 ]
             )
+            if args.record_id:
+                command.extend(["--record-id", args.record_id])
             if args.skill:
                 command.extend(["--skill", args.skill])
             if args.lease:
@@ -600,6 +614,10 @@ def dispatch(args: argparse.Namespace) -> int:
                 command.extend(["--layer", args.layer])
         command.extend(["--format", args.format])
         return run_command(command)
+    if args.command == "records":
+        return run_command([sys.executable, str(SCRIPTS_DIR / "task_records.py"), *args.args])
+    if args.command == "merge":
+        return run_command([sys.executable, str(SCRIPTS_DIR / "merge_safety.py"), args.target, "--head", args.head, "--format", args.format])
     if args.command == "changes":
         if args.action == "verify":
             command = [
@@ -643,6 +661,8 @@ def dispatch(args: argparse.Namespace) -> int:
             sys.executable,
             str(SCRIPTS_DIR / "workflow_check.py"),
             args.task_id,
+            "--record-id",
+            args.record_id,
             "--format",
             args.format,
         ]

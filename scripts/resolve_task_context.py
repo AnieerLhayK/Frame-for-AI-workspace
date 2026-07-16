@@ -73,6 +73,7 @@ TASK_GROUPS = (
             "workspace_health_tooling",
             "workspace_launcher_tooling",
             "context_resolution_tooling",
+            "task_outcome_records",
             "failure_diagnostics_tooling",
             "change_surface_planning",
             "change_scope_verification",

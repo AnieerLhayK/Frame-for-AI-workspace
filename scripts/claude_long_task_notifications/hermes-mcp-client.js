@@ -15,7 +15,9 @@ function parseArgs(argv) {
   const result = {
     minutes: "?",
     message: "",
+    messageFile: "",
     targets: [],
+    selfTest: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -27,9 +29,14 @@ function parseArgs(argv) {
     } else if (arg === "--message" && next) {
       result.message = next;
       i += 1;
+    } else if (arg === "--message-file" && next) {
+      result.messageFile = next;
+      i += 1;
     } else if (arg === "--target" && next) {
       result.targets.push(...next.split(",").map((value) => value.trim()).filter(Boolean));
       i += 1;
+    } else if (arg === "--self-test") {
+      result.selfTest = true;
     } else if (!arg.startsWith("--") && result.minutes === "?") {
       result.minutes = arg;
     }
@@ -41,7 +48,11 @@ function parseArgs(argv) {
   }
 
   if (!result.message) {
-    result.message = `Claude Code task completed in ${result.minutes} minute(s).`;
+    if (result.messageFile) {
+      result.message = fs.readFileSync(result.messageFile, "utf8");
+    } else {
+      result.message = `Claude Code task completed in ${result.minutes} minute(s).`;
+    }
   }
 
   return result;
@@ -62,6 +73,33 @@ function logInfo(message) {
 
 function logFailure(error) {
   appendLog(`${new Date().toISOString()} ERROR ${error.stack || error.message || String(error)}\n`);
+}
+
+function getToolText(result) {
+  if (!result) {
+    return "";
+  }
+  if (result.structuredContent && typeof result.structuredContent.result === "string") {
+    return result.structuredContent.result;
+  }
+  if (Array.isArray(result.content)) {
+    return result.content
+      .map((item) => (item && item.type === "text" && typeof item.text === "string" ? item.text : ""))
+      .filter(Boolean)
+      .join("\n");
+  }
+  return "";
+}
+
+function parseJsonObject(text) {
+  if (!text) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 class MCPTransport {
@@ -86,13 +124,36 @@ class MCPTransport {
   }
 
   drain() {
-    const delimiter = Buffer.from("\r\n\r\n");
     while (!this.closed) {
-      const headerEnd = this.buffer.indexOf(delimiter);
-      if (headerEnd === -1) {
-        break;
+      if (this.buffer[0] === 0x7b) {
+        const newline = this.buffer.indexOf(Buffer.from("\n"));
+        if (newline === -1) {
+          break;
+        }
+
+        const line = this.buffer.subarray(0, newline).toString("utf8").trim();
+        this.buffer = this.buffer.subarray(newline + 1);
+        if (!line) {
+          continue;
+        }
+        try {
+          this.dispatch(JSON.parse(line));
+        } catch {
+          // Ignore malformed newline-delimited logs.
+        }
+        continue;
       }
 
+      const delimiter = Buffer.from("\r\n\r\n");
+      const headerEnd = this.buffer.indexOf(delimiter);
+      if (headerEnd === -1) {
+        const newline = this.buffer.indexOf(Buffer.from("\n"));
+        if (newline === -1) {
+          break;
+        }
+        this.buffer = this.buffer.subarray(newline + 1);
+        continue;
+      }
       const header = this.buffer.subarray(0, headerEnd).toString("ascii");
       const match = header.match(/Content-Length:\s*(\d+)/i);
       if (!match) {
@@ -141,14 +202,17 @@ class MCPTransport {
       return;
     }
     const body = JSON.stringify(payload);
-    const header = `Content-Length: ${Buffer.byteLength(body, "utf8")}\r\nContent-Type: application/json; charset=utf-8\r\n\r\n`;
-    this.proc.stdin.write(header + body);
+    this.proc.stdin.write(`${body}\n`);
   }
 
-  request(method, params = {}) {
+  request(method, params) {
     const id = this.nextId;
     this.nextId += 1;
-    this.send({ jsonrpc: "2.0", id, method, params });
+    const payload = { jsonrpc: "2.0", id, method };
+    if (params !== undefined) {
+      payload.params = params;
+    }
+    this.send(payload);
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -167,8 +231,12 @@ class MCPTransport {
     });
   }
 
-  notify(method, params = {}) {
-    this.send({ jsonrpc: "2.0", method, params });
+  notify(method, params) {
+    const payload = { jsonrpc: "2.0", method };
+    if (params !== undefined) {
+      payload.params = params;
+    }
+    this.send(payload);
   }
 
   close() {
@@ -181,6 +249,28 @@ class MCPTransport {
     }
     this.pending.clear();
   }
+}
+
+async function resolveTarget(transport, target) {
+  if (!target || target.includes(":") || target === "all") {
+    return target;
+  }
+
+  const channelsResult = await transport.request("tools/call", {
+    name: "channels_list",
+    arguments: { platform: target },
+  });
+  const channelsPayload = parseJsonObject(getToolText(channelsResult));
+  const channels = channelsPayload && Array.isArray(channelsPayload.channels) ? channelsPayload.channels : [];
+  if (channels.length === 1 && channels[0].target) {
+    const resolved = String(channels[0].target);
+    logInfo(`resolved target ${target} -> ${resolved}`);
+    return resolved;
+  }
+  if (channels.length > 1) {
+    throw new Error(`Target ${target} is ambiguous; channels_list returned ${channels.length} channels`);
+  }
+  throw new Error(`Target ${target} was not found by channels_list`);
 }
 
 async function sendNotifications(options) {
@@ -211,20 +301,33 @@ async function sendNotifications(options) {
       clientInfo: { name: "claude-code-long-task-notifier", version: "2.0.0" },
     });
     transport.notify("notifications/initialized");
+    logInfo("initialized hermes mcp");
+
+    if (options.selfTest) {
+      await transport.request("tools/list");
+      logInfo("self-test tools/list succeeded");
+      const resolvedTargets = [];
+      for (const target of options.targets) {
+        resolvedTargets.push(await resolveTarget(transport, target));
+      }
+      console.log(`Self-test OK: Hermes MCP initialized; targets=${resolvedTargets.join(",")}`);
+      transport.notify("exit");
+      return;
+    }
 
     for (const target of options.targets) {
-      logInfo(`sending target=${target} minutes=${options.minutes}`);
+      const resolvedTarget = await resolveTarget(transport, target);
+      logInfo(`sending target=${resolvedTarget} minutes=${options.minutes}`);
       await transport.request("tools/call", {
         name: "messages_send",
         arguments: {
-          target,
+          target: resolvedTarget,
           message: `Claude Code\n${options.message}`,
         },
       });
-      logInfo(`sent target=${target}`);
+      logInfo(`sent target=${resolvedTarget}`);
     }
 
-    await transport.request("shutdown");
     transport.notify("exit");
   } catch (error) {
     if (stderr) {

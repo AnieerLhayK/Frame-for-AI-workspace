@@ -6,6 +6,7 @@ from pathlib import Path
 
 from scripts.publish_check import (
     EXPECTED_DOCS,
+    REQUIRED_EMPTY_LAYERS,
     REQUIRED_PATHS,
     check_forbidden_paths,
     run_functional_checks,
@@ -15,6 +16,8 @@ from scripts.publish_public import (
     EXCLUDED_PATHS,
     SCRUB_FILES,
     generate_beginner_guide_md,
+    generate_public_manifest,
+    generate_public_readme,
     generate_onboarding_md,
     generate_public_setup_py,
     scrub_content,
@@ -65,6 +68,22 @@ class PublicPublishTests(unittest.TestCase):
 
     def test_public_release_excludes_claude_local_settings(self) -> None:
         self.assertIn(".claude/settings.local.json", EXCLUDED_PATHS)
+
+    def test_public_frame_excludes_character_system_and_keeps_empty_skill_layers(self) -> None:
+        self.assertIn("packages/character-system", EXCLUDED_PATHS)
+        self.assertEqual(REQUIRED_EMPTY_LAYERS, {"skills", "external-skills"})
+
+    def test_public_manifest_has_no_private_packages_or_skills(self) -> None:
+        manifest = generate_public_manifest(Path("workspace_manifest.yaml"))
+        self.assertIn('"packages": []', manifest)
+        self.assertIn('"skills": []', manifest)
+        self.assertIn('"projections": []', manifest)
+        self.assertNotIn('"character-system"', manifest)
+
+    def test_public_readme_states_framework_boundary(self) -> None:
+        readme = generate_public_readme("Frame-for-AI-workspace")
+        self.assertIn("No `character-system` package is bundled", readme)
+        self.assertIn("`skills/` and `external-skills/` are empty", readme)
 
     def test_claude_notification_hermes_client_is_scrubbed(self) -> None:
         self.assertIn(

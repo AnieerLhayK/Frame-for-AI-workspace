@@ -1,12 +1,12 @@
 ﻿---
 report_name: workspace_health_report
-generated_at: 2026-07-01 20:54:24 +08:00
+generated_at: 2026-07-13 14:43:11 +08:00
 generated_by: scripts/sync_report.ps1
 source_root: ${WORKSPACE_ROOT}
 manifest_path: ${WORKSPACE_ROOT}\workspace_manifest.yaml
 manifest_version: 1.3.0
-manifest_last_modified: 2026-06-20 18:27:28 +08:00
-source_commit: 28909d8
+manifest_last_modified: 2026-07-13 14:42:10 +08:00
+source_commit: 1b512b4
 report_scope: manifest status, link status, missing files, hardcoded paths, protocol consistency, drift, shared uniqueness, and Git boundaries
 report_is_snapshot: true
 truth_source:
@@ -20,7 +20,7 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 
 # Workspace Health Report
 
-Generated: 2026-07-01 20:54:24 +08:00
+Generated: 2026-07-13 14:43:11 +08:00
 
 ## Manifest Status
 
@@ -32,6 +32,22 @@ Generated: 2026-07-01 20:54:24 +08:00
 
 | Name | Status | LinkType | TargetExists | LinkPath | ExpectedTarget | ActualTarget |
 | --- | --- | --- | --- | --- | --- | --- |
+| codex grill-me | OK | Junction | True | ${DATA_ROOT}/codex\skills\grill-me | ${WORKSPACE_ROOT}\external-skills\productivity\grill-me | ${WORKSPACE_ROOT}\external-skills\productivity\grill-me |
+| claude grill-me | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\grill-me | ${WORKSPACE_ROOT}\external-skills\productivity\grill-me | ${WORKSPACE_ROOT}\external-skills\productivity\grill-me |
+| codex grilling | OK | Junction | True | ${DATA_ROOT}/codex\skills\grilling | ${WORKSPACE_ROOT}\external-skills\productivity\grilling | ${WORKSPACE_ROOT}\external-skills\productivity\grilling |
+| claude grilling | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\grilling | ${WORKSPACE_ROOT}\external-skills\productivity\grilling | ${WORKSPACE_ROOT}\external-skills\productivity\grilling |
+| codex handoff | OK | Junction | True | ${DATA_ROOT}/codex\skills\handoff | ${WORKSPACE_ROOT}\external-skills\productivity\handoff | ${WORKSPACE_ROOT}\external-skills\productivity\handoff |
+| claude handoff | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\handoff | ${WORKSPACE_ROOT}\external-skills\productivity\handoff | ${WORKSPACE_ROOT}\external-skills\productivity\handoff |
+| codex diagnosing-bugs | OK | Junction | True | ${DATA_ROOT}/codex\skills\diagnosing-bugs | ${WORKSPACE_ROOT}\external-skills\engineering\diagnosing-bugs | ${WORKSPACE_ROOT}\external-skills\engineering\diagnosing-bugs |
+| claude diagnosing-bugs | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\diagnosing-bugs | ${WORKSPACE_ROOT}\external-skills\engineering\diagnosing-bugs | ${WORKSPACE_ROOT}\external-skills\engineering\diagnosing-bugs |
+| codex tdd | OK | Junction | True | ${DATA_ROOT}/codex\skills\tdd | ${WORKSPACE_ROOT}\external-skills\engineering\tdd | ${WORKSPACE_ROOT}\external-skills\engineering\tdd |
+| claude tdd | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\tdd | ${WORKSPACE_ROOT}\external-skills\engineering\tdd | ${WORKSPACE_ROOT}\external-skills\engineering\tdd |
+| codex code-review | OK | Junction | True | ${DATA_ROOT}/codex\skills\code-review | ${WORKSPACE_ROOT}\external-skills\engineering\code-review | ${WORKSPACE_ROOT}\external-skills\engineering\code-review |
+| claude code-review | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\code-review | ${WORKSPACE_ROOT}\external-skills\engineering\code-review | ${WORKSPACE_ROOT}\external-skills\engineering\code-review |
+| codex codebase-design | OK | Junction | True | ${DATA_ROOT}/codex\skills\codebase-design | ${WORKSPACE_ROOT}\external-skills\engineering\codebase-design | ${WORKSPACE_ROOT}\external-skills\engineering\codebase-design |
+| claude codebase-design | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\codebase-design | ${WORKSPACE_ROOT}\external-skills\engineering\codebase-design | ${WORKSPACE_ROOT}\external-skills\engineering\codebase-design |
+| codex writing-great-skills | OK | Junction | True | ${DATA_ROOT}/codex\skills\writing-great-skills | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills |
+| claude writing-great-skills | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\writing-great-skills | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills |
 | codex disk-scan-reporter | OK | Junction | True | ${DATA_ROOT}/codex\skills\disk-scan-reporter | ${WORKSPACE_ROOT}\skills\disk-scan-reporter | ${WORKSPACE_ROOT}\skills\disk-scan-reporter |
 | codex windows-ai-storage-governor | OK | Junction | True | ${DATA_ROOT}/codex\skills\windows-ai-storage-governor | ${WORKSPACE_ROOT}\skills\windows-ai-storage-governor | ${WORKSPACE_ROOT}\skills\windows-ai-storage-governor |
 | claude windows-ai-storage-governor | OK | Junction | True | ${WORKSPACE_ROOT}\.claude\skills\windows-ai-storage-governor | ${WORKSPACE_ROOT}\skills\windows-ai-storage-governor | ${WORKSPACE_ROOT}\skills\windows-ai-storage-governor |
@@ -116,6 +132,7 @@ Generated: 2026-07-01 20:54:24 +08:00
 | scripts\tests\test_agent_governance.py | ${WORKSPACE_ROOT} | script |
 | scripts\tests\test_hermes_workspace_guard.py | ${DATA_ROOT}/hermes\skills | script |
 | scripts\tests\test_hermes_workspace_guard.py | ${WORKSPACE_ROOT} | script |
+| scripts\tests\test_publish_chatty_ch_system.py | ${WORKSPACE_ROOT} | script |
 | skills\disk-scan-reporter\reports\disk_report_2026-06-19_002611.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
 | skills\disk-scan-reporter\reports\disk_report_2026-06-19_002927.md | ${WORKSPACE_ROOT} | skill-doc-or-source |
 | workspace_manifest.yaml | ${USER_HOME}/.config/opencode/skills | manifest-source-of-truth |
@@ -124,7 +141,7 @@ Generated: 2026-07-01 20:54:24 +08:00
 | workspace_manifest.yaml | ${WORKSPACE_ROOT} | manifest-source-of-truth |
 | workspace_manifest.yaml | ${WORKSPACE_ROOT}\\.claude\\skills | manifest-source-of-truth |
 
-Unsafe hardcoded path references outside manifest/generated reports: `24`.
+Unsafe hardcoded path references outside manifest/generated reports: `25`.
 
 ## Protocol Consistency
 
@@ -203,4 +220,4 @@ Unsafe hardcoded path references outside manifest/generated reports: `24`.
 - Manifest portability missing count: `0`
 - Optional missing count: `3`
 - Projection drift count: `0`
-- Unsafe hardcoded path count: `24`
+- Unsafe hardcoded path count: `25`

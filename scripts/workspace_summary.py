@@ -21,7 +21,7 @@ from scripts.workspace_cli import build_parser
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
 TASK_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "task_registry.yaml"
 KNOWLEDGE_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "knowledge_registry.yaml"
-LEDGER_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "task_ledger.md"
+LEDGER_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "task_ledger"
 
 ENTRY_PATTERN = re.compile(
     r"^### (?P<id>TASK-\d{8}-\d+) - (?P<title>.+?)\n"
@@ -61,9 +61,10 @@ def cli_commands() -> list[str]:
 
 
 def parse_recent_ledger(path: Path = LEDGER_PATH, limit: int = 5) -> list[dict[str, str]]:
-    text = path.read_text(encoding="utf-8")
+    paths = [path] if path.is_file() else sorted(path.glob("20??/??/??.md"), reverse=True)
     entries: list[dict[str, str]] = []
-    for match in ENTRY_PATTERN.finditer(text):
+    for ledger_path in paths:
+      for match in ENTRY_PATTERN.finditer(ledger_path.read_text(encoding="utf-8")):
         fields = {
             field.group("name").lower().replace(" ", "_"): field.group("value").strip()
             for field in FIELD_PATTERN.finditer(match.group("body"))
@@ -75,8 +76,7 @@ def parse_recent_ledger(path: Path = LEDGER_PATH, limit: int = 5) -> list[dict[s
                 **fields,
             }
         )
-        if len(entries) >= max(1, limit):
-            break
+        if len(entries) >= max(1, limit): return entries
     return entries
 
 

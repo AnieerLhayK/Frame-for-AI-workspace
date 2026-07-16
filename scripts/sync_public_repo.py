@@ -97,7 +97,7 @@ def check_workspace_clean() -> bool:
     return True
 
 
-def regenerate(staging: str) -> bool:
+def regenerate(staging: str, repo_name: str = "Frame-for-AI-workspace") -> bool:
     """Run publish_public.py. Return True on success."""
     script = WORKSPACE_ROOT / "scripts" / "publish_public.py"
     if not script.is_file():
@@ -106,7 +106,14 @@ def regenerate(staging: str) -> bool:
 
     print(f"[INFO] Regenerating public workspace → {staging}")
     result = subprocess.run(
-        [sys.executable, str(script), "--out-dir", staging],
+        [
+            sys.executable,
+            str(script),
+            "--out-dir",
+            staging,
+            "--repo-name",
+            repo_name,
+        ],
         capture_output=True, text=True, timeout=120,
     )
     if result.returncode != 0:

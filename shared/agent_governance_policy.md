@@ -149,16 +149,20 @@ replacement for Agent and acting-Skill authority.
 
 Effective write authority is the intersection of:
 
-1. the resolved task write scope;
-2. the Agent capability and path scope;
-3. the acting Skill execution mode, when a Skill is active;
-4. an optional valid lease;
-5. the platform tool boundary.
+1. an active task outcome record whose declared operation matches the target
+   (`workspace_write` or `external_write`);
+2. the resolved task write scope;
+3. the Agent capability and path scope;
+4. the acting Skill execution mode, when a Skill is active;
+5. an optional valid lease;
+6. the platform tool boundary.
 
-Any DENY blocks the tool before mutation. Post-change verification accepts
-`--agent` and `--skill` so Git evidence can be checked against the same
-identity and Skill contracts. Prompt or memory guidance may explain the route,
-but it must never be the only boundary.
+Any DENY blocks the tool before mutation. `workspace agent check` requires
+`--record-id` for writes and chooses the matching registration operation from
+the target path. Post-change verification accepts `--agent` and `--skill` so
+Git evidence can be checked against the same identity and Skill contracts.
+Prompt or memory guidance may explain the route, but it must never be the only
+boundary.
 
 ## Lifecycle
 

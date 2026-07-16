@@ -1,10 +1,10 @@
 ---
 report_name: manifest_validation_report
-generated_at: 2026-07-01 20:54:23 +0800
+generated_at: 2026-07-15 21:01:19 +0800
 generated_by: scripts/validate_manifest.py
 source_root: ${WORKSPACE_ROOT}
 manifest_path: ${WORKSPACE_ROOT}\workspace_manifest.yaml
-source_commit: 28909d8
+source_commit: 408a267
 report_scope: manifest portability and consistency validation
 report_is_snapshot: true
 truth_source:
@@ -20,8 +20,8 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 ## Summary
 
 - Errors: `0`
-- Warnings: `0`
-- Info: `112`
+- Warnings: `2`
+- Info: `171`
 
 ## Errors
 
@@ -29,7 +29,8 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 
 ## Warnings
 
-- None.
+- WARNING: absolute path field may need portability review: external_roots.research
+- WARNING: absolute path field may need portability review: external_roots.raw_skills
 
 ## Path Checks
 
@@ -92,6 +93,25 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 | skills[zyc].required_files:references/voice_card.md | references/voice_card.md | ${WORKSPACE_ROOT}\packages\character-system\runtime\characters\zyc\references\voice_card.md | True | True |
 | skills[zyc].required_files:references/evaluation_rubric.md | references/evaluation_rubric.md | ${WORKSPACE_ROOT}\packages\character-system\runtime\characters\zyc\references\evaluation_rubric.md | True | True |
 | skills[zyc].required_files:prompts/rewrite_prompt.md | prompts/rewrite_prompt.md | ${WORKSPACE_ROOT}\packages\character-system\runtime\characters\zyc\prompts\rewrite_prompt.md | True | True |
+| skills[grill-me].source_path | external-skills/productivity/grill-me | ${WORKSPACE_ROOT}\external-skills\productivity\grill-me | True | True |
+| skills[grill-me].required_files:SKILL.md | SKILL.md | ${WORKSPACE_ROOT}\external-skills\productivity\grill-me\SKILL.md | True | True |
+| skills[grilling].source_path | external-skills/productivity/grilling | ${WORKSPACE_ROOT}\external-skills\productivity\grilling | True | True |
+| skills[grilling].required_files:SKILL.md | SKILL.md | ${WORKSPACE_ROOT}\external-skills\productivity\grilling\SKILL.md | True | True |
+| skills[handoff].source_path | external-skills/productivity/handoff | ${WORKSPACE_ROOT}\external-skills\productivity\handoff | True | True |
+| skills[handoff].required_files:SKILL.md | SKILL.md | ${WORKSPACE_ROOT}\external-skills\productivity\handoff\SKILL.md | True | True |
+| skills[diagnosing-bugs].source_path | external-skills/engineering/diagnosing-bugs | ${WORKSPACE_ROOT}\external-skills\engineering\diagnosing-bugs | True | True |
+| skills[diagnosing-bugs].required_files:SKILL.md | SKILL.md | ${WORKSPACE_ROOT}\external-skills\engineering\diagnosing-bugs\SKILL.md | True | True |
+| skills[tdd].source_path | external-skills/engineering/tdd | ${WORKSPACE_ROOT}\external-skills\engineering\tdd | True | True |
+| skills[tdd].required_files:SKILL.md | SKILL.md | ${WORKSPACE_ROOT}\external-skills\engineering\tdd\SKILL.md | True | True |
+| skills[tdd].required_files:tests.md | tests.md | ${WORKSPACE_ROOT}\external-skills\engineering\tdd\tests.md | True | True |
+| skills[tdd].required_files:mocking.md | mocking.md | ${WORKSPACE_ROOT}\external-skills\engineering\tdd\mocking.md | True | True |
+| skills[code-review].source_path | external-skills/engineering/code-review | ${WORKSPACE_ROOT}\external-skills\engineering\code-review | True | True |
+| skills[code-review].required_files:SKILL.md | SKILL.md | ${WORKSPACE_ROOT}\external-skills\engineering\code-review\SKILL.md | True | True |
+| skills[codebase-design].source_path | external-skills/engineering/codebase-design | ${WORKSPACE_ROOT}\external-skills\engineering\codebase-design | True | True |
+| skills[codebase-design].required_files:SKILL.md | SKILL.md | ${WORKSPACE_ROOT}\external-skills\engineering\codebase-design\SKILL.md | True | True |
+| skills[writing-great-skills].source_path | external-skills/engineering/writing-great-skills | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills | True | True |
+| skills[writing-great-skills].required_files:SKILL.md | SKILL.md | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills\SKILL.md | True | True |
+| skills[writing-great-skills].required_files:GLOSSARY.md | GLOSSARY.md | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills\GLOSSARY.md | True | True |
 | protocols[workspace_policy].path | shared/workspace_policy.md | ${WORKSPACE_ROOT}\shared\workspace_policy.md | True | True |
 | protocols[discovery_rules].path | shared/discovery_rules.md | ${WORKSPACE_ROOT}\shared\discovery_rules.md | True | True |
 | protocols[failure_policy].path | shared/failure_policy.md | ${WORKSPACE_ROOT}\shared\failure_policy.md | True | True |
@@ -106,6 +126,22 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 
 | id | link_path | target_path | link_exists | target_exists | target_matches_source |
 | --- | --- | --- | --- | --- | --- |
+| codex.grill-me | ${DATA_ROOT}/codex\skills\grill-me | ${WORKSPACE_ROOT}\external-skills\productivity\grill-me | True | True | True |
+| claude.grill-me | ${WORKSPACE_ROOT}\.claude\skills\grill-me | ${WORKSPACE_ROOT}\external-skills\productivity\grill-me | True | True | True |
+| codex.grilling | ${DATA_ROOT}/codex\skills\grilling | ${WORKSPACE_ROOT}\external-skills\productivity\grilling | True | True | True |
+| claude.grilling | ${WORKSPACE_ROOT}\.claude\skills\grilling | ${WORKSPACE_ROOT}\external-skills\productivity\grilling | True | True | True |
+| codex.handoff | ${DATA_ROOT}/codex\skills\handoff | ${WORKSPACE_ROOT}\external-skills\productivity\handoff | True | True | True |
+| claude.handoff | ${WORKSPACE_ROOT}\.claude\skills\handoff | ${WORKSPACE_ROOT}\external-skills\productivity\handoff | True | True | True |
+| codex.diagnosing-bugs | ${DATA_ROOT}/codex\skills\diagnosing-bugs | ${WORKSPACE_ROOT}\external-skills\engineering\diagnosing-bugs | True | True | True |
+| claude.diagnosing-bugs | ${WORKSPACE_ROOT}\.claude\skills\diagnosing-bugs | ${WORKSPACE_ROOT}\external-skills\engineering\diagnosing-bugs | True | True | True |
+| codex.tdd | ${DATA_ROOT}/codex\skills\tdd | ${WORKSPACE_ROOT}\external-skills\engineering\tdd | True | True | True |
+| claude.tdd | ${WORKSPACE_ROOT}\.claude\skills\tdd | ${WORKSPACE_ROOT}\external-skills\engineering\tdd | True | True | True |
+| codex.code-review | ${DATA_ROOT}/codex\skills\code-review | ${WORKSPACE_ROOT}\external-skills\engineering\code-review | True | True | True |
+| claude.code-review | ${WORKSPACE_ROOT}\.claude\skills\code-review | ${WORKSPACE_ROOT}\external-skills\engineering\code-review | True | True | True |
+| codex.codebase-design | ${DATA_ROOT}/codex\skills\codebase-design | ${WORKSPACE_ROOT}\external-skills\engineering\codebase-design | True | True | True |
+| claude.codebase-design | ${WORKSPACE_ROOT}\.claude\skills\codebase-design | ${WORKSPACE_ROOT}\external-skills\engineering\codebase-design | True | True | True |
+| codex.writing-great-skills | ${DATA_ROOT}/codex\skills\writing-great-skills | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills | True | True | True |
+| claude.writing-great-skills | ${WORKSPACE_ROOT}\.claude\skills\writing-great-skills | ${WORKSPACE_ROOT}\external-skills\engineering\writing-great-skills | True | True | True |
 | codex.disk-scan-reporter | ${DATA_ROOT}/codex\skills\disk-scan-reporter | ${WORKSPACE_ROOT}\skills\disk-scan-reporter | True | True | True |
 | codex.windows-ai-storage-governor | ${DATA_ROOT}/codex\skills\windows-ai-storage-governor | ${WORKSPACE_ROOT}\skills\windows-ai-storage-governor | True | True | True |
 | claude.windows-ai-storage-governor | ${WORKSPACE_ROOT}\.claude\skills\windows-ai-storage-governor | ${WORKSPACE_ROOT}\skills\windows-ai-storage-governor | True | True | True |
@@ -134,27 +170,53 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 | session_stores.claude.data_root | ${DATA_ROOT}/claude | True |
 | session_stores.opencode.data_root | ${DATA_ROOT}/opencode\current-share | True |
 | output_roots.workspace | ${DATA_ROOT}/out/workspace | True |
+| external_roots.research | ${WORKSPACE_ROOT}\research | False |
+| external_roots.raw_skills | ${WORKSPACE_ROOT}\research\skills | False |
 | skills[0].projection_path | ${DATA_ROOT}/codex\skills\disk-scan-reporter | True |
 | skills[1].projection_path | ${DATA_ROOT}/codex\skills\windows-ai-storage-governor | True |
 | skills[2].projection_path | ${DATA_ROOT}/codex\skills\character-generator | True |
 | skills[3].projection_path | ${DATA_ROOT}/codex\skills\character-maintainer | True |
 | skills[4].projection_path | ${USER_HOME}/.config/opencode/skills\style-doctor | True |
 | skills[5].projection_path | ${USER_HOME}/.config/opencode/skills\zyc | True |
-| projections[0].link_path | ${DATA_ROOT}/codex\skills\disk-scan-reporter | True |
-| projections[1].link_path | ${DATA_ROOT}/codex\skills\windows-ai-storage-governor | True |
-| projections[2].link_path | ${WORKSPACE_ROOT}\.claude\skills\windows-ai-storage-governor | True |
-| projections[3].link_path | ${DATA_ROOT}/codex\skills\character-generator | True |
-| projections[4].link_path | ${WORKSPACE_ROOT}\.claude\skills\character-generator | True |
-| projections[5].link_path | ${DATA_ROOT}/codex\skills\character-maintainer | True |
-| projections[6].link_path | ${WORKSPACE_ROOT}\.claude\skills\character-maintainer | True |
-| projections[7].link_path | ${USER_HOME}/.config/opencode/skills\style-doctor | True |
-| projections[8].link_path | ${DATA_ROOT}/codex\skills\style-doctor | True |
-| projections[9].link_path | ${WORKSPACE_ROOT}\.claude\skills\style-doctor | True |
-| projections[10].link_path | ${DATA_ROOT}/hermes\skills\style-doctor | True |
-| projections[11].link_path | ${USER_HOME}/.config/opencode/skills\zyc | True |
-| projections[12].link_path | ${DATA_ROOT}/codex\skills\zyc | True |
-| projections[13].link_path | ${WORKSPACE_ROOT}\.claude\skills\zyc | True |
-| projections[14].link_path | ${DATA_ROOT}/hermes\skills\zyc | True |
+| skills[6].projection_path | ${DATA_ROOT}/codex\skills\grill-me | True |
+| skills[7].projection_path | ${DATA_ROOT}/codex\skills\grilling | True |
+| skills[8].projection_path | ${DATA_ROOT}/codex\skills\handoff | True |
+| skills[9].projection_path | ${DATA_ROOT}/codex\skills\diagnosing-bugs | True |
+| skills[10].projection_path | ${DATA_ROOT}/codex\skills\tdd | True |
+| skills[11].projection_path | ${DATA_ROOT}/codex\skills\code-review | True |
+| skills[12].projection_path | ${DATA_ROOT}/codex\skills\codebase-design | True |
+| skills[13].projection_path | ${DATA_ROOT}/codex\skills\writing-great-skills | True |
+| projections[0].link_path | ${DATA_ROOT}/codex\skills\grill-me | True |
+| projections[1].link_path | ${WORKSPACE_ROOT}\.claude\skills\grill-me | True |
+| projections[2].link_path | ${DATA_ROOT}/codex\skills\grilling | True |
+| projections[3].link_path | ${WORKSPACE_ROOT}\.claude\skills\grilling | True |
+| projections[4].link_path | ${DATA_ROOT}/codex\skills\handoff | True |
+| projections[5].link_path | ${WORKSPACE_ROOT}\.claude\skills\handoff | True |
+| projections[6].link_path | ${DATA_ROOT}/codex\skills\diagnosing-bugs | True |
+| projections[7].link_path | ${WORKSPACE_ROOT}\.claude\skills\diagnosing-bugs | True |
+| projections[8].link_path | ${DATA_ROOT}/codex\skills\tdd | True |
+| projections[9].link_path | ${WORKSPACE_ROOT}\.claude\skills\tdd | True |
+| projections[10].link_path | ${DATA_ROOT}/codex\skills\code-review | True |
+| projections[11].link_path | ${WORKSPACE_ROOT}\.claude\skills\code-review | True |
+| projections[12].link_path | ${DATA_ROOT}/codex\skills\codebase-design | True |
+| projections[13].link_path | ${WORKSPACE_ROOT}\.claude\skills\codebase-design | True |
+| projections[14].link_path | ${DATA_ROOT}/codex\skills\writing-great-skills | True |
+| projections[15].link_path | ${WORKSPACE_ROOT}\.claude\skills\writing-great-skills | True |
+| projections[16].link_path | ${DATA_ROOT}/codex\skills\disk-scan-reporter | True |
+| projections[17].link_path | ${DATA_ROOT}/codex\skills\windows-ai-storage-governor | True |
+| projections[18].link_path | ${WORKSPACE_ROOT}\.claude\skills\windows-ai-storage-governor | True |
+| projections[19].link_path | ${DATA_ROOT}/codex\skills\character-generator | True |
+| projections[20].link_path | ${WORKSPACE_ROOT}\.claude\skills\character-generator | True |
+| projections[21].link_path | ${DATA_ROOT}/codex\skills\character-maintainer | True |
+| projections[22].link_path | ${WORKSPACE_ROOT}\.claude\skills\character-maintainer | True |
+| projections[23].link_path | ${USER_HOME}/.config/opencode/skills\style-doctor | True |
+| projections[24].link_path | ${DATA_ROOT}/codex\skills\style-doctor | True |
+| projections[25].link_path | ${WORKSPACE_ROOT}\.claude\skills\style-doctor | True |
+| projections[26].link_path | ${DATA_ROOT}/hermes\skills\style-doctor | True |
+| projections[27].link_path | ${USER_HOME}/.config/opencode/skills\zyc | True |
+| projections[28].link_path | ${DATA_ROOT}/codex\skills\zyc | True |
+| projections[29].link_path | ${WORKSPACE_ROOT}\.claude\skills\zyc | True |
+| projections[30].link_path | ${DATA_ROOT}/hermes\skills\zyc | True |
 
 ## Future Relative Candidates
 
@@ -166,6 +228,30 @@ Report is a snapshot. Manifest is the source of truth. If this report conflicts 
 | skills[character-maintainer].projection_path | can be derived from platform_roots plus skill id when scripts support it |
 | skills[style-doctor].projection_path | can be derived from platform_roots plus skill id when scripts support it |
 | skills[zyc].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| skills[grill-me].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| skills[grilling].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| skills[handoff].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| skills[diagnosing-bugs].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| skills[tdd].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| skills[code-review].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| skills[codebase-design].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| skills[writing-great-skills].projection_path | can be derived from platform_roots plus skill id when scripts support it |
+| projections[codex.grill-me].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[claude.grill-me].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[codex.grilling].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[claude.grilling].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[codex.handoff].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[claude.handoff].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[codex.diagnosing-bugs].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[claude.diagnosing-bugs].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[codex.tdd].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[claude.tdd].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[codex.code-review].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[claude.code-review].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[codex.codebase-design].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[claude.codebase-design].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[codex.writing-great-skills].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
+| projections[claude.writing-great-skills].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
 | projections[codex.disk-scan-reporter].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
 | projections[codex.windows-ai-storage-governor].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |
 | projections[claude.windows-ai-storage-governor].link_path | platform-local deployment path; could be templated from platform_roots in a future manifest version |

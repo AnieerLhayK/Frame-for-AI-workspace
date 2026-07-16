@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.1",
+  "task_id": "TASK-20260716-002",
+  "task_type": "raw_material_filter_tooling",
+  "started_at": "2026-07-16T06:41:15Z",
+  "ended_at": null,
+  "status": "in_progress",
+  "registration": {
+    "operations": [
+      "external_write",
+      "workspace_write"
+    ]
+  },
+  "validation": {
+    "status": "not_run",
+    "commands": [],
+    "evidence": []
+  },
+  "human_edit_rounds": 0,
+  "tokens": {
+    "estimated": null,
+    "actual": null,
+    "saved": null,
+    "currency_cost": null
+  },
+  "usability": {
+    "status": "unknown",
+    "evidence": []
+  },
+  "notes": []
+}

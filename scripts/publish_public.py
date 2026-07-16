@@ -107,7 +107,33 @@ EXCLUDED_PATHS = {
     ".codex",
     ".opencode",
     ".obsidian",
+    # Tracked curated external skills remain excluded from public export until
+    # provenance, licensing, and adaptation review are complete.
     "external-skills",
+    # Frame is an architecture template, not a distribution of character
+    # skills or product-specific publishers.
+    "packages/character-system",
+    "scripts/publish_chatty_ch_system.py",
+    "scripts/publish_check_chatty_ch_system.py",
+    "scripts/sync_chatty_ch_system_repo.py",
+    "scripts/publish_qq_raw_filter.py",
+    "scripts/publish_check_qq_raw_filter.py",
+    "scripts/sync_qq_raw_filter_repo.py",
+    "scripts/tests/test_publish_chatty_ch_system.py",
+    "scripts/tests/test_publish_qq_raw_filter.py",
+    "scripts/tests/test_sync_qq_raw_filter_repo.py",
+    # These tests exercise private platform hooks, character paths, or local
+    # governance registrations that are intentionally absent from Frame.
+    "scripts/tests/test_agent_governance.py",
+    "scripts/tests/test_hermes_workspace_guard.py",
+    "scripts/tests/test_platform_agent_guards.py",
+    "scripts/tests/test_verify_change_scope.py",
+    "scripts/tests/test_workspace_health.py",
+    "scripts/tests/test_startup_context_policy.py",
+    "scripts/tests/test_workspace_cli.py",
+    "scripts/tests/test_plan_change_surface.py",
+    "scripts/tests/test_find_knowledge.py",
+    "scripts/tests/test_workspace_explain.py",
     "mcp/servers",
     "mcp/downloads",
     "mcp/logs",
@@ -137,7 +163,7 @@ SCRUB_FILES: set[str] = {
     "shared/templates/agent_capability_lease.example.yaml",
     "PROJECT_CONTEXT/task_registry.yaml",
     "PROJECT_CONTEXT/session_migrations.json",
-    "PROJECT_CONTEXT/task_ledger.md",
+    "PROJECT_CONTEXT/task_ledger/README.md",
     "PROJECT_CONTEXT/current_status.md",
     "PROJECT_CONTEXT/context_budget.md",
     "WORKSPACE_ENGINEERING/external_knowledge/external_rag_planning.md",
@@ -202,6 +228,11 @@ SKELETON_DIRS: list[tuple[str, list[str], str]] = [
 ]
 
 # Stub content for skeleton skill files
+SKELETON_DIRS = []
+
+# Tracked extension points. They intentionally contain no bundled skills.
+PUBLIC_EMPTY_LAYERS = ("skills", "external-skills")
+
 SKELETON_STUB: dict[str, str] = {
     "README.md": """# {dir_name}
 
@@ -320,6 +351,16 @@ def needs_scrub(rel_path: str) -> bool:
         return True
     if "/reports/" in norm:
         return True
+    # Task history and outcomes may quote environment-specific paths in
+    # evidence; public snapshots keep their structure but scrub their text.
+    if norm.startswith("PROJECT_CONTEXT/task_ledger/"):
+        return True
+    if norm.startswith("PROJECT_CONTEXT/task_records/"):
+        return True
+    # Public context keeps generic governance notes but must not carry the
+    # source workspace's machine paths.
+    if norm.startswith("PROJECT_CONTEXT/"):
+        return True
     # All mcp/configs/*.json need scrubbing
     if norm.startswith("mcp/configs/") and norm.endswith(".json"):
         return True
@@ -329,6 +370,75 @@ def needs_scrub(rel_path: str) -> bool:
 def is_template(rel_path: str) -> bool:
     """Check if a file should also produce a .template variant."""
     return rel_path.replace("\\", "/") in TEMPLATE_FILES
+
+
+def generate_public_manifest(source_manifest: Path) -> str:
+    """Build a generic manifest without private packages, skills, or links."""
+    data = json.loads(source_manifest.read_text(encoding="utf-8"))
+    workspace = data.setdefault("workspace", {})
+    workspace["workspace_name"] = "governed-ai-workspace-template"
+    workspace["source_of_truth"] = "${WORKSPACE_ROOT}"
+    workspace["description"] = (
+        "Portable manifest for a governed AI workspace framework."
+    )
+    data["platform_roots"] = {
+        "codex": "${DATA_ROOT}/codex/skills",
+        "claude": "${WORKSPACE_ROOT}/.claude/skills",
+        "opencode": "${USER_HOME}/.config/opencode/skills",
+        "hermes": "${DATA_ROOT}/hermes/skills",
+    }
+    data["session_stores"] = {
+        "claude": {
+            "data_root": "${DATA_ROOT}/claude",
+            "projects_path": "projects",
+            "project_identity": "workspace-root",
+        },
+        "opencode": {
+            "data_root": "${DATA_ROOT}/opencode/current-share",
+            "database_path": "opencode.db",
+            "project_identity": "git-worktree",
+        },
+    }
+    data["output_roots"] = {"workspace": "${DATA_ROOT}/out/workspace"}
+    data["external_roots"] = {
+        "research": "${DATA_ROOT}/research",
+        "raw_skills": "${DATA_ROOT}/research/skills",
+        "adapted_skills": "${WORKSPACE_ROOT}/external-skills",
+    }
+    data["packages"] = []
+    data["skills"] = []
+    data["projections"] = []
+    return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+
+
+def generate_public_readme(repo_name: str) -> str:
+    """Return the public Frame README with its framework-only boundary explicit."""
+    return f"""# {repo_name}
+
+This repository is a deployable framework template for a governed AI workspace.
+It contains architecture, policies, routing tools, and portable setup helpers.
+
+## Boundary
+
+- No `character-system` package is bundled.
+- `skills/` and `external-skills/` are empty extension points.
+- No private corpus, personal character, or existing third-party skill is
+  included.
+- The framework does not claim to provide a finished character or provider
+  integration.
+
+## Start
+
+```bash
+python scripts/setup_public_workspace.py
+python scripts/workspace_cli.py health
+python -m pytest scripts/tests -q
+```
+
+Read `BEGINNER_GUIDE.md` and `PATH_MAPPING_REFERENCE.md` before adding local
+skills or platform integrations. Keep credentials and private source outside
+this repository.
+"""
 
 
 def generate_path_mapping_md() -> str:
@@ -521,9 +631,10 @@ def generate_beginner_guide_md(repo_name: str) -> str:
     """Return beginner-focused guidance for the public skeleton."""
     return f"""# BEGINNER_GUIDE - {repo_name}
 
-This repository is a public skeleton for building a governed AI workspace. It
-keeps the workspace's own structure visible: task routing, knowledge lookup,
-agent boundaries, report checks, and explainable CLI entrypoints.
+This repository is a public framework template for building a governed AI
+workspace. It keeps the workspace's own structure visible: task routing,
+knowledge lookup, agent boundaries, report checks, and explainable CLI
+entrypoints. It contains no bundled character-system or existing skills.
 
 ## Quick Start
 
@@ -559,8 +670,9 @@ python scripts/workspace_cli.py agent list
 python scripts/workspace_cli.py health
 ```
 
-These commands show the environment's own basic functions before you add your
-own skills or platform integrations.
+These commands show the framework's own basic functions before you add your
+own skills under `skills/` or separately reviewed external skills under
+`external-skills/`.
 
 ## What To Configure Manually
 
@@ -581,7 +693,7 @@ def generate_onboarding_md(repo_name: str) -> str:
     """Return the content for ONBOARDING.md."""
     return f"""# ONBOARDING — Getting Started with {repo_name}
 
-This template provides a complete governed-skill-workspace architecture.
+This template provides the framework for a governed AI workspace.
 Follow these steps to set it up in your local environment. For the shortest
 beginner path, start with `BEGINNER_GUIDE.md`.
 
@@ -616,7 +728,7 @@ Or run the conservative helper:
 python scripts/setup_public_workspace.py
 ```
 
-The helper prepares only the workspace skeleton's own basic functions. It does
+The helper prepares only the framework's own basic functions. It does
 not configure provider credentials, AI-platform plugins, or external model
 settings.
 
@@ -650,6 +762,8 @@ python scripts/workspace_cli.py agent list
 ## Step 5: Register Your Own Skills
 
 See `workspace_manifest.yaml` → `skills[]` for the skill declaration format.
+The public template has no bundled skills. Add your own under `skills/`, then
+register them in `workspace_manifest.yaml` under `skills[]`.
 Each skill needs:
 1. A unique `id`
 2. A `role` (governance, production, maintenance, feedback_diagnosis, runtime_character)
@@ -779,6 +893,11 @@ def main() -> int:
             src_file = Path(dirpath) / fname
             rel_path_norm = rel_path.replace("\\", "/")
 
+            # Rebuild the manifest below from a public-safe projection instead
+            # of copying the private package and skill registry.
+            if rel_path_norm == "workspace_manifest.yaml":
+                continue
+
             if args.dry_run:
                 # Classify what would happen
                 if needs_scrub(rel_path_norm):
@@ -838,8 +957,11 @@ def main() -> int:
                 warnings.append(f"Template source not found: {tf_norm}")
                 continue
             try:
-                content = src_file.read_text(encoding="utf-8")
-                scrubbed = scrub_content(content)
+                if tf_norm == "workspace_manifest.yaml":
+                    scrubbed = generate_public_manifest(src_file)
+                else:
+                    content = src_file.read_text(encoding="utf-8")
+                    scrubbed = scrub_content(content)
                 write_file(out_dir, template_rel, scrubbed)
                 counts["templated"] += 1
             except OSError as exc:
@@ -853,11 +975,16 @@ def main() -> int:
 
     # Generate metadata documents
     if not args.dry_run:
+        public_manifest = generate_public_manifest(manifest_path)
+        write_file(out_dir, "workspace_manifest.yaml", public_manifest)
+        write_file(out_dir, "README.md", generate_public_readme(repo_name))
         write_file(out_dir, "PATH_MAPPING_REFERENCE.md", generate_path_mapping_md())
         write_file(out_dir, "BEGINNER_GUIDE.md", generate_beginner_guide_md(repo_name))
         write_file(out_dir, "ONBOARDING.md", generate_onboarding_md(repo_name))
         write_file(out_dir, "scripts/setup_public_workspace.py", generate_public_setup_py())
-        counts["copied"] += 4
+        for layer in PUBLIC_EMPTY_LAYERS:
+            write_file(out_dir, f"{layer}/.gitkeep", "")
+        counts["copied"] += 7
 
     print()
     if args.dry_run:
@@ -866,6 +993,10 @@ def main() -> int:
 
     # Git init
     git_dir = out_dir / ".git"
+    for metadata_name in (".gitattributes", ".gitignore"):
+        metadata_src = workspace_root / metadata_name
+        if metadata_src.is_file():
+            shutil.copy2(metadata_src, out_dir / metadata_name)
     if not git_dir.is_dir():
         try:
             subprocess.run(
@@ -874,14 +1005,6 @@ def main() -> int:
                 capture_output=True,
                 check=True,
             )
-            # Create .gitattributes from workspace root
-            gitattrs_src = workspace_root / ".gitattributes"
-            if gitattrs_src.is_file():
-                shutil.copy2(gitattrs_src, out_dir / ".gitattributes")
-            # Create .gitignore from workspace root
-            gitignore_src = workspace_root / ".gitignore"
-            if gitignore_src.is_file():
-                shutil.copy2(gitignore_src, out_dir / ".gitignore")
             subprocess.run(
                 ["git", "add", "."],
                 cwd=out_dir,

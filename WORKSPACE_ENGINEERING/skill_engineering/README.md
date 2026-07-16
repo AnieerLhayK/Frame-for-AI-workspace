@@ -24,3 +24,4 @@ Current references:
 - `drift_patterns.md`
 - `style_alignment.md`
 - `evolution_patterns.md`
+- `personal_corpus_preparation.md`

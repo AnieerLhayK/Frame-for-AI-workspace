@@ -48,6 +48,23 @@
           "ses_1718f0289ffebeY0oNMr8SHVU4"
         ]
       }
+    },
+    {
+      "id": "qq-raw-filter-20260715",
+      "date": "2026-07-15",
+      "status": "protected",
+      "workspace_root": "${WORKSPACE_ROOT}",
+      "path_mappings": [
+        {
+          "old": "scripts/raw_material_filter",
+          "new": "packages/character-system/engineering/corpus-preparation/qq-raw-material-filter"
+        }
+      ],
+      "notes": [
+        "The move stays inside the same workspace root and does not change a platform skill projection.",
+        "Existing Claude/OpenCode session stores remain external and were not rewritten.",
+        "Resume by workspace root or session id; historical working-directory metadata may retain the old subpath."
+      ]
     }
   ]
 }

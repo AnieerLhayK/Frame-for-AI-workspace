@@ -1,0 +1,91 @@
+schema_version: "0.1"
+purpose: "Track Markdown files and directories whose same-name zh-CN companions must be considered when edited."
+
+rules:
+  - "When editing a registered Markdown primary, update the same-name .zh-CN.md companion when it exists, or record why no semantic sync is needed."
+  - "A directory entry registers every matching Markdown primary under that directory; exact pairs are only needed for root-level files, exceptions, or files outside registered directories."
+  - "When creating a new .zh-CN.md companion outside a registered directory rule, add an exact pair or directory rule here in the same change."
+  - "Use this registry to avoid broad repository scans during normal edits; check only the registered directories or exact pairs relevant to the changed files."
+  - "Semantic sync is required, not literal translation parity."
+
+directories:
+  - path: ""
+    pattern: "README.md"
+    recursive: false
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Root workspace README bilingual companion."
+  - path: "PROJECT_CONTEXT"
+    pattern: "*.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Project memory docs and project-context report READMEs with bilingual companions."
+  - path: "USAGE_GUIDES"
+    pattern: "README.md"
+    recursive: false
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Usage guide root README bilingual companion."
+  - path: "USAGE_GUIDES/REFERENCE"
+    pattern: "README.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Reference guide READMEs with bilingual companions."
+  - path: "USAGE_GUIDES/PROMPT_TEMPLATES"
+    pattern: "README.md"
+    recursive: false
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Prompt template root README bilingual companion."
+  - path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system"
+    pattern: "*.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Character-system prompt templates with bilingual companions."
+  - path: "USAGE_GUIDES/PROMPT_TEMPLATES/workflows"
+    pattern: "*.md"
+    recursive: false
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Workflow prompt templates with bilingual companions."
+  - path: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance"
+    pattern: "*.md"
+    recursive: false
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Workspace-maintenance prompt templates with bilingual companions."
+  - path: "WORKSPACE_ENGINEERING"
+    pattern: "README.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Workspace engineering section READMEs with bilingual companions."
+  - path: "skills"
+    pattern: "README.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Standalone skill READMEs with bilingual companions."
+  - path: "reports"
+    pattern: "README.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Report-area READMEs with bilingual companions."
+  - path: "packages/character-system"
+    pattern: "README.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Character-system package, distribution, and report READMEs with bilingual companions."
+  - path: "external-skills"
+    pattern: "README.md"
+    recursive: false
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Tracked adapted external-skill landing area with bilingual entry documentation."
+
+pairs: []

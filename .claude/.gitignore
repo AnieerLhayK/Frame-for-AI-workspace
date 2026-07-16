@@ -1,0 +1,8 @@
+# Claude Code project-local state. Shared instructions and settings remain
+# tracked explicitly through the parent repository.
+/*.local.json
+/*.local.md
+/routing_events.ndjson
+
+# Manifest-managed project skill projections. Source lives under skills/ or packages/.
+/skills/
