@@ -55,7 +55,7 @@ def render_template(path: Path, replacements: dict[str, str], *, overwrite: bool
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Prepare the public workspace skeleton for first use.")
-    parser.add_argument("--workspace-root", default=str(Path(__file__).resolve().parents[1]))
+    parser.add_argument("--workspace-root", default=str(WORKSPACE_ROOT))
     parser.add_argument("--data-root", default=str(Path.home() / ".ai-workspace-data"))
     parser.add_argument("--user-home", default=str(Path.home()))
     parser.add_argument("--dev-root", default=str(Path.home() / "dev"))

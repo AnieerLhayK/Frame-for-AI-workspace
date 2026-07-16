@@ -97,3 +97,41 @@
 - reason: A character output can feel appealing while still drifting facts, overfitting motifs, weakening privacy boundaries, or generalizing a character-specific trick too early.
 - date if known: 2026-06-04 ZYC validation case review.
 - consequence: Validation notes should separate user aesthetic judgment from agent checks and record disagreement when needed.
+
+## Scripts Use Deep Responsibility Packages With Legacy Adapters
+
+- decision: Keep script implementations in responsibility packages under
+  `scripts/workspace/`, `scripts/validation/`, `scripts/publishing/`,
+  `scripts/platform/`, and `scripts/reporting/`; retain root entry points as
+  thin compatibility adapters.
+- reason: The root scripts directory had high coupling and repeated path and
+  subprocess setup, while existing callers depend on legacy command and import
+  paths.
+- date if known: 2026-07-16 scripts governance migration.
+- consequence: Internal code imports package implementations and shared runtime
+  helpers. Root `python scripts/<name>.py`, `from scripts.<name> import ...`,
+  and platform entry points remain supported; no new public module CLI is
+  introduced. Tests mirror the package domains under `scripts/tests/`.
+
+## README Layers Are Navigation, Not Parallel Authority
+
+- decision: Keep root README and section READMEs as concise navigation and
+  contracts, while placing volatile facts in the manifest, shared policy, live
+  status, or generated reports that own them.
+- reason: Repeating paths, platform details, and maintenance procedures across
+  bilingual READMEs causes drift and consumes startup context.
+- date if known: 2026-07-16 README governance pass.
+- consequence: Existing `README.zh-CN.md` companions are synchronized
+  semantically; missing companions remain documented exceptions rather than
+  automatic new files. Platform projections are not edited as source.
+
+## Public Projection README Content Follows Publisher Boundaries
+
+- decision: Map README facts to public repositories only through the registered
+  publisher for that repository.
+- reason: Frame, Chatty Ch System, and qq-chat-raw-filter expose different
+  source surfaces and must not become copies of the private workspace.
+- date if known: 2026-07-16 README governance pass.
+- consequence: Generated public README templates and package-facing README
+  content stay aligned with their publisher; root workspace documentation is
+  not copied wholesale into every remote.

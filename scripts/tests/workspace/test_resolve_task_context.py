@@ -553,7 +553,11 @@ class ResolverTests(unittest.TestCase):
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["required"] = ["src/missing.md"]
         registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
-        script = Path(__file__).resolve().parents[1] / "resolve_task_context.py"
+        script = (
+            Path(__file__).resolve().parents[3]
+            / "scripts"
+            / "resolve_task_context.py"
+        )
 
         completed = subprocess.run(
             [

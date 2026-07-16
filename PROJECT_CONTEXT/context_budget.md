@@ -183,5 +183,5 @@ When `tiktoken` is installed, the meter uses the declared encoding. Otherwise it
 Run startup regressions with:
 
 ```powershell
-python -m unittest scripts.tests.test_startup_context_policy
+python -m unittest scripts.tests.workspace.test_startup_context_policy
 ```

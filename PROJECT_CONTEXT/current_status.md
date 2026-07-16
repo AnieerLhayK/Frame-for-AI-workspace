@@ -58,6 +58,11 @@
 - Task outcomes have a separate tracked fact layer under `PROJECT_CONTEXT/task_records/`; `workspace records` validates and summarizes success, validation, edits, duration, token fields, and usability.
 - Prompt registry established with `USAGE_GUIDES/prompt_registry.yaml` to resolve reusable prompt ids before regenerating meta-prompts.
 - Task/prompt resolver established with `scripts/resolve_task_context.py`; it emits a bounded task view and avoids rereading full routing registries by default.
+- Scripts governance migration established responsibility packages under
+  `scripts/workspace/`, `scripts/validation/`, `scripts/publishing/`,
+  `scripts/platform/`, and `scripts/reporting/`, with shared runtime helpers,
+  mirrored domain tests, and long-lived root compatibility adapters. Legacy
+  Python, PowerShell, VBS, JS, and import entry points remain supported.
 - Context token meter established with per-task overrides, optional `tiktoken` support, a dependency-free heuristic fallback, and warning-first enforcement.
 - P5.3 startup compression keeps root `AGENTS.md` below a machine-readable token ceiling and tests narrow-task budgets plus duplicate preloaded-file counting.
 - Source-of-truth de-duplication pass established: current local path facts should live in `workspace_manifest.yaml`; docs should reference manifest fields or use placeholders.
@@ -184,13 +189,27 @@
 - Hermes runtime-loop exposure validation: the filesystem MCP listed both
   canonical read roots and successfully read the diagnosis template while
   keeping four mutation tools excluded.
-- Governance workflow validation: 50 focused tests and 170 full script tests
-  passed; real scope verification and workflow check both returned PASS.
-- All three current report groups are fresh, and `workspace health --with-tests`
-  returns PASS.
-- `reports/protocol_validation_report.md`: 0 errors, 1 warning. The warning says schemas are present as lightweight field contracts and deep instance validation is not yet enforced.
-- `reports/manifest_validation_report.md`: 0 errors, 0 warnings.
-- `reports/workspace_health_report.md`: required missing count 0, runtime loop missing count 0, protocol validation missing count 0, manifest portability missing count 0. It still reports optional missing files and shared-doc hardcoded path warnings.
+- The isolated workspace script suite passes 311 tests; the package-local
+  qq-filter suite passes 23 and the disk-scan-reporter suite passes 35.
+- A root-level pytest collection still has the four known baseline import
+  errors: two qq-filter tests need the package import environment and two
+  disk-scan tests use legacy `scripts.*` imports. No new collection failure was
+  introduced by this documentation pass.
+- The latest live check is `NEEDS_ATTENTION` only because Hermes runtime
+  governance is not fully enforced. The workspace script-test health check
+  passes when run with an isolated test runtime. This is a tracked runtime
+  issue, not a README claim to hide.
+- Manifest and protocol validation report 0 errors, with the known portability
+  and lightweight-schema warnings. All three current report groups are fresh.
+- Link and registered Markdown companion checks pass. Existing Chinese
+  companions are synchronized when present; missing companions are not
+  created automatically.
+- Link and registered Markdown companion checks currently pass. Existing
+  Chinese companions are synchronized when present; missing companions are not
+  created automatically.
+- README governance uses the manifest, shared policy, publisher configuration,
+  and live checks as facts. Root and section README files provide navigation
+  and local contracts rather than parallel path registries.
 - `scripts/check_links.ps1`: validate all manifest projections and shared
   uniqueness after each exposure change.
 
