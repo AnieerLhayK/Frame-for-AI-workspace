@@ -511,6 +511,32 @@ platform-specific health warning is expected until that platform is configured.
 """
 
 
+def generate_public_agent_guidance(filename: str) -> str:
+    """Return generic agent guidance without private workspace instructions."""
+    return f"""# {filename}
+
+This public repository is a governed AI workspace framework template.
+
+## Boundary
+
+- Treat this repository as source for framework structure and policies only.
+- Keep credentials, private corpora, personal data, and provider state outside
+  the repository.
+- `skills/` and `external-skills/` are empty extension layers in this release.
+- Add downstream domain packages only after reviewing provenance, privacy,
+  licensing, and deployment boundaries.
+
+## Safe Start
+
+Run `python scripts/setup_public_workspace.py`, then use the read-only health,
+task-routing, and test commands documented in `BEGINNER_GUIDE.md`.
+
+The optional Claude model-advice toggle is documented at
+`.claude/model-routing-advice.json`; it is advisory and does not grant extra
+permissions.
+"""
+
+
 def generate_path_mapping_md() -> str:
     """Return the content for PATH_MAPPING_REFERENCE.md."""
     return """# PATH_MAPPING_REFERENCE
@@ -1050,13 +1076,15 @@ def main() -> int:
         write_file(out_dir, "README.md", generate_public_readme(repo_name))
         write_file(out_dir, "README.zh-CN.md", generate_public_readme_zh(repo_name))
         write_file(out_dir, "ARCHITECTURE.md", generate_public_architecture_md())
+        write_file(out_dir, "AGENTS.md", generate_public_agent_guidance("AGENTS.md"))
+        write_file(out_dir, "CLAUDE.md", generate_public_agent_guidance("CLAUDE.md"))
         write_file(out_dir, "PATH_MAPPING_REFERENCE.md", generate_path_mapping_md())
         write_file(out_dir, "BEGINNER_GUIDE.md", generate_beginner_guide_md(repo_name))
         write_file(out_dir, "ONBOARDING.md", generate_onboarding_md(repo_name))
         write_file(out_dir, "scripts/setup_public_workspace.py", generate_public_setup_py())
         for layer in PUBLIC_EMPTY_LAYERS:
             write_file(out_dir, f"{layer}/.gitkeep", "")
-        counts["copied"] += 9
+        counts["copied"] += 11
 
     print()
     if args.dry_run:
