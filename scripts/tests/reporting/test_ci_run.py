@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
 
 from scripts.reporting.ci_run import (
     TestSuite,
@@ -26,7 +27,12 @@ class CiRunnerTests(unittest.TestCase):
         self.assertEqual(infra, {"scripts/tests/workspace/test_workspace_health.py"})
 
     def test_standalone_suites_use_their_own_import_roots(self) -> None:
-        suites = build_test_suites()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "scripts" / "tests").mkdir(parents=True)
+            (root / "packages" / "character-system" / "engineering" / "corpus-preparation" / "qq-raw-material-filter" / "tests").mkdir(parents=True)
+            (root / "skills" / "disk-scan-reporter" / "tests").mkdir(parents=True)
+            suites = build_test_suites(root)
         self.assertEqual(
             [suite.name for suite in suites],
             ["workspace", "qq-raw-material-filter", "disk-scan-reporter"],
@@ -36,6 +42,15 @@ class CiRunnerTests(unittest.TestCase):
         self.assertEqual(suites[1].test_path.as_posix(), "tests")
         self.assertEqual(suites[2].cwd.name, "disk-scan-reporter")
         self.assertEqual(suites[2].test_path.as_posix(), "tests")
+
+    def test_missing_optional_package_suites_are_not_scheduled(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            suites = build_test_suites(root)
+        self.assertEqual(
+            [(suite.name, suite.cwd, suite.test_path) for suite in suites],
+            [("workspace", root, Path("scripts/tests"))],
+        )
 
     def test_summary_marks_only_infrastructure_failures_as_pass(self) -> None:
         suite = TestSuite("workspace", Path("."), Path("scripts/tests"))

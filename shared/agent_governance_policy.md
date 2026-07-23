@@ -109,6 +109,25 @@ bind its tool calls to this policy, it resolves to Consumer and must not receive
 workspace write capabilities. Candidate testing output belongs only under an
 exact `reports/agent-experiments/<agent-id>/` scope.
 
+## External Workspace Task Bridge
+
+An active registered agent working from a different workspace may modify this
+workspace only after it invokes `workspace records external-start` against this
+workspace, declares its absolute client root, and exports the returned record
+ID to its write adapter. It must use the ordinary `workspace agent check` for
+each target path with the same `--external-client-root`; that check rejects a
+record whose external origin, agent, or client root does not match. The bridge
+records attribution and does not expand the agent's capabilities or path scope.
+
+Before finalization, the same originating agent may call `workspace records
+report-usage` with its host's explicit usage payload. The command accepts only
+an active external-origin record, verifies the registered actor matches the
+record origin, and writes `tokens.actual` and optional `currency_cost` while
+the record is active. Provider credentials, transcripts, and arbitrary
+external filesystem access remain outside this interface; a telemetry file must
+be inside the declared external client root. Agent registration is a local
+identity contract, not cryptographic proof of the invoking process.
+
 ## Missing Registration
 
 When an agent cannot discover a needed skill:

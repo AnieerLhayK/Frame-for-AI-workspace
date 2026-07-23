@@ -276,6 +276,7 @@ tasks:
     use_when_zh:
     - 连接 Agent 和 Skill 权限到运行时工具分发、参与者感知变更验证或平台守卫健康检查
     required:
+    - PROJECT_CONTEXT/tasks/registry/domains/governance.yaml
     - shared/agent_governance_policy.md
     - shared/agent_governance.yaml
     - shared/agent_registry.yaml
@@ -292,6 +293,7 @@ tasks:
     - scripts/workspace_health.py
     - scripts/workspace/workspace_health.py
     - scripts/workspace/workspace_cli.py
+    - scripts/workspace/task_records.py
     - scripts/reporting/ci_run.py
     optional:
     - AGENTS.md
@@ -315,6 +317,7 @@ tasks:
     write_scope:
     - AGENTS.md
     - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/governance.yaml
     - PROJECT_CONTEXT/continuity/current_status.md
     - PROJECT_CONTEXT/tasks/records/**
     - PROJECT_CONTEXT/tasks/ledger/**
@@ -334,6 +337,8 @@ tasks:
     - scripts/workspace_health.py
     - scripts/workspace/workspace_health.py
     - scripts/workspace/workspace_cli.py
+    - scripts/workspace/task_records.py
+    - scripts/task_records.py
     - scripts/reporting/ci_run.py
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_hermes_workspace_guard.py
@@ -344,6 +349,9 @@ tasks:
     - scripts/tests/workspace/test_workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
     - scripts/tests/workspace/test_workspace_health.py
+    - scripts/tests/workspace/test_task_records.py
+    - PROJECT_CONTEXT/tasks/records/README.md
+    - PROJECT_CONTEXT/tasks/records/README.zh-CN.md
     - scripts/tests/reporting/test_ci_run.py
     - USAGE_GUIDES/QUICK_START/agent_governance.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
@@ -359,6 +367,7 @@ tasks:
       scripts.tests.workspace.test_hermes_workspace_guard scripts.tests.platform.test_platform_agent_guards
       scripts.tests.workspace.test_verify_change_scope scripts.tests.workspace.test_workflow_check
       scripts.tests.workspace.test_workspace_cli scripts.tests.workspace.test_workspace_health
+      scripts.tests.workspace.test_task_records
     - python scripts/workspace_cli.py agent check --agent hermes --skill zyc --path
       packages/character-system/runtime/characters/zyc/references/voice_card.md
     - python scripts/workspace_cli.py agent check --agent hermes --skill style-doctor

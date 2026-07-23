@@ -226,6 +226,7 @@ def build_parser() -> argparse.ArgumentParser:
     agent_check.add_argument("--operation", choices=("read", "write"), default="write")
     agent_check.add_argument("--path", required=True)
     agent_check.add_argument("--record-id")
+    agent_check.add_argument("--external-client-root")
     agent_check.add_argument("--skill")
     agent_check.add_argument("--lease")
     agent_check.add_argument("--integration", action="store_true")
@@ -541,6 +542,8 @@ def dispatch(args: argparse.Namespace) -> int:
             )
             if args.record_id:
                 command.extend(["--record-id", args.record_id])
+            if args.external_client_root:
+                command.extend(["--external-client-root", args.external_client_root])
             if args.skill:
                 command.extend(["--skill", args.skill])
             if args.lease:

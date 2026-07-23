@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Record, validate, and gate durable workspace task outcomes.
 
-The public interface is deliberately small: ``start``, ``init``, ``require``,
-``finalize``, ``show``, ``summary``, and ``validate``.  ``require`` is the
-single seam used by write gates; callers do not need to know record storage or
-registration compatibility details.
+The public interface is deliberately small: ``start``, ``external-start``,
+``report-usage``, ``init``, ``require``, ``finalize``, ``show``, ``summary``,
+and ``validate``.  ``require`` is the single seam used by write gates; callers
+do not need to know record storage or registration compatibility details.
 """
 from __future__ import annotations
 
@@ -194,10 +194,20 @@ def host_usage(task_id: str) -> dict[str, Any]:
             return usage_unavailable("usage_file_unreadable", transport=transport)
     else:
         return usage_unavailable("no_host_usage_source")
+    return usage_from_json(raw, task_id=task_id, transport=transport)
+
+
+def usage_from_json(raw: str, *, task_id: str, transport: str) -> dict[str, Any]:
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
         return usage_unavailable("usage_payload_invalid_json", transport=transport)
+    return usage_from_payload(payload, task_id=task_id, transport=transport)
+
+
+def usage_from_payload(
+    payload: object, *, task_id: str, transport: str
+) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return usage_unavailable("usage_payload_not_object", transport=transport)
     if payload.get("task_id") not in (None, task_id):
@@ -228,6 +238,41 @@ def host_usage(task_id: str) -> dict[str, Any]:
         "total_tokens": total,
         "currency_cost": cost,
     }
+
+
+def external_agent_id(name: str) -> str:
+    """Resolve an active registered actor for an external workspace caller."""
+    from scripts.workspace.agent_governance import (
+        effective_registration,
+        load_yaml,
+        load_manifest,
+        load_registry,
+        POLICY_PATH,
+    )
+
+    resolved = effective_registration(
+        load_yaml(POLICY_PATH), load_registry(), load_manifest(), name
+    )
+    if (
+        not resolved["registered"]
+        or resolved["registration_status"] != "active"
+        or resolved["degraded"]
+    ):
+        raise ValueError("external task callers must be active registered agents")
+    return str(resolved["agent"])
+
+
+def external_client_root(value: str) -> str:
+    client_root = Path(value).expanduser()
+    if not client_root.is_absolute():
+        raise ValueError("--client-root must be an absolute path")
+    client_root = client_root.resolve()
+    workspace_root = ROOT.resolve()
+    if client_root == workspace_root or workspace_root in client_root.parents:
+        raise ValueError("--client-root must be outside the workspace root")
+    if not client_root.is_dir():
+        raise ValueError("--client-root must be an existing directory")
+    return str(client_root)
 
 
 def validate_record(record: dict[str, Any]) -> list[str]:
@@ -302,6 +347,14 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             errors.append("registration.operations must be a non-empty list")
         elif set(operations) - OPERATIONS:
             errors.append("registration.operations contains an invalid operation")
+    origin = record.get("origin")
+    if origin is not None:
+        if not isinstance(origin, dict) or origin.get("kind") != "external_workspace":
+            errors.append("origin must describe an external workspace")
+        elif not isinstance(origin.get("agent"), str) or not origin["agent"]:
+            errors.append("external origin requires an agent")
+        elif not isinstance(origin.get("client_root"), str) or not origin["client_root"]:
+            errors.append("external origin requires a client_root")
     if (
         record.get("status") == "successful"
         and record.get("validation", {}).get("status") == "not_run"
@@ -310,7 +363,9 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     return errors
 
 
-def active_registration(task_id: str, operation: str) -> dict[str, Any]:
+def active_registration(
+    task_id: str, operation: str, *, allow_external_origin: bool = False
+) -> dict[str, Any]:
     """Return the active record or raise a caller-ready registration error."""
     if operation not in OPERATIONS:
         raise ValueError(f"invalid registration operation: {operation}")
@@ -326,6 +381,13 @@ def active_registration(task_id: str, operation: str) -> dict[str, Any]:
         raise ValueError(
             f"task record {task_id} is not registered for {operation}"
         )
+    origin = record.get("origin")
+    if (
+        isinstance(origin, dict)
+        and origin.get("kind") == "external_workspace"
+        and not allow_external_origin
+    ):
+        raise ValueError("external task records require --external-client-root")
     try:
         display_path = str(path.relative_to(ROOT)).replace("\\", "/")
     except ValueError:
@@ -386,6 +448,85 @@ def start(args: argparse.Namespace) -> dict[str, Any]:
     raise ValueError("could not allocate a task record id for this day")
 
 
+def external_start(args: argparse.Namespace) -> dict[str, Any]:
+    if "workspace_write" not in args.operation:
+        raise ValueError("external workspace tasks must declare workspace_write")
+    agent = external_agent_id(args.agent)
+    client_root = external_client_root(args.client_root)
+    record = start(args)
+    path = record_path(record["task_id"], record["started_at"])
+    record["origin"] = {
+        "kind": "external_workspace",
+        "agent": agent,
+        "client_root": client_root,
+    }
+    errors = validate_record(record)
+    if errors:
+        raise ValueError("; ".join(errors))
+    write_record(path, record)
+    return record
+
+
+def active_external_registration(
+    task_id: str, *, agent: str, client_root: str
+) -> dict[str, Any]:
+    """Verify an external caller is using its own active origin record."""
+    registration = active_registration(
+        task_id, "workspace_write", allow_external_origin=True
+    )
+    _, record = read_record(task_id)
+    origin = record.get("origin")
+    expected_agent = external_agent_id(agent)
+    expected_root = external_client_root(client_root)
+    if not isinstance(origin, dict) or origin.get("kind") != "external_workspace":
+        raise ValueError("task record is not registered for an external workspace")
+    if origin.get("agent") != expected_agent:
+        raise ValueError("external task agent does not match the task origin")
+    if origin.get("client_root") != expected_root:
+        raise ValueError("external client root does not match the task origin")
+    return registration
+
+
+def report_usage(args: argparse.Namespace) -> dict[str, Any]:
+    path, record = read_record(args.task_id)
+    if record.get("status") != "in_progress":
+        raise ValueError("usage reports require an active task record")
+    origin = record.get("origin")
+    if not isinstance(origin, dict) or origin.get("kind") != "external_workspace":
+        raise ValueError("usage reports require an external workspace task record")
+    if external_agent_id(args.agent) != origin.get("agent"):
+        raise ValueError("usage-reporting agent does not match the task origin")
+    if args.usage_json is not None:
+        usage = usage_from_json(
+            args.usage_json, task_id=record["task_id"], transport="external_cli"
+        )
+    else:
+        usage_path = Path(args.usage_file).resolve()
+        client_root = Path(str(origin["client_root"])).resolve()
+        try:
+            usage_path.relative_to(client_root)
+        except ValueError as error:
+            raise ValueError("usage file must be inside the external client root") from error
+        if not usage_path.is_file():
+            raise ValueError("usage file is unreadable")
+        try:
+            raw = usage_path.read_text(encoding="utf-8")
+        except OSError as error:
+            raise ValueError("usage file is unreadable") from error
+        usage = usage_from_json(raw, task_id=record["task_id"], transport="external_file")
+    if usage["status"] != "recorded":
+        raise ValueError(f"usage report rejected: {usage['reason']}")
+    record["tokens"]["actual"] = usage["total_tokens"]
+    if usage["currency_cost"] is not None:
+        record["tokens"]["currency_cost"] = usage["currency_cost"]
+    record["usage"] = usage
+    errors = validate_record(record)
+    if errors:
+        raise ValueError("; ".join(errors))
+    write_record(path, record)
+    return record
+
+
 def finalize(args: argparse.Namespace) -> dict[str, Any]:
     path, record = read_record(args.task_id)
     record.update(
@@ -400,6 +541,13 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
     record["usability"]["status"] = args.usability
     record["schema_version"] = "1.3"
     usage = host_usage(record["task_id"])
+    existing_usage = record.get("usage")
+    if (
+        usage["status"] == "unavailable"
+        and isinstance(existing_usage, dict)
+        and existing_usage.get("status") == "recorded"
+    ):
+        usage = existing_usage
     if args.tokens_actual is not None:
         record["tokens"]["actual"] = args.tokens_actual
         usage = {
@@ -471,12 +619,19 @@ def main() -> int:
         description="Manage structured workspace task outcome records."
     )
     sub = parser.add_subparsers(dest="action", required=True)
+    def add_registration_arguments(command: argparse.ArgumentParser) -> None:
+        command.add_argument("--task-type", required=True)
+        command.add_argument("--operation", action="append", choices=sorted(OPERATIONS), required=True)
+        command.add_argument("--started-at")
+        command.add_argument("--tokens-estimated", type=int)
+        command.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
+
     p = sub.add_parser("start", help="Allocate and register an active task record.")
-    p.add_argument("--task-type", required=True)
-    p.add_argument("--operation", action="append", choices=sorted(OPERATIONS), required=True)
-    p.add_argument("--started-at")
-    p.add_argument("--tokens-estimated", type=int)
-    p.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
+    add_registration_arguments(p)
+    p = sub.add_parser("external-start", help="Register a workspace task initiated from an external workspace.")
+    p.add_argument("--agent", required=True)
+    p.add_argument("--client-root", required=True)
+    add_registration_arguments(p)
     p = sub.add_parser("init", help="Register a caller-supplied task record id.")
     p.add_argument("task_id")
     p.add_argument("--task-type", required=True)
@@ -498,6 +653,12 @@ def main() -> int:
     p.add_argument("--tokens-actual", type=int)
     p.add_argument("--tokens-saved", type=int)
     p.add_argument("--currency-cost", type=float)
+    p = sub.add_parser("report-usage", help="Write verified external-host usage into an active external task.")
+    p.add_argument("task_id")
+    p.add_argument("--agent", required=True)
+    usage_input = p.add_mutually_exclusive_group(required=True)
+    usage_input.add_argument("--usage-json")
+    usage_input.add_argument("--usage-file")
     p = sub.add_parser("note-merge-review", help="Record merge review or a user-approved skip.")
     p.add_argument("task_id")
     p.add_argument("--status", choices=sorted(MERGE_REVIEW_STATUSES), required=True)
@@ -517,12 +678,16 @@ def main() -> int:
     try:
         if args.action == "start":
             output = start(args)
+        elif args.action == "external-start":
+            output = external_start(args)
         elif args.action == "init":
             output = init(args)
         elif args.action == "require":
             output = active_registration(args.task_id, args.operation)
         elif args.action == "finalize":
             output = finalize(args)
+        elif args.action == "report-usage":
+            output = report_usage(args)
         elif args.action == "note-merge-review":
             output = add_merge_review_note(args)
         elif args.action == "show":

@@ -12,7 +12,7 @@ from typing import Any
 import yaml
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
-from scripts.workspace.task_records import active_registration
+from scripts.workspace.task_records import active_external_registration, active_registration
 from scripts.workspace.governance.hermes_approval import (
     HERMES_GUARD_EVENTS,
     approve_hermes_guard as _approve_hermes_guard,
@@ -1573,6 +1573,7 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--operation", choices=("read", "write"), default="write")
     check.add_argument("--path", required=True)
     check.add_argument("--record-id")
+    check.add_argument("--external-client-root")
     check.add_argument("--skill")
     check.add_argument("--lease")
     check.add_argument("--integration", action="store_true")
@@ -1632,17 +1633,24 @@ def main() -> int:
                     registration_error = "--record-id is required for a write check"
                 else:
                     try:
-                        registration = active_registration(
-                            args.record_id,
-                            (
-                                "external_write"
-                                if (
-                                    target["surface"] == "external_environment"
-                                    or target.get("requires_external_write")
-                                )
-                                else "workspace_write"
-                            ),
-                        )
+                        if args.external_client_root:
+                            registration = active_external_registration(
+                                args.record_id,
+                                agent=args.agent,
+                                client_root=args.external_client_root,
+                            )
+                        else:
+                            registration = active_registration(
+                                args.record_id,
+                                (
+                                    "external_write"
+                                    if (
+                                        target["surface"] == "external_environment"
+                                        or target.get("requires_external_write")
+                                    )
+                                    else "workspace_write"
+                                ),
+                            )
                     except ValueError as error:
                         registration_error = str(error)
             payload = check_access(

@@ -73,10 +73,15 @@ def build_test_suites(root: Path | None = None) -> tuple[TestSuite, ...]:
         / "qq-raw-material-filter"
     )
     disk_scan_root = workspace_root / "skills" / "disk-scan-reporter"
-    return (
+    candidates = (
         TestSuite("workspace", workspace_root, Path("scripts/tests")),
         TestSuite("qq-raw-material-filter", qq_root, Path("tests")),
         TestSuite("disk-scan-reporter", disk_scan_root, Path("tests")),
+    )
+    return tuple(
+        suite
+        for suite in candidates
+        if suite.name == "workspace" or (suite.cwd / suite.test_path).is_dir()
     )
 
 

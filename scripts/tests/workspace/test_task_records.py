@@ -128,6 +128,179 @@ class TaskRecordsTests(unittest.TestCase):
             self.assertEqual(task_records.tokens_estimated(args), 123)
         resolve.assert_not_called()
 
+    def test_external_start_records_registered_actor_and_client_root(self) -> None:
+        args = type(
+            "Args",
+            (),
+            {
+                "agent": "external-host",
+                "client_root": "/external-host",
+                "task_type": "demo",
+                "tokens_estimated": 123,
+                "bind": [],
+                "operation": ["workspace_write"],
+                "started_at": "2026-07-16T00:00:00Z",
+            },
+        )()
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            task_records, "RECORD_ROOT", Path(directory)
+        ), patch.object(task_records, "external_agent_id", return_value="opencode"), patch.object(
+            task_records, "external_client_root", return_value="/external-host"
+        ):
+            record = task_records.external_start(args)
+        self.assertEqual(record["origin"], {
+            "kind": "external_workspace",
+            "agent": "opencode",
+            "client_root": "/external-host",
+        })
+        self.assertFalse(task_records.validate_record(record))
+
+    def test_external_client_root_requires_existing_directory_outside_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace_root = root / "workspace"
+            client_root = root / "client"
+            workspace_root.mkdir()
+            client_root.mkdir()
+            with patch.object(task_records, "ROOT", workspace_root):
+                self.assertEqual(task_records.external_client_root(str(client_root)), str(client_root))
+                with self.assertRaisesRegex(ValueError, "outside"):
+                    task_records.external_client_root(str(workspace_root / "nested"))
+                with self.assertRaisesRegex(ValueError, "existing directory"):
+                    task_records.external_client_root(str(root / "missing"))
+
+    def test_report_usage_updates_active_external_task_and_rejects_other_actor(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            task_records, "RECORD_ROOT", Path(directory)
+        ), patch.object(task_records, "external_agent_id", side_effect=lambda value: value):
+            record = task_records.initial_record(
+                "TASK-20260716-001",
+                task_type="demo",
+                started_at="2026-07-16T00:00:00Z",
+                tokens_estimated=0,
+                operations=["workspace_write"],
+            )
+            record["origin"] = {
+                "kind": "external_workspace",
+                "agent": "opencode",
+                "client_root": "/external-host",
+            }
+            path = task_records.record_path(record["task_id"], record["started_at"])
+            task_records.create_record(path, record)
+            args = type("Args", (), {
+                "task_id": record["task_id"],
+                "agent": "opencode",
+                "usage_json": '{"source":"external_host","input_tokens":120,"output_tokens":30,"currency_cost":0.02}',
+                "usage_file": None,
+            })()
+            updated = task_records.report_usage(args)
+            args.agent = "other"
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                task_records.report_usage(args)
+        self.assertEqual(updated["tokens"]["actual"], 150)
+        self.assertEqual(updated["tokens"]["currency_cost"], 0.02)
+        self.assertEqual(updated["usage"]["transport"], "external_cli")
+
+    def test_active_external_registration_binds_agent_and_client_root(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace_root = root / "workspace"
+            client_root = root / "client"
+            other_root = root / "other"
+            workspace_root.mkdir()
+            client_root.mkdir()
+            other_root.mkdir()
+            with patch.object(task_records, "RECORD_ROOT", root / "task_records"), patch.object(
+                task_records, "ROOT", workspace_root
+            ), patch.object(task_records, "external_agent_id", side_effect=lambda value: value):
+                record = task_records.initial_record(
+                    "TASK-20260716-001", task_type="demo", started_at="2026-07-16T00:00:00Z",
+                    tokens_estimated=0, operations=["workspace_write"],
+                )
+                record["origin"] = {
+                    "kind": "external_workspace", "agent": "opencode", "client_root": str(client_root),
+                }
+                task_records.create_record(
+                    task_records.record_path(record["task_id"], record["started_at"]), record
+                )
+                self.assertEqual(
+                    task_records.active_external_registration(
+                        record["task_id"], agent="opencode", client_root=str(client_root)
+                    )["status"],
+                    "active",
+                )
+                with self.assertRaisesRegex(ValueError, "require --external-client-root"):
+                    task_records.active_registration(record["task_id"], "workspace_write")
+                with self.assertRaisesRegex(ValueError, "client root does not match"):
+                    task_records.active_external_registration(
+                        record["task_id"], agent="opencode", client_root=str(other_root)
+                    )
+
+    def test_finalize_preserves_usage_reported_during_external_task(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(task_records, "RECORD_ROOT", root / "task_records"), patch.object(
+                task_ledger, "DESTINATION", root / "task_ledger"
+            ), patch.object(task_records, "external_agent_id", side_effect=lambda value: value):
+                record = task_records.initial_record(
+                    "TASK-20260716-001",
+                    task_type="demo",
+                    started_at="2026-07-16T00:00:00Z",
+                    tokens_estimated=0,
+                    operations=["workspace_write"],
+                )
+                record["origin"] = {
+                    "kind": "external_workspace",
+                    "agent": "opencode",
+                    "client_root": "/external-host",
+                }
+                path = task_records.record_path(record["task_id"], record["started_at"])
+                task_records.create_record(path, record)
+                task_records.report_usage(type("Args", (), {
+                    "task_id": record["task_id"], "agent": "opencode",
+                    "usage_json": '{"source":"external_host","total_tokens":150}',
+                    "usage_file": None,
+                })())
+                final = task_records.finalize(type("Args", (), {
+                    "task_id": record["task_id"], "ended_at": "2026-07-16T00:10:00Z",
+                    "status": "successful", "validation": "passed", "usability": "usable",
+                    "human_edit_rounds": 0, "command": [], "tokens_actual": None,
+                    "tokens_saved": None, "currency_cost": None,
+                })())
+        self.assertEqual(final["tokens"]["actual"], 150)
+        self.assertEqual(final["usage"]["status"], "recorded")
+
+    def test_report_usage_file_is_limited_to_the_external_client_root(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            client_root = root / "client"
+            client_root.mkdir()
+            allowed = client_root / "usage.json"
+            allowed.write_text('{"source":"external_host","total_tokens":5}', encoding="utf-8")
+            outside = root / "outside.json"
+            outside.write_text('{"source":"external_host","total_tokens":5}', encoding="utf-8")
+            with patch.object(task_records, "RECORD_ROOT", root / "task_records"), patch.object(
+                task_records, "external_agent_id", side_effect=lambda value: value
+            ):
+                record = task_records.initial_record(
+                    "TASK-20260716-001", task_type="demo", started_at="2026-07-16T00:00:00Z",
+                    tokens_estimated=0, operations=["workspace_write"],
+                )
+                record["origin"] = {
+                    "kind": "external_workspace", "agent": "opencode", "client_root": str(client_root),
+                }
+                task_records.create_record(
+                    task_records.record_path(record["task_id"], record["started_at"]), record
+                )
+                args = type("Args", (), {
+                    "task_id": record["task_id"], "agent": "opencode",
+                    "usage_json": None, "usage_file": str(allowed),
+                })()
+                self.assertEqual(task_records.report_usage(args)["tokens"]["actual"], 5)
+                args.usage_file = str(outside)
+                with self.assertRaisesRegex(ValueError, "inside the external client root"):
+                    task_records.report_usage(args)
+
     def test_merge_review_skip_requires_reason_and_is_structured(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.object(
             task_records, "RECORD_ROOT", Path(directory)
