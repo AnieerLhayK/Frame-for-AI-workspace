@@ -1,0 +1,18 @@
+# Canonical knowledge topic.
+topics:
+  external_knowledge_planning:
+    title: External knowledge base, RAG, and retrieval planning
+    aliases:
+    - rag
+    - external knowledge
+    - knowledge base
+    - knowledge retrieval
+    - 检索
+    - RAG
+    - 外部知识库
+    - 向量检索
+    entries:
+    - path: WORKSPACE_ENGINEERING/external_knowledge/external_rag_planning.md
+      layer: workspace_engineering
+      purpose: Bounded evaluation of external RAG/knowledge base feasibility, tool
+        comparison, and staged roadmap.

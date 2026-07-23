@@ -1,0 +1,37 @@
+schema_version: "0.1"
+purpose: "Bounded machine-readable map of PROJECT_CONTEXT ownership and startup routes."
+loading:
+  startup: ["PROJECT_CONTEXT/README.md", "PROJECT_CONTEXT/context_index.yaml", "AGENTS.md"]
+  expand_by_task: true
+  history_default: excluded
+domains:
+  continuity:
+    path: "PROJECT_CONTEXT/continuity"
+    read_when: "Session handoff, current status, or path migration is relevant."
+  governance:
+    path: "PROJECT_CONTEXT/governance"
+    read_when: "Context budgets or change-surface policy are relevant."
+  documentation:
+    path: "PROJECT_CONTEXT/documentation"
+    read_when: "Markdown pairing or documentation hygiene is relevant."
+  memory:
+    path: "PROJECT_CONTEXT/memory"
+    read_when: "Decisions or workspace vocabulary are relevant."
+  references:
+    path: "PROJECT_CONTEXT/references"
+    read_when: "External project boundaries are relevant."
+  tasks:
+    path: "PROJECT_CONTEXT/tasks"
+    read_when: "Task routing, task records, or the human ledger is relevant."
+  knowledge:
+    path: "PROJECT_CONTEXT/knowledge"
+    read_when: "Bounded topic discovery is relevant."
+  potential_for_future:
+    path: "PROJECT_CONTEXT/potential_for_future"
+    read_when: "Future options, risks, or their history are explicitly relevant."
+  todo:
+    path: "PROJECT_CONTEXT/todo"
+    read_when: "Unfinished or trigger-based work is relevant."
+  reports:
+    path: "PROJECT_CONTEXT/reports"
+    read_when: "A context-local report is explicitly relevant."

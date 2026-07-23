@@ -122,6 +122,12 @@ workspace health
 workspace health --with-tests
 ```
 
+`workspace health --with-tests` uses the CI classifier: core test failures
+remain blocking, while environment-dependent infrastructure failures stay in
+the test details as non-blocking evidence. Use `workspace agent
+approve-hermes-guard` to preview a required Hermes guard reapproval after its
+script changes; `--approve --record-id <TASK-ID>` is the only writing form.
+
 查看当前 workspace 版本、Git 状态、能力数量和最近治理记录：
 
 ```powershell

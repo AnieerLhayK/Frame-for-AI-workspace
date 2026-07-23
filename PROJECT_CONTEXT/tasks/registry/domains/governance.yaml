@@ -1,0 +1,410 @@
+# Canonical task definitions for the PROJECT_CONTEXT task domain.
+tasks:
+  agent_governance_update:
+    use_when:
+    - Changing agent registration, lifecycle, roles, workspace surface classifications,
+      change-request routing, or temporary capability lease rules.
+    use_when_zh:
+    - 修改 Agent 注册、生命周期、角色、工作区表面分类、变更请求路由或临时能力授权规则
+    required:
+    - shared/agent_governance_policy.md
+    - shared/agent_governance.yaml
+    - shared/agent_registry.yaml
+    - shared/schemas/agent_registration.schema.json
+    - scripts/agent_governance.py
+    - scripts/workspace/agent_governance.py
+    - scripts/workspace/governance/
+    - scripts/workspace/merge_safety.py
+    - scripts/workspace/task_records.py
+    - scripts/workspace/workspace_cli.py
+    - scripts/tests/workspace/test_agent_governance.py
+    - scripts/tests/workspace/test_merge_safety.py
+    - scripts/tests/workspace/test_task_records.py
+    optional:
+    - shared/workspace_policy.md
+    - shared/reporting_policy.md
+    - USAGE_GUIDES/QUICK_START/agent_governance.md
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/sync_public_repo.py
+    - scripts/sync_chatty_ch_system_repo.py
+    - scripts/sync_qq_raw_filter_repo.py
+    - scripts/tests/publishing/test_publish_public.py
+    - scripts/tests/publishing/test_publish_chatty_ch_system.py
+    - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
+    ignore:
+    - private corpus material
+    - platform session stores
+    - active external lease contents unless explicitly supplied
+    - unrelated skill implementation
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 20000
+      expanded_warn_tokens: 26000
+    write_scope:
+    - workspace_manifest.yaml
+    - shared/
+    - reports/agent-requests/
+    - reports/agent-experiments/
+    - PROJECT_CONTEXT/
+    - USAGE_GUIDES/QUICK_START/agent_governance.md
+    - README.md
+    - ARCHITECTURE.md
+    - scripts/agent_governance.py
+    - scripts/workspace/agent_governance.py
+    - scripts/workspace/governance/
+    - scripts/workspace/merge_safety.py
+    - scripts/workspace/task_records.py
+    - scripts/workspace/workspace_cli.py
+    - scripts/merge_safety.py
+    - scripts/task_records.py
+    - scripts/tests/workspace/test_agent_governance.py
+    - scripts/tests/workspace/test_merge_safety.py
+    - scripts/tests/workspace/test_task_records.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/sync_public_repo.py
+    - scripts/sync_chatty_ch_system_repo.py
+    - scripts/sync_qq_raw_filter_repo.py
+    - scripts/tests/publishing/test_publish_public.py
+    - scripts/tests/publishing/test_publish_chatty_ch_system.py
+    - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
+    - AGENTS.md
+    validation:
+    - python -m unittest scripts.tests.workspace.test_agent_governance scripts.tests.workspace.test_merge_safety
+      scripts.tests.workspace.test_task_records scripts.tests.workspace.test_workspace_cli
+    - python -m pytest -q scripts/tests/publishing/test_publish_public.py scripts/tests/publishing/test_publish_chatty_ch_system.py
+      scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
+    - python scripts/workspace_cli.py agent status
+    - python scripts/workspace_cli.py agent list
+    - python scripts/workspace_cli.py agent validate codex
+    - python scripts/workspace_cli.py agent doctor cursor
+    - python scripts/workspace_cli.py agent check --agent hermes --path workspace_manifest.yaml
+    - python scripts/workspace_cli.py agent check --agent hermes --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
+    - python scripts/validate_protocols.py
+    - python scripts/validate_manifest.py
+    - git diff --check
+  change_scope_verification:
+    use_when:
+    - Changing the read-only verifier that compares actual Git changes with resolved
+      task write_scope.
+    - Changing high-risk path detection or post-edit scope verification behavior.
+    use_when_zh:
+    - 修改只读范围验证器（比较实际 Git 变更与已解析任务的 write_scope）
+    required:
+    - PROJECT_CONTEXT/governance/change_surface_policy.md
+    - scripts/verify_change_scope.py
+    - scripts/tests/workspace/test_verify_change_scope.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    optional:
+    - AGENTS.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - PROJECT_CONTEXT/continuity/current_status.md
+    ignore:
+    - private corpus material
+    - platform loading surfaces as editable source
+    - unrelated Skill implementation
+    - external data and Session stores
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 16000
+      expanded_warn_tokens: 22000
+    write_scope:
+    - AGENTS.md
+    - PROJECT_CONTEXT/governance/change_surface_policy.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - scripts/verify_change_scope.py
+    - scripts/tests/workspace/test_verify_change_scope.py
+    - scripts/plan_change_surface.py
+    - scripts/tests/workspace/test_plan_change_surface.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - reports/manifest_validation_report.md
+    - reports/protocol_validation_report.md
+    - reports/workspace_health_report.md
+    - reports/workspace_setup_report.md
+    validation:
+    - python -m unittest scripts.tests.workspace.test_verify_change_scope scripts.tests.workspace.test_plan_change_surface
+      scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py changes verify change_scope_verification --strict
+    - python scripts/workspace_cli.py changes plan developer_interface_tooling --intent
+      tooling
+    - python scripts/resolve_task_context.py change_scope_verification --format json
+    - git diff --check
+  claude_project_boundary:
+    use_when:
+    - Changing Claude Code project roots, tracked .claude rules, boundary hooks, or
+      project-switching launchers.
+    use_when_zh:
+    - 修改 Claude Code 项目根、.claude 规则、边界钩子或项目切换启动器
+    required:
+    - CLAUDE.md
+    - .claude/project-boundary.json
+    - .claude/rules/workspace-boundary.md
+    - .claude/settings.json
+    - .claude/hooks/workspace_boundary_guard.ps1
+    - shared/claude/policies/model-routing-policy.md
+    - scripts/claude_long_task_notifications/
+    - scripts/install_claude_long_task_notifications.ps1
+    - scripts/workspace_health.py
+    - scripts/tests/workspace/test_workspace_health.py
+    optional:
+    - AGENTS.md
+    - README.md
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/continuity/session_handoff.md
+    - USAGE_GUIDES/QUICK_START/claude_code.md
+    - scripts/claude_model_advice.py
+    - scripts/tests/workspace/test_claude_model_advice.py
+    - machine-local Claude project registry and launcher scripts
+    ignore:
+    - external project implementation details
+    - private Claude session history
+    - Claude authentication and provider settings
+    - unrelated skill behavior
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - CLAUDE.md
+    - .claude/
+    - README.md
+    - PROJECT_CONTEXT/
+    - USAGE_GUIDES/
+    - shared/claude/policies/model-routing-policy.md
+    - scripts/claude_long_task_notifications/
+    - scripts/install_claude_long_task_notifications.ps1
+    - scripts/claude_model_advice.py
+    - scripts/tests/workspace/test_claude_model_advice.py
+    - scripts/workspace_health.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - explicitly approved machine-local Claude registry and launchers
+    validation:
+    - python -m unittest scripts.tests.workspace.test_workspace_health
+    - workspace health --with-tests
+    - test allowed and blocked Claude hook inputs
+    - test every registered Claude project launcher with --version
+    - git diff --check
+  governance_workflow_simplification:
+    use_when:
+    - Unifying change-risk classification, simplifying the daily maintenance workflow,
+      or defining governance observation and reduction criteria.
+    use_when_zh:
+    - 统一变更风险分类、简化日常维护工作流或定义治理观察和缩减标准
+    required:
+    - PROJECT_CONTEXT/governance/change_surface_policy.md
+    - shared/agent_governance.yaml
+    - shared/agent_governance_policy.md
+    - scripts/verify_change_scope.py
+    - scripts/tests/workspace/test_verify_change_scope.py
+    - scripts/workflow_check.py
+    - scripts/tests/workspace/test_workflow_check.py
+    - scripts/tests/platform/test_platform_agent_guards.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    optional:
+    - AGENTS.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/todo/README.md
+    ignore:
+    - private corpus material
+    - platform loading surfaces as editable source
+    - unrelated Skill implementation
+    - external Session, cache, and tool data
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 21000
+      expanded_warn_tokens: 28000
+    write_scope:
+    - AGENTS.md
+    - PROJECT_CONTEXT/governance/change_surface_policy.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/todo/README.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - shared/agent_governance.yaml
+    - shared/agent_governance_policy.md
+    - scripts/verify_change_scope.py
+    - scripts/tests/workspace/test_verify_change_scope.py
+    - scripts/workflow_check.py
+    - scripts/tests/workspace/test_workflow_check.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - reports/manifest_validation_report.md
+    - reports/protocol_validation_report.md
+    - reports/workspace_health_report.md
+    - reports/workspace_setup_report.md
+    validation:
+    - python -m unittest scripts.tests.workspace.test_verify_change_scope scripts.tests.workspace.test_workflow_check
+      scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py changes verify governance_workflow_simplification
+      --strict
+    - python scripts/workspace_cli.py workflow check governance_workflow_simplification
+      --strict
+    - python scripts/resolve_task_context.py governance_workflow_simplification --format
+      json
+    - python scripts/workspace_cli.py knowledge validate
+    - python scripts/validate_manifest.py
+    - python scripts/validate_protocols.py
+    - python scripts/workspace_cli.py health --with-tests
+    - git diff --check
+  runtime_authorization_enforcement:
+    use_when:
+    - Connecting Agent and Skill authority to runtime tool dispatch, actor-aware change
+      verification, or platform guard health checks.
+    use_when_zh:
+    - 连接 Agent 和 Skill 权限到运行时工具分发、参与者感知变更验证或平台守卫健康检查
+    required:
+    - shared/agent_governance_policy.md
+    - shared/agent_governance.yaml
+    - shared/agent_registry.yaml
+    - workspace_manifest.yaml
+    - scripts/agent_governance.py
+    - scripts/workspace/agent_governance.py
+    - scripts/hermes_workspace_guard.py
+    - reasonix.toml
+    - opencode.json
+    - .opencode/plugins/workspace-governance.js
+    - reasonix.toml
+    - scripts/verify_change_scope.py
+    - scripts/workflow_check.py
+    - scripts/workspace_health.py
+    - scripts/workspace/workspace_health.py
+    - scripts/workspace/workspace_cli.py
+    - scripts/reporting/ci_run.py
+    optional:
+    - AGENTS.md
+    - USAGE_GUIDES/QUICK_START/agent_governance.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - packages/character-system/runtime/characters/zyc/SKILL.md
+    - packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
+    ignore:
+    - private corpus material
+    - unrelated Skill implementation
+    - external Session contents except bounded incident evidence
+    - platform data unrelated to workspace runtime enforcement
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 32000
+      expanded_warn_tokens: 40000
+    write_scope:
+    - AGENTS.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - PROJECT_CONTEXT/todo/README.md
+    - shared/agent_governance_policy.md
+    - shared/agent_governance.yaml
+    - shared/agent_registry.yaml
+    - scripts/agent_governance.py
+    - scripts/workspace/agent_governance.py
+    - scripts/hermes_workspace_guard.py
+    - reasonix.toml
+    - opencode.json
+    - .opencode/plugins/workspace-governance.js
+    - scripts/verify_change_scope.py
+    - scripts/workflow_check.py
+    - scripts/workspace_cli.py
+    - scripts/workspace_health.py
+    - scripts/workspace/workspace_health.py
+    - scripts/workspace/workspace_cli.py
+    - scripts/reporting/ci_run.py
+    - scripts/tests/workspace/test_agent_governance.py
+    - scripts/tests/workspace/test_hermes_workspace_guard.py
+    - scripts/tests/platform/test_platform_agent_guards.py
+    - scripts/tests/workspace/test_verify_change_scope.py
+    - scripts/tests/workspace/test_workflow_check.py
+    - scripts/tests/platform/test_platform_agent_guards.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - scripts/tests/reporting/test_ci_run.py
+    - USAGE_GUIDES/QUICK_START/agent_governance.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - packages/character-system/runtime/characters/zyc/SKILL.md
+    - packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
+    - reports/manifest_validation_report.md
+    - reports/protocol_validation_report.md
+    - reports/workspace_health_report.md
+    - reports/workspace_setup_report.md
+    validation:
+    - python -m unittest scripts.tests.reporting.test_ci_run scripts.tests.workspace.test_agent_governance
+      scripts.tests.workspace.test_hermes_workspace_guard scripts.tests.platform.test_platform_agent_guards
+      scripts.tests.workspace.test_verify_change_scope scripts.tests.workspace.test_workflow_check
+      scripts.tests.workspace.test_workspace_cli scripts.tests.workspace.test_workspace_health
+    - python scripts/workspace_cli.py agent check --agent hermes --skill zyc --path
+      packages/character-system/runtime/characters/zyc/references/voice_card.md
+    - python scripts/workspace_cli.py agent check --agent hermes --skill style-doctor
+      --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
+    - python scripts/workspace_cli.py agent check --agent reasonix --skill zyc --path
+      packages/character-system/runtime/characters/zyc/references/voice_card.md
+    - python scripts/workspace_cli.py agent check --agent opencode --skill style-doctor
+      --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
+    - python scripts/workspace_cli.py changes verify runtime_authorization_enforcement
+      --agent codex --strict
+    - python scripts/workspace_cli.py workflow check runtime_authorization_enforcement
+      --agent codex --strict
+    - python scripts/workspace_cli.py health --with-tests
+    - python scripts/validate_manifest.py
+    - python scripts/validate_protocols.py
+    - git diff --check
+  shared_policy_update:
+    use_when:
+    - Adding or changing an optional shared policy that projects or tools adopt explicitly
+      without making it an always-loaded workspace rule.
+    use_when_zh:
+    - 添加或修改可选的共享策略（项目和工具显式采纳的，不成为常加载规则）
+    required:
+    - AGENTS.md
+    - ARCHITECTURE.md
+    - shared/INDEX.md
+    - shared/workspace_policy.md
+    - shared/workspace_path_policy.md
+    optional:
+    - CLAUDE.md
+    - .claude/rules/
+    - USAGE_GUIDES/
+    - workspace_manifest.yaml
+    ignore:
+    - runtime provider configuration
+    - platform settings and environment variables
+    - unrelated project implementation
+    - private session history
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - shared/
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    validation:
+    - python scripts/validate_protocols.py
+    - python scripts/resolve_task_context.py shared_policy_update
+    - git diff --check

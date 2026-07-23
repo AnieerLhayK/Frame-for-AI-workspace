@@ -9,13 +9,16 @@ from typing import Any
 import yaml
 
 
+from scripts.workspace.project_context import KNOWLEDGE_INDEX_PATH, load_knowledge_registry
 from scripts.workspace.runtime import WORKSPACE_ROOT
-REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "knowledge_registry.yaml"
+REGISTRY_PATH = KNOWLEDGE_INDEX_PATH
 TOKEN_PATTERN = re.compile(r"[a-z0-9_-]+|[\u3400-\u9fff]+", re.IGNORECASE)
 LAYER_ALIASES = {"skill_engineering": "workspace_engineering"}
 
 
 def load_registry(path: Path = REGISTRY_PATH) -> dict[str, Any]:
+    if path == REGISTRY_PATH:
+        return load_knowledge_registry()
     payload = yaml.safe_load(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict) or not isinstance(payload.get("topics"), dict):
         raise ValueError("knowledge registry must contain a topics mapping")

@@ -1,6 +1,6 @@
 """Workspace maintenance tooling package.
 
-The package is intentionally lightweight. Stable script paths at the root of
-``scripts/`` are compatibility adapters; implementations live in the
-responsibility-oriented subpackages.
+The package is intentionally lightweight. Root ``scripts/`` paths remain
+silent compatibility adapters during the staged migration; implementations
+live in responsibility-oriented subpackages.
 """

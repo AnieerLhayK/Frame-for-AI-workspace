@@ -4,14 +4,20 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import re
+import subprocess
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from scripts.workspace.runtime import WORKSPACE_ROOT as ROOT
-LEGACY = ROOT / "PROJECT_CONTEXT" / "task_ledger.md"
-DESTINATION = ROOT / "PROJECT_CONTEXT" / "task_ledger"
+import yaml
+
+from scripts.workspace.project_context import TASK_LEDGER_ROOT
+from scripts.workspace.runtime import WORKSPACE_ROOT
+DESTINATION = TASK_LEDGER_ROOT
+MIGRATION_RECEIPT = DESTINATION / "migration_receipt.yaml"
+LEGACY_DIRECTORY = DESTINATION / "legacy"
 ENTRY = re.compile(r"(?=^### TASK-)", re.MULTILINE)
 DATE = re.compile(r"^- Date: (\d{4})-(\d{2})-(\d{2})\s*$", re.MULTILINE)
 TASK_HEADING = re.compile(r"^### (TASK-[^\s]+)\b", re.MULTILINE)
@@ -41,7 +47,7 @@ def record_entry(record: dict[str, Any], record_path: Path) -> str:
     validation = record.get("validation", {})
     commands = validation.get("commands", []) if isinstance(validation, dict) else []
     try:
-        display_path = record_path.relative_to(ROOT).as_posix()
+        display_path = record_path.relative_to(WORKSPACE_ROOT).as_posix()
     except ValueError:
         display_path = record_path.as_posix()
 
@@ -92,14 +98,56 @@ def partition() -> None:
         for day, items in grouped.items(): write_day(monthly.parent / monthly.stem / f"{day}.md", items)
         monthly.unlink()
 
-def validate() -> bool:
-    old = DESTINATION / "legacy" / "task_ledger.pre-migration.md"
+def _daily_task_ids() -> set[str]:
     archived = list(DESTINATION.glob("20??/??/??.md"))
-    if not old.is_file() or not archived: return False
-    old_ids = {item for item in re.findall(r"^### (TASK-[^\s]+)", old.read_text(encoding="utf-8"), re.MULTILINE) if item != "TASK-YYYYMMDD-NNN"}
-    new_ids = set()
-    for path in archived: new_ids.update(re.findall(r"^### (TASK-[^\s]+)", path.read_text(encoding="utf-8"), re.MULTILINE))
-    return old_ids <= new_ids
+    task_ids: set[str] = set()
+    for path in archived:
+        task_ids.update(TASK_HEADING.findall(path.read_text(encoding="utf-8")))
+    return task_ids
+
+
+def git_blob_matches(receipt: dict[str, Any]) -> bool | None:
+    """Return whether the recorded source blob matches, or None outside Git."""
+    inside = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"],
+        cwd=WORKSPACE_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if inside.returncode != 0 or inside.stdout.strip() != "true":
+        return None
+    blob = str(receipt.get("source_blob", ""))
+    expected_hash = str(receipt.get("source_sha256", ""))
+    result = subprocess.run(
+        ["git", "cat-file", "blob", blob],
+        cwd=WORKSPACE_ROOT,
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0 and hashlib.sha256(result.stdout).hexdigest().upper() == expected_hash.upper()
+
+
+def validate() -> bool:
+    if LEGACY_DIRECTORY.is_dir() and any(LEGACY_DIRECTORY.iterdir()):
+        return False
+    if not MIGRATION_RECEIPT.is_file():
+        return False
+    try:
+        receipt = yaml.safe_load(MIGRATION_RECEIPT.read_text(encoding="utf-8-sig"))
+    except (OSError, yaml.YAMLError):
+        return False
+    if not isinstance(receipt, dict) or receipt.get("schema_version") != "1.0":
+        return False
+    task_ids = receipt.get("task_ids")
+    if not isinstance(task_ids, list) or not task_ids or not all(isinstance(item, str) for item in task_ids):
+        return False
+    if not {"source_commit", "source_blob", "source_sha256", "source_path"} <= set(receipt):
+        return False
+    if not set(task_ids) <= _daily_task_ids():
+        return False
+    blob_status = git_blob_matches(receipt)
+    return blob_status is not False
 
 def sync_records(*, task_id: str | None = None, day: str | None = None) -> list[str]:
     """Backfill finalized task records, optionally for one task or one day."""

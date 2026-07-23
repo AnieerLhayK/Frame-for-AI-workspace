@@ -60,7 +60,6 @@ surface_classes:
       - packages/character-system/reports/runtime-loop/patches/**
       - packages/character-system/reports/runtime-loop/validations/**
       - packages/character-system/reports/runtime-loop/generalization_backlog/**
-      - reports/hermes/**
       - reports/opencode/**
       - reports/reasonix/**
   - id: agent_experiment_record
@@ -126,9 +125,9 @@ change_risk_policy:
   high_path_patterns:
     - workspace_manifest.yaml
     - shared/**
-    - PROJECT_CONTEXT/task_registry.yaml
-    - PROJECT_CONTEXT/context_budget.md
-    - PROJECT_CONTEXT/change_surface_policy.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/governance/change_surface_policy.md
     - .claude/**
     - scripts/agent_governance.py
     - scripts/resolve_task_context.py
@@ -180,3 +179,20 @@ request_policy:
   structural_reviewers:
     - codex
     - claude
+
+git_branch_governance:
+  integration_branch: main
+  default_strategy: ff-only
+  allowed_one_shot_strategies:
+    - ff-only
+    - merge-commit
+  managed_branches:
+    - codex
+    - claude
+  integration_paths:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+  review_note_kind: merge_review
+  review_statuses:
+    - completed
+    - skipped_user_approved

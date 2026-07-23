@@ -23,6 +23,9 @@ to their package-local shared directory.
   repository artifacts and transient staging files.
 - `shared/git_integration_policy.md`: conservative merge preflight, stop
   conditions, post-merge validation, and rollback guidance.
+- `shared/agent_governance.yaml`: also registers managed public publishers;
+  `scripts/sync_public_projections.py` synchronizes every registered projection
+  after a source update reaches `main`.
 
 ## Package Protocols
 

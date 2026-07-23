@@ -41,6 +41,24 @@
   },
   "packages": [],
   "skills": [],
+  "plugin_skills": [
+    {
+      "id": "gh-fix-ci",
+      "qualified_id": "github:gh-fix-ci",
+      "plugin_id": "github",
+      "role": "maintenance",
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "registration": "installed_plugin",
+      "source_of_instructions": "github:gh-fix-ci"
+    }
+  ],
   "projections": [],
   "protocols": [
     {

@@ -1,0 +1,34 @@
+# Canonical knowledge topic.
+topics:
+  workspace_optimization_options:
+    title: Potential workspace integration improvements
+    aliases:
+    - optimization options
+    - potential improvements
+    - integration improvement
+    - rule gap
+    - future rule
+    - 潜在优化
+    - 优化选项
+    - 规则缺口
+    - 以后注意
+    entries:
+    - path: PROJECT_CONTEXT/potential_for_future/README.md
+      layer: project_context
+      purpose: Index for future improvement and risk categories.
+    - path: PROJECT_CONTEXT/potential_for_future/optimization_options.yaml
+      layer: project_context
+      purpose: Low-status candidates for future workspace integration improvements.
+    - path: PROJECT_CONTEXT/potential_for_future/risk_register.yaml
+      layer: project_context
+      purpose: Potential risks to revisit when trigger conditions occur.
+    - path: PROJECT_CONTEXT/potential_for_future/history/
+      layer: project_context
+      purpose: Historical terminal decisions for a named audit or migration.
+    - path: PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+      layer: project_context
+      purpose: Registered Markdown zh-CN companion sync expectations.
+    - path: AGENTS.md
+      layer: documentation
+      purpose: Always-on guidance for Markdown companion sync and reusable future
+        guidance capture.

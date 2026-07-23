@@ -9,6 +9,7 @@ from typing import Sequence
 
 from scripts.workspace.runtime import SCRIPTS_ROOT as SCRIPTS_DIR
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.entrypoints import ENTRYPOINT_MODULES
 
 
 def powershell_executable() -> str:
@@ -20,8 +21,32 @@ def powershell_executable() -> str:
     return shutil.which("powershell.exe") or shutil.which("pwsh") or "powershell.exe"
 
 
+def canonical_command(command: Sequence[str]) -> list[str]:
+    """Resolve an internal root-adapter invocation to its canonical module.
+
+    The root files remain public, behavior-compatible adapters during the
+    staged migration.  Workspace-owned orchestration does not execute them,
+    however: it invokes their deep implementation directly.
+    """
+    resolved = list(command)
+    if len(resolved) < 2 or Path(resolved[1]).suffix != ".py":
+        return resolved
+
+    try:
+        entrypoint = Path(resolved[1]).resolve()
+    except OSError:
+        return resolved
+    if entrypoint.parent != SCRIPTS_DIR:
+        return resolved
+
+    module = ENTRYPOINT_MODULES.get(entrypoint.name)
+    if module is None:
+        return resolved
+    return [resolved[0], "-m", module, *resolved[2:]]
+
+
 def run_command(command: Sequence[str]) -> int:
-    return subprocess.run(list(command), cwd=WORKSPACE_ROOT, check=False).returncode
+    return subprocess.run(canonical_command(command), cwd=WORKSPACE_ROOT, check=False).returncode
 
 
 def resolver_command(args: argparse.Namespace, *, strict_budget: bool = False) -> list[str]:
@@ -158,6 +183,9 @@ def build_parser() -> argparse.ArgumentParser:
     merge = commands.add_parser("merge", help="Run conservative read-only merge preflight.")
     merge.add_argument("target")
     merge.add_argument("--head", default="HEAD")
+    merge.add_argument("--agent")
+    merge.add_argument("--record-id")
+    merge.add_argument("--strategy", choices=("ff-only", "merge-commit"), default="ff-only")
     merge.add_argument("--format", choices=("text", "json"), default="text")
 
     records = commands.add_parser("records", help="Create, finalize, inspect, and summarize task outcomes.")
@@ -200,6 +228,7 @@ def build_parser() -> argparse.ArgumentParser:
     agent_check.add_argument("--record-id")
     agent_check.add_argument("--skill")
     agent_check.add_argument("--lease")
+    agent_check.add_argument("--integration", action="store_true")
     agent_check.add_argument("--format", choices=("text", "json"), default="text")
     agent_request = agent_commands.add_parser("request", help="Create a reviewable change request.")
     agent_request.add_argument("--agent", required=True)
@@ -212,6 +241,13 @@ def build_parser() -> argparse.ArgumentParser:
     agent_request.add_argument("--path", action="append", default=[])
     agent_request.add_argument("--output")
     agent_request.add_argument("--format", choices=("text", "json"), default="text")
+    agent_hermes_approval = agent_commands.add_parser(
+        "approve-hermes-guard",
+        help="Preview or explicitly approve the configured Hermes workspace guard hooks.",
+    )
+    agent_hermes_approval.add_argument("--approve", action="store_true")
+    agent_hermes_approval.add_argument("--record-id")
+    agent_hermes_approval.add_argument("--format", choices=("text", "json"), default="text")
     agent_lease = agent_commands.add_parser("lease", help="Manage temporary capability leases.")
     lease_commands = agent_lease.add_subparsers(dest="lease_action", required=True)
     lease_validate = lease_commands.add_parser("validate", help="Validate an external lease file.")
@@ -280,6 +316,14 @@ def build_parser() -> argparse.ArgumentParser:
     validate_commands.add_parser(
         "protocols",
         help="Validate shared protocols and refresh their snapshot report.",
+    )
+    validate_commands.add_parser(
+        "future-register",
+        help="Validate active and historical potential-for-future registries.",
+    )
+    validate_commands.add_parser(
+        "project-context",
+        help="Validate the canonical PROJECT_CONTEXT layout and reject retired root projections.",
     )
     validate_links = validate_commands.add_parser(
         "links",
@@ -501,6 +545,8 @@ def dispatch(args: argparse.Namespace) -> int:
                 command.extend(["--skill", args.skill])
             if args.lease:
                 command.extend(["--lease", args.lease])
+            if args.integration:
+                command.append("--integration")
         elif args.action == "request":
             command.extend(
                 [
@@ -516,6 +562,11 @@ def dispatch(args: argparse.Namespace) -> int:
                 command.extend(["--path", path])
             if args.output:
                 command.extend(["--output", args.output])
+        elif args.action == "approve-hermes-guard":
+            if args.approve:
+                command.append("--approve")
+            if args.record_id:
+                command.extend(["--record-id", args.record_id])
         elif args.action in {"show", "validate", "doctor"}:
             command.append(args.agent_id)
         elif args.action == "lease":
@@ -595,6 +646,10 @@ def dispatch(args: argparse.Namespace) -> int:
             return run_command([sys.executable, str(SCRIPTS_DIR / "validate_manifest.py")])
         if args.target == "protocols":
             return run_command([sys.executable, str(SCRIPTS_DIR / "validate_protocols.py")])
+        if args.target == "future-register":
+            return run_command([sys.executable, str(SCRIPTS_DIR / "validate_future_register.py")])
+        if args.target == "project-context":
+            return run_command([sys.executable, "-m", "scripts.validation.validate_project_context"])
         command = [
             powershell_executable(),
             "-NoProfile",
@@ -621,7 +676,12 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "records":
         return run_command([sys.executable, str(SCRIPTS_DIR / "task_records.py"), *args.args])
     if args.command == "merge":
-        return run_command([sys.executable, str(SCRIPTS_DIR / "merge_safety.py"), args.target, "--head", args.head, "--format", args.format])
+        command = [sys.executable, str(SCRIPTS_DIR / "merge_safety.py"), args.target, "--head", args.head, "--strategy", args.strategy, "--format", args.format]
+        if args.agent:
+            command.extend(["--agent", args.agent])
+        if args.record_id:
+            command.extend(["--record-id", args.record_id])
+        return run_command(command)
     if args.command == "changes":
         if args.action == "verify":
             command = [

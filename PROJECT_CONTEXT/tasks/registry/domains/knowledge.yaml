@@ -1,0 +1,367 @@
+# Canonical task definitions for the PROJECT_CONTEXT task domain.
+tasks:
+  context_resolution_tooling:
+    use_when:
+    - Changing the task context resolver, token meter, budget thresholds, or registry
+      resolution contract.
+    use_when_zh:
+    - 修改任务上下文解析器、token 计量器、预算阈值或注册表解析合约
+    required:
+    - AGENTS.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/registry/
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - USAGE_GUIDES/prompt_registry.yaml
+    - scripts/resolve_task_context.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    optional:
+    - README.md
+    - scripts/requirements-context-tools.txt
+    ignore:
+    - reports/
+    - private corpus material
+    - platform loading surfaces
+    - unrelated skill implementation
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - AGENTS.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - README.md
+    - scripts/resolve_task_context.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/requirements-context-tools.txt
+    validation:
+    - python -m unittest scripts.tests.workspace.test_resolve_task_context
+    - python scripts/resolve_task_context.py --list
+    - python scripts/resolve_task_context.py --list-prompts
+    - python scripts/resolve_task_context.py platform_exposure --format json
+    - git diff --check
+  knowledge_interface_tooling:
+    use_when:
+    - Changing the bounded knowledge registry or read-only topic discovery interface.
+    use_when_zh:
+    - 修改有边界的知识注册表或只读主题发现接口
+    required:
+    - PROJECT_CONTEXT/knowledge/index.yaml
+    - scripts/find_knowledge.py
+    - scripts/tests/workspace/test_find_knowledge.py
+    optional:
+    - PROJECT_CONTEXT/README.md
+    - WORKSPACE_ENGINEERING/README.md
+    - README.md
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - WORKSPACE_ENGINEERING/
+    ignore:
+    - reports/
+    - private corpus material
+    - platform loading surfaces
+    - indexed entry content unless a missing or incorrect route is demonstrated
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - AGENTS.md
+    - README.md
+    - PROJECT_CONTEXT/README.md
+    - PROJECT_CONTEXT/knowledge/index.yaml
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - scripts/find_knowledge.py
+    - scripts/tests/workspace/test_find_knowledge.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    validation:
+    - python -m unittest scripts.tests.workspace.test_find_knowledge scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py knowledge list
+    - python scripts/workspace_cli.py knowledge validate
+    - python scripts/workspace_cli.py knowledge find "skill 开发"
+    - python scripts/workspace_cli.py knowledge find "运行时 skill"
+    - python scripts/workspace_cli.py knowledge find "character generator"
+    - python scripts/workspace_cli.py knowledge find "OpenCode loading"
+    - python scripts/resolve_task_context.py knowledge_interface_tooling --format
+      json
+    - git diff --check
+  project_memory_maintenance:
+    use_when:
+    - Reconciling current status, todo priorities, handoff notes, or recent completed-task
+      metadata without changing workspace behavior.
+    use_when_zh:
+    - 更新当前状态、待办优先级、交接记录或已完成任务元数据，不改变工作区行为
+    required:
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/todo/README.md
+    - PROJECT_CONTEXT/todo/external-skills.md
+    - PROJECT_CONTEXT/todo/workspace-optimization.md
+    optional:
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - PROJECT_CONTEXT/continuity/session_handoff.md
+    - PROJECT_CONTEXT/README.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/potential_for_future/README.md
+    - PROJECT_CONTEXT/potential_for_future/optimization_options.yaml
+    - PROJECT_CONTEXT/potential_for_future/risk_register.yaml
+    ignore:
+    - reports/
+    - private corpus material
+    - platform loading surfaces
+    - skill implementation
+    - ledger entries older than the latest 5 unless a named task requires reconciliation
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/todo/README.md
+    - PROJECT_CONTEXT/todo/external-skills.md
+    - PROJECT_CONTEXT/todo/workspace-optimization.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - PROJECT_CONTEXT/continuity/session_handoff.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/potential_for_future/
+    validation:
+    - python scripts/resolve_task_context.py project_memory_maintenance --format json
+    - python scripts/workspace_cli.py summary --format json
+    - python scripts/workspace_cli.py health --with-tests
+    - git diff --check
+  prompt_usage_update:
+    use_when:
+    - Changing user-facing prompt templates, quick starts, or usage guides.
+    use_when_zh:
+    - 修改面向用户的 prompt 模板、快速入门或使用指南
+    required:
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - USAGE_GUIDES/README.md
+    - USAGE_GUIDES/START_HERE.md
+    - USAGE_GUIDES/prompt_registry.yaml
+    - USAGE_GUIDES/PROMPT_TEMPLATES/README.md
+    optional:
+    - workspace_manifest.yaml
+    - PROJECT_CONTEXT/continuity/current_status.md
+    ignore:
+    - reports/
+    - packages/character-system/engineering/generation/character-generator/scripts/
+    - packages/character-system/runtime/characters/zyc/references/
+    prompt:
+    - usage_guide_edit
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - USAGE_GUIDES/
+    - packages/character-system/engineering/generation/character-generator/generator_prompt.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    validation:
+    - python scripts/check_doc_pairs.py --validate-coverage
+    - git diff -- USAGE_GUIDES
+    - all task prompt ids exist in USAGE_GUIDES/prompt_registry.yaml
+  source_of_truth_dedup:
+    use_when:
+    - Removing duplicated path, projection, platform-root, or source-of-truth facts
+      from docs and guides.
+    - Converting volatile local path facts into references to workspace_manifest.yaml.
+    use_when_zh:
+    - 从文档和指南中移除重复的路径、投影、平台根或事实来源信息
+    required:
+    - workspace_manifest.yaml
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - ARCHITECTURE.md
+    - USAGE_GUIDES/prompt_registry.yaml
+    - shared/workspace_path_policy.md
+    optional:
+    - PROJECT_CONTEXT/continuity/session_handoff.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - PROJECT_CONTEXT/memory/glossary.md
+    - USAGE_GUIDES/QUICK_START/
+    - USAGE_GUIDES/PROMPT_TEMPLATES/
+    - rg output for duplicated local paths
+    ignore:
+    - reports/ unless regenerating snapshots is explicitly part of the task
+    - platform loading surfaces
+    - skill runtime logic
+    prompt:
+    - source_truth_dedup
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/
+    - USAGE_GUIDES/
+    - shared/ path/source/projection policy files when needed
+    - workspace_manifest.yaml only when a missing fact needs a canonical home
+    validation:
+    - rg for duplicated absolute local path facts outside manifest and reports
+    - all task prompt ids exist in USAGE_GUIDES/prompt_registry.yaml
+    - python scripts/validate_protocols.py when shared protocols change
+    - git diff --check
+  startup_context_optimization:
+    use_when:
+    - Reducing always-loaded agent instructions, startup context, or resolver regression
+      risk.
+    use_when_zh:
+    - 减少常加载的 Agent 指令、启动上下文或解析器回归风险
+    required:
+    - AGENTS.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - scripts/resolve_task_context.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/tests/workspace/test_startup_context_policy.py
+    optional:
+    - README.md
+    - PROJECT_CONTEXT/README.md
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/todo/README.md
+    ignore:
+    - reports/
+    - private corpus material
+    - platform loading surfaces
+    - skill implementation beyond entry files
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 24000
+      expanded_warn_tokens: 30000
+    write_scope:
+    - AGENTS.md
+    - README.md
+    - PROJECT_CONTEXT/
+    - scripts/resolve_task_context.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/tests/workspace/test_startup_context_policy.py
+    validation:
+    - python -m unittest scripts.tests.workspace.test_resolve_task_context scripts.tests.workspace.test_startup_context_policy
+    - python scripts/resolve_task_context.py platform_exposure --format json
+    - python scripts/resolve_task_context.py skill_metadata_update --bind target-skill=packages/character-system/engineering/generation/character-generator
+      --format json
+    - git diff --check
+  task_registry_update:
+    use_when:
+    - Changing task routing, context boundaries, or task classification rules.
+    use_when_zh:
+    - 修改任务路由、上下文边界或任务分类规则
+    required:
+    - AGENTS.md
+    - PROJECT_CONTEXT/README.md
+    - PROJECT_CONTEXT/README.zh-CN.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - ARCHITECTURE.md
+    - workspace_manifest.yaml
+    - .gitignore
+    optional:
+    - WORKSPACE_ENGINEERING/README.md
+    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - PROJECT_CONTEXT/todo/README.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/potential_for_future/
+    ignore:
+    - reports/
+    - packages/character-system/engineering/generation/character-generator/characters/
+    - packages/character-system/runtime/characters/zyc/references/
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/registry/
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/knowledge/index.yaml
+    - PROJECT_CONTEXT/knowledge/topics/
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/README.md
+    - PROJECT_CONTEXT/README.zh-CN.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/potential_for_future/
+    - PROJECT_CONTEXT/knowledge/index.yaml
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - AGENTS.md
+    - .gitignore
+    - scripts/check_doc_pairs.py
+    - scripts/tests/validation/test_check_doc_pairs.py
+    - scripts/validate_future_register.py
+    - scripts/validation/validate_future_register.py
+    - scripts/workspace/entrypoints.py
+    - scripts/workspace/workspace_cli.py
+    - scripts/tests/validation/test_validate_future_register.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    validation:
+    - python -m unittest scripts.tests.validation.test_check_doc_pairs
+    - python scripts/check_doc_pairs.py --validate-coverage
+    - python -m unittest scripts.tests.validation.test_validate_future_register scripts.tests.workspace.test_workspace_cli
+    - python scripts/validate_future_register.py
+    - python scripts/workspace_cli.py knowledge validate
+    - git diff --check
+  workspace_engineering_knowledge:
+    use_when:
+    - Adding, restructuring, validating, or publishing reusable AI workspace engineering
+      knowledge.
+    - Capturing a reusable workspace, Agent, governance, portability, tooling, or
+      Skill Engineering lesson.
+    - Adapting attributed external engineering experience into locally reviewed methodology.
+    use_when_zh:
+    - 添加、重组、验证或发布可复用的 AI 工作区工程知识
+    required:
+    - WORKSPACE_ENGINEERING/README.md
+    - WORKSPACE_ENGINEERING/knowledge_provenance.md
+    - PROJECT_CONTEXT/knowledge/index.yaml
+    optional:
+    - WORKSPACE_ENGINEERING/architecture_patterns.md
+    - WORKSPACE_ENGINEERING/workspace_patterns.md
+    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - WORKSPACE_ENGINEERING/portability_patterns.md
+    - WORKSPACE_ENGINEERING/anti_patterns.md
+    - WORKSPACE_ENGINEERING/skill_engineering/
+    - WORKSPACE_ENGINEERING/case_studies/
+    - WORKSPACE_ENGINEERING/experiments/
+    ignore:
+    - private corpus material
+    - platform session stores
+    - unrelated runtime reports
+    - raw third-party repositories unless explicitly approved as evidence
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - WORKSPACE_ENGINEERING/
+    - PROJECT_CONTEXT/knowledge/index.yaml
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/todo/README.md
+    - README.md
+    - ARCHITECTURE.md
+    - AGENTS.md
+    - .claude/project-boundary.json
+    - scripts/find_knowledge.py
+    - scripts/plan_change_surface.py
+    - scripts/workspace_cli.py
+    - scripts/tests/
+    validation:
+    - python -m unittest scripts.tests.workspace.test_find_knowledge scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py knowledge validate
+    - python scripts/workspace_cli.py knowledge find "workspace engineering"
+    - python scripts/workspace_cli.py knowledge find "skill 开发"
+    - python scripts/resolve_task_context.py workspace_engineering_knowledge --format
+      json
+    - git diff --check

@@ -17,6 +17,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.project_context import load_task_registry
+
 try:
     import yaml
 except ImportError:  # pragma: no cover - exercised through CLI failure behavior
@@ -25,7 +28,7 @@ except ImportError:  # pragma: no cover - exercised through CLI failure behavior
 
 DEFAULT_MAX_PARENT_DEPTH = 5
 DEFAULT_MANIFEST_FILENAME = "workspace_manifest.yaml"
-TASK_REGISTRY_PATH = "PROJECT_CONTEXT/task_registry.yaml"
+TASK_REGISTRY_PATH = "PROJECT_CONTEXT/tasks/registry/index.yaml"
 PROMPT_REGISTRY_PATH = "USAGE_GUIDES/prompt_registry.yaml"
 PLACEHOLDER_RE = re.compile(r"<([A-Za-z0-9_-]+)>")
 PATH_SUFFIXES = {
@@ -612,7 +615,7 @@ def resolve_task(
     count_tokens: bool,
     encoding_override: str | None = None,
 ) -> dict[str, Any]:
-    task_registry = load_yaml(workspace_root / TASK_REGISTRY_PATH)
+    task_registry = load_task_registry(workspace_root / "PROJECT_CONTEXT")
     prompt_registry_path = str(
         task_registry.get("default_rules", {})
         .get("prompt_registry", {})
@@ -884,7 +887,7 @@ def resolve_prompt(
     count_tokens: bool,
     encoding_override: str | None = None,
 ) -> dict[str, Any]:
-    task_registry = load_yaml(workspace_root / TASK_REGISTRY_PATH)
+    task_registry = load_task_registry(workspace_root / "PROJECT_CONTEXT")
     prompt_registry_path = str(
         task_registry.get("default_rules", {})
         .get("prompt_registry", {})
@@ -1129,13 +1132,15 @@ def print_text(result: dict[str, Any]) -> None:
             print(f"- {error}")
 
 
-ROUTING_EVENTS_PATH = os.path.normpath(
-    os.environ.get(
-        "AI_TOOL_STAGING_DIR",
-        # Cross-platform fallback: relative to this script's directory
-        os.path.join(os.path.dirname(__file__), "..", ".claude"),
-    )
-) + os.sep + "routing_events.ndjson"
+def routing_events_path() -> Path:
+    """Keep resolver telemetry outside the moved implementation package."""
+    staging_dir = os.environ.get("AI_TOOL_STAGING_DIR")
+    if staging_dir:
+        return Path(staging_dir) / "routing_events.ndjson"
+    return WORKSPACE_ROOT / ".claude" / "routing_events.ndjson"
+
+
+ROUTING_EVENTS_PATH = str(routing_events_path())
 
 
 def record_routing_event(result: dict[str, Any]) -> None:
@@ -1176,9 +1181,9 @@ def record_routing_event(result: dict[str, Any]) -> None:
     }
 
     try:
-        dir_path = os.path.dirname(ROUTING_EVENTS_PATH)
-        os.makedirs(dir_path, exist_ok=True)
-        with open(ROUTING_EVENTS_PATH, "a", encoding="utf-8") as fh:
+        event_path = Path(ROUTING_EVENTS_PATH)
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        with event_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(event, ensure_ascii=False) + "\n")
     except OSError:
         pass  # best-effort recording
@@ -1188,7 +1193,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Resolve a registered task into minimal context and token estimates."
     )
-    parser.add_argument("task", nargs="?", help="Exact task id from PROJECT_CONTEXT/task_registry.yaml.")
+    parser.add_argument("task", nargs="?", help="Exact task id from PROJECT_CONTEXT/tasks/registry/index.yaml.")
     parser.add_argument("--list", action="store_true", help="List registered task ids.")
     parser.add_argument("--list-prompts", action="store_true", help="List registered prompt ids.")
     parser.add_argument("--prompt-id", help="Resolve one prompt id directly.")
@@ -1213,7 +1218,7 @@ def main() -> int:
     workspace_root = manifest_path.parent.resolve()
 
     try:
-        task_registry = load_yaml(workspace_root / TASK_REGISTRY_PATH)
+        task_registry = load_task_registry(workspace_root / "PROJECT_CONTEXT")
         if args.list:
             print_task_list(task_registry, args.format)
             return 0

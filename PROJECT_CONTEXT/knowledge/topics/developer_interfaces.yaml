@@ -1,0 +1,22 @@
+# Canonical knowledge topic.
+topics:
+  developer_interfaces:
+    title: Developer-facing workspace commands
+    aliases:
+    - cli
+    - developer api
+    - interface
+    - command
+    - 开发者接口
+    - 命令入口
+    - 怎么调用
+    entries:
+    - path: README.md
+      layer: documentation
+      purpose: Supported workspace CLI examples.
+    - path: scripts/workspace_cli.py
+      layer: tooling
+      purpose: Unified task, prompt, report, change, and knowledge command entry.
+    - path: USAGE_GUIDES/QUICK_START/workspace_cli.md
+      layer: usage_guides
+      purpose: Beginner-facing guide to the supported workspace CLI commands.

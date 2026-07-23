@@ -1,0 +1,25 @@
+# Canonical knowledge topic.
+topics:
+  current_status:
+    title: Current state, handoff, risks, and next work
+    aliases:
+    - status
+    - handoff
+    - todo
+    - risk
+    - 当前状态
+    - 工程现状
+    - 下一步
+    entries:
+    - path: PROJECT_CONTEXT/continuity/current_status.md
+      layer: project_context
+      purpose: Current verified workspace state.
+    - path: PROJECT_CONTEXT/continuity/session_handoff.md
+      layer: project_context
+      purpose: Continuation guidance for a new session.
+    - path: PROJECT_CONTEXT/todo/README.md
+      layer: project_context
+      purpose: Open follow-up work.
+    - path: PROJECT_CONTEXT/todo/external-skills.md
+      layer: project_context
+      purpose: Raw external skill intake and compatibility queue.

@@ -1,0 +1,26 @@
+# Canonical knowledge topic.
+topics:
+  runtime_skill_usage:
+    title: Runtime skill usage and user-facing guidance
+    aliases:
+    - runtime skill
+    - use skill
+    - invoke skill
+    - zyc usage
+    - 用户端
+    - 运行时 skill
+    - 调用 skill
+    entries:
+    - path: USAGE_GUIDES/REFERENCE/README.md
+      layer: usage_guides
+      purpose: Role-oriented map for runtime, engineering, workflow, and platform
+        reference material.
+    - path: USAGE_GUIDES/REFERENCE/runtime/zyc.md
+      layer: usage_guides
+      purpose: Detailed runtime usage guidance for the ZYC character skill.
+    - path: USAGE_GUIDES/REFERENCE/runtime/diagnosis-maintenance-relationships.md
+      layer: usage_guides
+      purpose: When runtime use should hand off to diagnosis or maintenance.
+    - path: USAGE_GUIDES/PROMPT_TEMPLATES/character-system/runtime/zyc.md
+      layer: usage_guides
+      purpose: Copy-ready prompts for invoking the ZYC runtime skill.

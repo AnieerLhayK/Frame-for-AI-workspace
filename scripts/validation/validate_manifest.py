@@ -218,6 +218,39 @@ def check_required_fields(manifest: dict[str, Any], state: State) -> None:
                 state.add("WARNING", f"skills[{skill_id}] has multiple exposures for platform: {platform}")
             seen_platforms.add(platform)
 
+    plugin_skills = manifest.get("plugin_skills", [])
+    if not isinstance(plugin_skills, list):
+        state.add("ERROR", "manifest plugin_skills must be a list")
+    else:
+        seen_plugin_ids: set[str] = set()
+        for plugin_skill in plugin_skills:
+            if not isinstance(plugin_skill, dict):
+                state.add("ERROR", "plugin_skills entries must be objects")
+                continue
+            skill_id = str(plugin_skill.get("id", ""))
+            qualified_id = str(plugin_skill.get("qualified_id", ""))
+            plugin_id = str(plugin_skill.get("plugin_id", ""))
+            if not skill_id or not qualified_id or not plugin_id:
+                state.add(
+                    "ERROR",
+                    "plugin_skills entries require id, qualified_id, and plugin_id",
+                )
+            if skill_id in seen_plugin_ids:
+                state.add("ERROR", f"duplicate plugin skill id: {skill_id}")
+            seen_plugin_ids.add(skill_id)
+            if plugin_skill.get("role") not in valid_roles:
+                state.add(
+                    "ERROR",
+                    f"plugin_skills[{skill_id}].role is missing or invalid: "
+                    f"{plugin_skill.get('role')}",
+                )
+            check_mode_contract(
+                plugin_skill.get("execution_modes"),
+                valid_execution_modes,
+                f"plugin_skills[{skill_id}].execution_modes",
+                state,
+            )
+
 
 def check_mode_contract(
     contract: Any,

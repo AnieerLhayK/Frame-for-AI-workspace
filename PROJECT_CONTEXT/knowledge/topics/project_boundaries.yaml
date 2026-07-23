@@ -1,0 +1,23 @@
+# Canonical knowledge topic.
+topics:
+  project_boundaries:
+    title: Project roots, repository boundaries, and Claude Code switching
+    aliases:
+    - project boundary
+    - repository boundary
+    - claude project
+    - 项目边界
+    - 仓库边界
+    - Claude 串仓
+    - 串仓
+    - 跨仓写入
+    entries:
+    - path: ARCHITECTURE.md
+      layer: documentation
+      purpose: Workspace, package, skill, and external-project boundaries.
+    - path: .claude/rules/workspace-boundary.md
+      layer: documentation
+      purpose: Claude Code write boundary for this workspace Git root.
+    - path: USAGE_GUIDES/QUICK_START/claude_code.md
+      layer: usage_guides
+      purpose: How Claude Code selects and switches between separate project roots.

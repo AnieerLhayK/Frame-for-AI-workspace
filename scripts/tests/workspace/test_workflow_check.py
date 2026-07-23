@@ -27,7 +27,7 @@ class WorkflowCheckTests(unittest.TestCase):
             patch("scripts.workflow_check.active_registration", return_value={
                 "task_id": "TASK-20260715-001",
                 "operation": "workspace_write",
-                "path": "PROJECT_CONTEXT/task_records/2026/07/15/TASK-20260715-001.json",
+                "path": "PROJECT_CONTEXT/tasks/records/2026/07/15/TASK-20260715-001.json",
                 "status": "active",
             }),
             patch("scripts.workflow_check.verify_changes", return_value=verification) as verify,
@@ -41,7 +41,7 @@ class WorkflowCheckTests(unittest.TestCase):
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(
             verify.call_args.kwargs["additional_write_scope"],
-            ["PROJECT_CONTEXT/task_records/2026/07/15/TASK-20260715-001.json"],
+            ["PROJECT_CONTEXT/tasks/records/2026/07/15/TASK-20260715-001.json"],
         )
 
     def test_missing_record_is_an_error(self) -> None:

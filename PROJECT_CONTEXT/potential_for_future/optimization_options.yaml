@@ -1,47 +1,54 @@
-schema_version: "0.1"
+schema_version: "0.2"
 purpose: "Low-status registry for potential workspace integration improvements that are not active todo items."
 
 rules:
   - "Use this file for reusable improvement options that are plausible but not ready to become PROJECT_CONTEXT/todo/ or enforceable policy."
   - "Check it when a new issue resembles a previously noticed integration gap."
   - "Promote an option to task routing, shared policy, tooling, or todo only when current evidence makes it actionable."
+  - "Move implemented or rejected options to history/optimization_options.yaml with migration metadata."
   - "Keep entries brief; this is a retrieval aid, not a design document."
 
 statuses:
   candidate: "Worth remembering; no committed implementation plan yet."
   active: "Being implemented in the current task."
-  implemented: "Implemented in workspace rules, routing, docs, or tooling."
-  rejected: "Considered and intentionally not pursued."
 
+# Terminal statuses belong in history/optimization_options.yaml.
 options:
-  - id: "OPT-20260703-001"
-    title: "Markdown zh-CN companion synchronization"
-    status: "implemented"
-    trigger_when:
-      - "A Markdown usage guide, prompt template, or project-context doc has a same-name .zh-CN.md companion."
-      - "A developer notices that an English doc update left a Chinese companion stale."
-    current_resolution:
-      - "PROJECT_CONTEXT/doc_pair_registry.yaml tracks registered pairs and watched directories."
-      - "AGENTS.md requires checking that registry for Markdown edits."
-      - "scripts/check_doc_pairs.py reports changed registered primaries whose companions were not changed."
-    related_files:
-      - "PROJECT_CONTEXT/doc_pair_registry.yaml"
-      - "scripts/check_doc_pairs.py"
 
-  - id: "OPT-20260703-002"
-    title: "Capture direct developer adjustments before they become residual drift"
-    status: "implemented"
+  - id: "OPT-20260718-010"
+    title: "Selective directory-local manifests for address-heavy domains"
+    status: "candidate"
     trigger_when:
-      - "The user or a developer says a rule should be remembered for future work."
-      - "A useful adjustment exists only in conversation or a one-off edit, with no route or policy home."
-    current_resolution:
-      - "AGENTS.md instructs agents to encode reusable guidance in the smallest owning layer or record it here."
-      - "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml keeps low-status candidates outside the active todo list."
-      - "PROJECT_CONTEXT/knowledge_registry.yaml registers this file for bounded retrieval."
+      - "A directory has multiple independent consumers, mutable internal paths, and repeated path facts that cannot be expressed cleanly by workspace_manifest.yaml or an existing domain index."
+      - "A directory-local path change repeatedly requires synchronized edits across scripts, tests, documentation, and publishers."
+    potential_resolution:
+      - "Introduce a small tracked YAML manifest only for the proven domain, with stable ids, relative paths, ownership, and validation rules."
+      - "Resolve variables through one loader or the existing workspace manifest; do not add ad-hoc `${root}` interpolation without a parser and schema."
+      - "Keep workspace_manifest.yaml as the global source of truth and make local manifests subordinate indexes, not competing root registries."
+      - "Start with a read-only report or validator and add write behavior only after two independent consumers justify the seam."
+    current_decision:
+      - "No immediate manifest is needed for scripts, reports, shared, or WORKSPACE_ENGINEERING; existing runtime, registry, manifest, and README interfaces are sufficient."
+      - "Re-evaluate WORKSPACE_ENGINEERING only if its knowledge navigation becomes machine-consumed by multiple tools."
     related_files:
-      - "AGENTS.md"
-      - "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml"
-      - "PROJECT_CONTEXT/knowledge_registry.yaml"
+      - "workspace_manifest.yaml"
+      - "PROJECT_CONTEXT/context_index.yaml"
+      - "scripts/workspace/runtime.py"
+      - "scripts/workspace/entrypoints.py"
+
+  - id: "OPT-20260718-009"
+    title: "Explicit Claude Code user-profile maintenance review"
+    status: "candidate"
+    trigger_when:
+      - "A workspace review finds the installed Claude Code version behind a freshly verified official release."
+      - "An enabled user-level plugin has no demonstrated workflow value, or provider auto mode repeatedly remains unavailable."
+    potential_resolution:
+      - "Recheck the official release before updating the user-level Claude Code installation; do not rely on an old handoff version claim."
+      - "Review the idle plugin and provider auto-mode limitation with the user, then disable the plugin or change provider behavior only with explicit approval."
+      - "Keep user-profile changes outside ordinary workspace commits and record only their workspace-facing effect."
+    related_files:
+      - "${USER_HOME}/.claude/settings.json"
+      - ".claude/settings.json"
+      - "PROJECT_CONTEXT/todo/workspace-optimization.md"
 
   - id: "OPT-20260703-003"
     title: "First-class conversational character-generator intake"

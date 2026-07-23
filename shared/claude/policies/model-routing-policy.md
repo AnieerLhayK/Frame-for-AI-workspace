@@ -124,7 +124,7 @@ or long-lived branch merge conflict planning are Pro-class tasks even when the
 first requested action is only to inspect or explain.
 
 For this workspace, a long-lived branch merged into `main` with conflicts in
-`PROJECT_CONTEXT/task_ledger.md`, `PROJECT_CONTEXT/todo/README.md`, or
+`PROJECT_CONTEXT/tasks/ledger.md`, `PROJECT_CONTEXT/todo/README.md`, or
 `USAGE_GUIDES/prompt_registry.yaml` is explicitly Pro-class conflict planning.
 
 ## Decision Flow

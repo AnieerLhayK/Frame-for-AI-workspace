@@ -8,6 +8,7 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -18,16 +19,25 @@ from scripts.resolve_task_context import (
     expand_placeholders,
     parse_bindings,
     print_task_list,
+    routing_events_path,
     resolve_prompt,
     resolve_task,
 )
 
 
 class ResolverTests(unittest.TestCase):
+    def test_routing_events_fallback_uses_workspace_claude_directory(self) -> None:
+        with patch.dict("os.environ", {}, clear=True):
+            self.assertEqual(
+                routing_events_path(),
+                Path(__file__).resolve().parents[3] / ".claude" / "routing_events.ndjson",
+            )
+
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
         (self.root / "PROJECT_CONTEXT").mkdir()
+        (self.root / "PROJECT_CONTEXT" / "tasks" / "registry").mkdir(parents=True)
         (self.root / "USAGE_GUIDES").mkdir()
         (self.root / "src").mkdir()
         (self.root / "workspace_manifest.yaml").write_text("{}", encoding="utf-8")
@@ -52,8 +62,8 @@ class ResolverTests(unittest.TestCase):
                     "resolver": {
                         "preloaded_files": ["AGENTS.md"],
                         "consumed_files": [
-                            "PROJECT_CONTEXT/task_registry.yaml",
-                            "PROJECT_CONTEXT/context_budget.md",
+                            "PROJECT_CONTEXT/tasks/registry/index.yaml",
+                            "PROJECT_CONTEXT/governance/context_budget.md",
                             "USAGE_GUIDES/prompt_registry.yaml",
                         ],
                         "retain_consumed_for_tasks": ["registry_edit"],
@@ -79,7 +89,7 @@ class ResolverTests(unittest.TestCase):
             "tasks": {
                 "demo": {
                     "required": [
-                        "PROJECT_CONTEXT/task_registry.yaml",
+                        "PROJECT_CONTEXT/tasks/registry/index.yaml",
                         "<target>/target.md",
                         "git status --short",
                     ],
@@ -90,7 +100,7 @@ class ResolverTests(unittest.TestCase):
                     "validation": ["git diff --check"],
                 },
                 "registry_edit": {
-                    "required": ["PROJECT_CONTEXT/task_registry.yaml"],
+                    "required": ["PROJECT_CONTEXT/tasks/registry/index.yaml"],
                     "optional": [],
                     "ignore": [],
                     "prompt": ["demo_prompt"],
@@ -108,7 +118,7 @@ class ResolverTests(unittest.TestCase):
                 }
             }
         }
-        (self.root / "PROJECT_CONTEXT" / "task_registry.yaml").write_text(
+        (self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml").write_text(
             yaml.safe_dump(task_registry, sort_keys=False),
             encoding="utf-8",
         )
@@ -132,7 +142,7 @@ class ResolverTests(unittest.TestCase):
 
     def test_task_list_text_is_grouped_table(self) -> None:
         registry = yaml.safe_load(
-            (self.root / "PROJECT_CONTEXT" / "task_registry.yaml").read_text(
+            (self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml").read_text(
                 encoding="utf-8"
             )
         )
@@ -163,7 +173,7 @@ class ResolverTests(unittest.TestCase):
         )
         self.assertIn("src/target.md", result["context"]["required_paths"])
         self.assertIn(
-            "PROJECT_CONTEXT/task_registry.yaml",
+            "PROJECT_CONTEXT/tasks/registry/index.yaml",
             result["context"]["resolver_consumed_files"],
         )
         self.assertIn("git status --short", result["context"]["external_evidence"])
@@ -181,7 +191,7 @@ class ResolverTests(unittest.TestCase):
             count_tokens=True,
         )
         self.assertIn(
-            "PROJECT_CONTEXT/task_registry.yaml",
+            "PROJECT_CONTEXT/tasks/registry/index.yaml",
             result["context"]["required_paths"],
         )
         self.assertEqual(result["tool_policy"]["profile"], "maintenance")
@@ -204,7 +214,7 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(result["tool_policy"]["deny"], ["workspace.write"])
 
     def test_unknown_tool_profile_is_rejected(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["tool_profile"] = "missing"
         registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
@@ -250,7 +260,7 @@ class ResolverTests(unittest.TestCase):
         )
 
     def test_unknown_prompt_is_an_error(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["prompt"] = ["missing"]
         registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
@@ -335,7 +345,7 @@ class ResolverTests(unittest.TestCase):
         self.assertNotIn("Ignore this.", result["prompt"]["template_content"])
 
     def test_path_escape_is_blocked(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["required"] = ["../outside.md"]
         registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
@@ -356,7 +366,7 @@ class ResolverTests(unittest.TestCase):
         )
 
     def test_ignored_required_path_is_not_counted(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["required"] = ["src/target.md"]
         data["tasks"]["demo"]["ignore"] = ["src/"]
@@ -381,7 +391,7 @@ class ResolverTests(unittest.TestCase):
     def test_wildcard_directory_ignore(self) -> None:
         (self.root / "archive-old").mkdir()
         (self.root / "archive-old" / "large.md").write_text("ignored", encoding="utf-8")
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["default_rules"]["default_ignore"] = ["archive*/"]
         data["tasks"]["demo"]["required"] = ["archive-old/"]
@@ -433,7 +443,7 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(result["token_budget"]["initial_tokens"], 0)
 
     def test_task_budget_overrides_default(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["budget"] = {"required_warn_tokens": 1}
         registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
@@ -448,7 +458,7 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(result["token_budget"]["status"], "WARN")
 
     def test_missing_required_file_is_an_error(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["required"] = ["src/missing.md"]
         registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
@@ -476,7 +486,7 @@ class ResolverTests(unittest.TestCase):
         self.assertTrue(any("Missing required resource" in item for item in result["errors"]))
 
     def test_missing_optional_file_warns_only_when_expanded(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["required"] = ["src/target.md"]
         data["tasks"]["demo"]["optional"] = ["src/missing-optional.md"]
@@ -514,7 +524,7 @@ class ResolverTests(unittest.TestCase):
         self.assertTrue(any("Missing optional resource" in item for item in result["warnings"]))
 
     def test_optional_placeholder_is_inactive_until_expanded(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["required"] = ["src/target.md"]
         data["tasks"]["demo"]["optional"] = ["<optional-target>/optional.md"]
@@ -549,7 +559,7 @@ class ResolverTests(unittest.TestCase):
         )
 
     def test_cli_returns_nonzero_for_missing_required_file(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "task_registry.yaml"
+        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["required"] = ["src/missing.md"]
         registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")

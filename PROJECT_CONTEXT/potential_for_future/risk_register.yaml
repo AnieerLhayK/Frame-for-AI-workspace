@@ -1,48 +1,36 @@
-schema_version: "0.1"
+schema_version: "0.2"
 purpose: "Low-status registry for potential structural, privacy, publication, and migration risks."
 
 rules:
   - "Record a risk here when it is reusable and not yet an active incident or task."
   - "Each entry needs a trigger, impact, current handling, and a clear owner or related path."
   - "Promote a risk to an active task or enforceable policy when evidence makes action necessary."
+  - "Move mitigated, accepted, or retired risks to history/risk_register.yaml with migration metadata."
   - "Do not store private corpus excerpts, credentials, or volatile runtime logs."
 
 statuses:
   candidate: "Known possibility; monitor until a trigger occurs."
   observed: "Evidence exists; mitigation is not yet complete."
-  mitigated: "A durable control exists; verify it when the surrounding system changes."
-  accepted: "The tradeoff is intentional and documented."
-  retired: "The risk no longer applies or has moved to a more authoritative register."
 
+# Terminal statuses belong in history/risk_register.yaml.
 risks:
-  - id: "RISK-20260715-001"
-    title: "Public projection accidentally includes corpus-preparation tooling"
-    status: "mitigated"
-    trigger_when:
-      - "The Chatty public publisher recursively copies packages/character-system/engineering."
-      - "A new private or local-only engineering tool is added below that root."
-    impact:
-      - "Private path assumptions or local corpus-processing behavior can enter a public repository."
-    current_handling:
-      - "The Chatty publisher explicitly excludes corpus-preparation/qq-raw-material-filter."
-      - "The generated public projection checker rejects the excluded path."
-    related_files:
-      - "scripts/publish_chatty_ch_system.py"
-      - "scripts/publish_check_chatty_ch_system.py"
 
-  - id: "RISK-20260715-002"
-    title: "Subtree prefix changes can break standalone remote history"
-    status: "mitigated"
+  - id: "RISK-20260718-005"
+    title: "Claude Code routing checks can add duplicate interaction latency"
+    status: "observed"
     trigger_when:
-      - "A workspace-owned tool changes its local directory while its remote is published as a subtree."
+      - "The same model-routing guard runs on both prompt submission and broad tool use."
+      - "Interactive Claude Code work shows repeated routing delay or inconsistent routing decisions."
     impact:
-      - "A force push can disconnect or rewrite the remote repository history."
+      - "Every interaction can pay routing-check latency, while removing either phase can lose assessment-before-tool coverage."
     current_handling:
-      - "qq-chat-raw-filter uses a generated root projection and normal remote commits."
-      - "The sync script regenerates from the workspace source and does not use git subtree."
+      - "Treat prompt submission and tool use as separate phases: one injects the assessment requirement and the other enforces it."
+      - "Optimize only after a measured latency audit proves an equivalent replacement preserves both phases."
+      - "Do not change the independent workspace write-boundary guard as part of routing optimization."
     related_files:
-      - "scripts/publish_qq_raw_filter.py"
-      - "scripts/sync_qq_raw_filter_repo.py"
+      - ".claude/settings.json"
+      - ".claude/hooks/model_routing_guard.ps1"
+      - ".claude/hooks/workspace_boundary_guard.ps1"
 
   - id: "RISK-20260715-003"
     title: "Path references drift after workspace package moves"
@@ -55,7 +43,7 @@ risks:
       - "Treat source moves as explicit migration tasks with pre-move and post-move reference scans."
     related_files:
       - "workspace_manifest.yaml"
-      - "PROJECT_CONTEXT/task_registry.yaml"
+      - "PROJECT_CONTEXT/tasks/registry/index.yaml"
       - "shared/session_continuity_policy.md"
 
   - id: "RISK-20260715-004"
@@ -69,5 +57,5 @@ risks:
       - "Preserve the concurrent record and keep it out of the migration commit unless its owner explicitly includes it."
       - "Run status and scope checks again immediately before validation and commit."
     related_files:
-      - "PROJECT_CONTEXT/task_records/"
+      - "PROJECT_CONTEXT/tasks/records/"
       - "AGENTS.md"

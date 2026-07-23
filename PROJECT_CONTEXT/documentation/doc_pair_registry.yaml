@@ -88,4 +88,8 @@ directories:
     sync_level: "semantic"
     note: "Tracked adapted external-skill landing area with bilingual entry documentation."
 
-pairs: []
+pairs:
+  - primary: "WORKSPACE_ENGINEERING/context_structure_refactoring.md"
+    companion: "WORKSPACE_ENGINEERING/context_structure_refactoring.zh-CN.md"
+    sync_level: "semantic"
+    note: "Bilingual reusable method for PROJECT_CONTEXT and scripts structural migrations."

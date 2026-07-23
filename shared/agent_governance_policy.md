@@ -17,6 +17,13 @@ edit workspace structure, or change a platform projection.
 
 The ordered machine-readable form is `shared/agent_governance.yaml`.
 
+`reports/agent-requests/` is a durable proposal surface and may be empty when
+there are no pending requests. `reports/agent-experiments/` is an opt-in,
+bounded testing surface and is also allowed to remain empty. Neither directory
+is a current snapshot collection. Historical Hermes diagnostics belong under
+`PROJECT_CONTEXT/reports/history/hermes/`; `reports/hermes/` is retired and is
+not an Agent write target.
+
 ### Managed Public Publishers
 
 The public projections for Frame for AI Workspace, Chatty Ch System, and
@@ -33,6 +40,15 @@ all of the following before it creates a checkout, commits, or sends data:
 Custom staging paths or remote URLs are rejected by the managed publishers;
 use a separate inspection workflow when a temporary local copy is needed. They
 cannot be used to bypass the registered publication target.
+
+After an applicable workspace source change is fast-forwarded to `main`, the
+maintainer must invoke `scripts/sync_public_projections.py --push` with an
+active `external_write` record. That orchestrator discovers every registered
+publisher from `managed_platform_publishers`, so adding a future projection to
+the registry automatically adds it to the required synchronization step. It
+always regenerates and verifies each selected projection; a clean projection
+simply produces no remote commit. Direct edits to public checkouts remain
+forbidden.
 
 Concrete identities do not live in that policy. They live in
 `shared/agent_registry.yaml`, which records status, registration type, aliases,

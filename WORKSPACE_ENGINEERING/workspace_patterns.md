@@ -68,7 +68,7 @@ Key rules demonstrated in practice:
 The resolver (`scripts/resolve_task_context.py`) unifies three registries into one bounded task view:
 
 ```text
-task_registry.yaml    →  what files to read + tool profile + scope
+tasks/registry/index.yaml → what files to read + tool profile + scope
 prompt_registry.yaml  →  what prompts to load + anchors
 context_budget.md     →  token ceiling per level
 ```
@@ -101,7 +101,7 @@ After the initial build-out, PROJECT_CONTEXT accumulated both active (task_ledge
 - **MERGE** what has a better home (architecture → root `ARCHITECTURE.md`;
   coding style → `WORKSPACE_ENGINEERING/skill_engineering/style_alignment.md`;
   protocols → `shared/INDEX.md`).
-- **KEEP** what is actively used (task_ledger, task_registry, current_status, todo, session_handoff).
+- **KEEP** what is actively used (task ledger, task registry domain index, current status, todo, session handoff).
 
 The principle: a directory that once served as catch-all must have its files
 rehomed as the workspace matures, or it becomes stale technical debt. The

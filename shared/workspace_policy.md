@@ -50,6 +50,15 @@ They should contain projections to workspace source, not independent source copi
 
 Platform roots can be local absolute paths because they are deployment entry points for installed tools. They are not portable source layout.
 
+## Public Repository Projections
+
+Public repositories generated from this workspace are managed projections, not
+independent sources. Once a workspace source change has reached `main`, run
+the registered aggregate publisher (`scripts/sync_public_projections.py`) with
+an active external-write record. It regenerates, validates, and synchronizes
+every registered public repository, including future entries added to
+`shared/agent_governance.yaml -> managed_platform_publishers`.
+
 ## Role, Authority, Execution, And Exposure
 
 Skill governance uses four separate dimensions:
@@ -62,6 +71,14 @@ Skill governance uses four separate dimensions:
 Platform exposure grants discoverability only. It does not grant write access, expand authority, or prove that the platform has the tools needed to execute the skill safely.
 
 The manifest records current exposures through `skills[].exposures[].projection_id`, which resolves to `projections[]`. During the compatibility phase, `skills[].platform` and `skills[].projection_path` remain as aliases for the first exposure. New logic should prefer `exposures[]`.
+
+Installed plugin-provided skills are registered separately under
+`workspace_manifest.yaml -> plugin_skills`. These entries record the plugin
+identity and allowed execution modes without copying plugin source into the
+workspace or pretending that the plugin has a workspace source path or local
+projection. Agent write checks may use either the short `id` or the
+`qualified_id`; registration still does not bypass the agent, task-record, or
+path-scope checks.
 
 ## Do Not Edit Link Surfaces
 

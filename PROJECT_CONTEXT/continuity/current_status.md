@@ -1,5 +1,13 @@
 # Current Status
 
+## PROJECT_CONTEXT Layout
+
+- The canonical memory index is `PROJECT_CONTEXT/context_index.yaml`.
+- Task routing, records, and the dated ledger are grouped under
+  `PROJECT_CONTEXT/tasks/`; knowledge is split under `PROJECT_CONTEXT/knowledge/`.
+- Root registry YAML compatibility projections were retired on 2026-07-19.
+  Historical task ledgers and reports retain their original path references.
+
 ## Workspace State
 
 - Source root: `workspace_manifest.yaml -> workspace.source_of_truth`
@@ -21,7 +29,7 @@
   `grill-me`, `grilling`, `handoff`, `diagnosing-bugs`, `tdd`, `code-review`,
   `codebase-design`, and `writing-great-skills`.
 - Known external project roots are tracked separately in
-  `PROJECT_CONTEXT/external_projects.yaml`; they are not workspace packages or
+  `PROJECT_CONTEXT/references/external_projects.yaml`; they are not workspace packages or
   skill projections.
 - Registered external project: `math-modeling` at
   `${WORKSPACE_ROOT}/projects/数学建模`, private remote
@@ -38,7 +46,11 @@
   projections.
 - Claude Code and OpenCode conversation stores remain under
   `workspace_manifest.yaml -> session_stores`; source moves are tracked in
-  `PROJECT_CONTEXT/session_migrations.json`.
+  `PROJECT_CONTEXT/continuity/session_migrations.json`.
+- Health uses the governed CI classifier: core test failures block health;
+  infrastructure-dependent failures remain visible in test details but do not
+  downgrade the global result. Hermes guard script changes invalidate only the
+  three matching allowlist approvals and require explicit managed reapproval.
 
 ## Completed Governance Work
 
@@ -52,10 +64,10 @@
   Claude/OpenCode backups and `workspace sessions audit`.
 - The character package now owns its domain protocols and runtime-loop records;
   root `shared/` contains workspace-global governance only.
-- Task routing layer established with `PROJECT_CONTEXT/task_registry.yaml` to reduce broad context loading before maintenance work.
-- Context budget layer established with `PROJECT_CONTEXT/context_budget.md` to control expansion beyond required task context.
-- Task ledger is partitioned under `PROJECT_CONTEXT/task_ledger/YYYY/MM.md` to preserve maintenance decisions without rereading broad context.
-- Task outcomes have a separate tracked fact layer under `PROJECT_CONTEXT/task_records/`; `workspace records` validates and summarizes success, validation, edits, duration, token fields, and usability.
+- Task routing layer established with `PROJECT_CONTEXT/tasks/registry/index.yaml` to reduce broad context loading before maintenance work.
+- Context budget layer established with `PROJECT_CONTEXT/governance/context_budget.md` to control expansion beyond required task context.
+- Task ledger is partitioned under `PROJECT_CONTEXT/tasks/ledger/YYYY/MM.md` to preserve maintenance decisions without rereading broad context.
+- Task outcomes have a separate tracked fact layer under `PROJECT_CONTEXT/tasks/records/`; `workspace records` validates and summarizes success, validation, edits, duration, token fields, and usability.
 - Prompt registry established with `USAGE_GUIDES/prompt_registry.yaml` to resolve reusable prompt ids before regenerating meta-prompts.
 - Task/prompt resolver established with `scripts/resolve_task_context.py`; it emits a bounded task view and avoids rereading full routing registries by default.
 - Scripts governance migration established responsibility packages under
@@ -169,6 +181,10 @@
 - Workspace health now checks Hermes, OpenCode, and Reasonix runtime adapters
   together and fails if Cursor is accidentally promoted beyond proposed
   Consumer authority.
+- `workspace agent approve-hermes-guard` now previews the exact configured
+  Hermes workspace hooks by default and requires `--approve --record-id` with
+  an active external-write record to refresh their current script-mtime
+  approvals. It retains unrelated allowlist entries.
 
 ## Context Efficiency Evidence
 
@@ -207,6 +223,9 @@
 - Link and registered Markdown companion checks currently pass. Existing
   Chinese companions are synchronized when present; missing companions are not
   created automatically.
+- The read-only `workspace sessions audit` still reports the pre-existing
+  OpenCode/qq-raw-filter continuity failures; this migration does not touch
+  external session stores or backups.
 - README governance uses the manifest, shared policy, publisher configuration,
   and live checks as facts. Root and section README files provide navigation
   and local contracts rather than parallel path registries.
@@ -226,7 +245,7 @@ would improve workspace maintenance is recorded under
   P2–P5 (directory, BM25, CLI) are justified.
 - **Boundary:** No external directories, indexes, databases, vector stores,
   or retrieval services will be created until P0 effectiveness is measured.
-- `knowledge_registry.yaml` has a new `external_knowledge_planning` topic.
+- `knowledge/index.yaml` has a new `external_knowledge_planning` topic.
 
 ## Current Unfinished Or Open Work
 

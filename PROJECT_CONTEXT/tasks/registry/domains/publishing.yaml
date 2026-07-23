@@ -1,0 +1,136 @@
+# Canonical task definitions for the PROJECT_CONTEXT task domain.
+tasks:
+  public_projection_synchronization:
+    use_when:
+    - Changing the registered public-repository projection synchronization policy,
+      orchestration, publisher registration, or its validation.
+    - Synchronizing one or more registered public projections after the corresponding
+      workspace source has advanced.
+    use_when_zh:
+    - 修改已注册公开投影仓库的同步策略、编排、发布器注册或验证机制。
+    - 在对应 workspace 源已前进后，同步一个或多个已注册的公开投影。
+    required:
+    - AGENTS.md
+    - README.md
+    - README.zh-CN.md
+    - shared/INDEX.md
+    - shared/workspace_policy.md
+    - shared/agent_governance_policy.md
+    - shared/agent_governance.yaml
+    - scripts/publishing/sync_public_projections.py
+    - scripts/publishing/sync_public_repo.py
+    - scripts/publishing/sync_chatty_ch_system_repo.py
+    - scripts/publishing/sync_qq_raw_filter_repo.py
+    - scripts/tests/publishing/
+    - scripts/workspace/entrypoints.py
+    optional:
+    - .github/workflows/
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/
+    ignore:
+    - private corpus material
+    - platform loading surfaces
+    - disposable staging checkout contents
+    - unrelated package implementation
+    prompt:
+    - task_routing
+    tool_profile: platform_maintenance
+    ledger: true
+    write_scope:
+    - AGENTS.md
+    - README.md
+    - README.zh-CN.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/publishing.yaml
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - shared/INDEX.md
+    - shared/workspace_policy.md
+    - shared/agent_governance_policy.md
+    - shared/agent_governance.yaml
+    - scripts/publishing/sync_public_projections.py
+    - scripts/sync_public_projections.py
+    - scripts/workspace/entrypoints.py
+    - scripts/tests/publishing/test_sync_public_projections.py
+    - scripts/publishing/publish_public.py
+    - scripts/publishing/sync_public_repo.py
+    - scripts/publishing/sync_chatty_ch_system_repo.py
+    - scripts/publishing/sync_qq_raw_filter_repo.py
+    - scripts/tests/publishing/test_publish_public.py
+    - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
+    - scripts/tests/validation/test_validate_project_context.py
+    validation:
+    - python -m pytest -q scripts/tests/publishing/test_sync_public_projections.py
+    - python -m unittest scripts.tests.publishing.test_publish_public
+    - python scripts/sync_public_projections.py --help
+    - python scripts/validate_protocols.py
+    - python scripts/resolve_task_context.py public_projection_synchronization --format json
+    - git diff --check
+  report_freshness_tooling:
+    use_when:
+    - Changing read-only report freshness detection or the explicit report refresh
+      interface.
+    use_when_zh:
+    - 修改只读报告新鲜度检测或显式报告刷新接口
+    required:
+    - shared/reporting_policy.md
+    - scripts/report_status.py
+    - scripts/tests/reporting/test_report_status.py
+    - scripts/sync_report.ps1
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    optional:
+    - README.md
+    - relevant report generator
+    - previous report snapshot
+    ignore:
+    - packages/character-system/engineering/generation/character-generator/characters/
+    - packages/character-system/runtime/characters/zyc/references/
+    - WORKSPACE_ENGINEERING/
+    - unrelated historical reports
+    prompt:
+    - report_refresh
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - README.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - shared/reporting_policy.md
+    - scripts/report_status.py
+    - scripts/tests/reporting/test_report_status.py
+    - scripts/sync_report.ps1
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - reports/
+    validation:
+    - python -m unittest scripts.tests.reporting.test_report_status scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py reports status --format json
+    - python scripts/validate_protocols.py
+    - powershell -ExecutionPolicy Bypass -File scripts/sync_report.ps1
+    - git diff --check
+  report_regeneration:
+    use_when:
+    - Regenerating snapshot reports after source, manifest, protocol, or link changes.
+    use_when_zh:
+    - 在源代码、manifest、协议或链接变更后重新生成快照报告
+    required:
+    - workspace_manifest.yaml
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - shared/reporting_policy.md
+    - relevant generator script
+    optional:
+    - previous report snapshot
+    ignore:
+    - packages/character-system/engineering/generation/character-generator/characters/
+    - packages/character-system/runtime/characters/zyc/references/
+    - WORKSPACE_ENGINEERING/
+    prompt:
+    - report_refresh
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - reports/
+    validation:
+    - rerun the matching validator or report generator

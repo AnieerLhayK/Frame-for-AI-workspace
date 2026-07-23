@@ -1,0 +1,19 @@
+# Canonical knowledge topic.
+topics:
+  portability:
+    title: Workspace movement and path portability
+    aliases:
+    - portability
+    - migration
+    - move workspace
+    - path policy
+    - 迁移
+    - 移动 workspace
+    - 路径可移植
+    entries:
+    - path: shared/manifest_portability_policy.md
+      layer: shared
+      purpose: Manifest and projection portability rules.
+    - path: WORKSPACE_ENGINEERING/portability_patterns.md
+      layer: workspace_engineering
+      purpose: Reusable migration and dry-run lessons.

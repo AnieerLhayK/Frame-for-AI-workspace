@@ -1,0 +1,20 @@
+# Canonical knowledge topic.
+topics:
+  personal_corpus_preparation:
+    title: Personal corpus preparation for character skills
+    aliases:
+    - personal corpus
+    - private corpus
+    - corpus README
+    - character corpus
+    - personal profile
+    - source role
+    - 个人语料
+    - 语料 README
+    - 角色语料
+    entries:
+    - path: WORKSPACE_ENGINEERING/skill_engineering/personal_corpus_preparation.md
+      layer: workspace_engineering
+      purpose: Reusable method for preparing uneven personal corpora, source READMEs,
+        source roles, normalization layers, and profile guidance before character
+        generation.

@@ -139,11 +139,14 @@ def push(staging: str) -> bool:
         if result.returncode != 0:
             print(result.stderr.strip(), file=sys.stderr)
             return False
-        result = run(["git", "commit", "-m", "sync: regenerate chatty character system"], path)
-        if result.returncode != 0:
-            print(result.stderr.strip(), file=sys.stderr)
-            return False
-        print(result.stdout.strip())
+        if not run(["git", "status", "--porcelain"], path).stdout.strip():
+            print("[INFO] No remote changes to commit.")
+        else:
+            result = run(["git", "commit", "-m", "sync: regenerate chatty character system"], path)
+            if result.returncode != 0:
+                print(result.stderr.strip(), file=sys.stderr)
+                return False
+            print(result.stdout.strip())
     else:
         print("[INFO] No remote changes to commit.")
 

@@ -12,8 +12,22 @@ from typing import MutableMapping
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
 
 
+def _resolves_to(path_value: str, target: Path) -> bool:
+    try:
+        return Path(path_value or ".").resolve() == target
+    except OSError:
+        return False
+
+
 def ensure_workspace_importable() -> None:
     root = str(WORKSPACE_ROOT)
+    script_dir = Path(__file__).resolve().parent
+    # Root compatibility adapters execute with ``scripts/`` as sys.path[0].
+    # The governed domain package ``scripts/platform`` would otherwise shadow
+    # Python's standard-library ``platform`` module in child processes.
+    sys.path[:] = [
+        entry for entry in sys.path if not _resolves_to(entry, script_dir)
+    ]
     if root not in sys.path:
         sys.path.insert(0, root)
     else:

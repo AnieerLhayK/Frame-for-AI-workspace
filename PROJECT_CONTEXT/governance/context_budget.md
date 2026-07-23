@@ -2,7 +2,7 @@
 
 This file defines the default context-loading budget for maintenance work in this workspace.
 
-It does not replace `workspace_manifest.yaml`, `shared/`, or `PROJECT_CONTEXT/task_registry.yaml`.
+It does not replace `workspace_manifest.yaml`, `shared/`, or `PROJECT_CONTEXT/tasks/registry/index.yaml`.
 Use it as a budget guard before reading optional files, reports, generated outputs, archives, or platform data.
 
 ## Purpose
@@ -24,9 +24,9 @@ Load or execute these for almost every maintenance task:
 
 - `AGENTS.md`
 - `git status --short --untracked-files=all`
-- `python scripts/resolve_task_context.py <task-id>`
+- `workspace task resolve <task-id>`
 
-Use `python scripts/resolve_task_context.py --list` when the exact task id is unknown. The resolver reads the full task and prompt registries itself and emits only the selected task view.
+Use `workspace task list` when the exact task id is unknown. The resolver reads the full task and prompt registries itself and emits only the selected task view.
 
 The resolver also returns a task-level tool profile. Unlisted capabilities are denied by default; capabilities under `confirm` require explicit user approval for the current task.
 
@@ -34,7 +34,7 @@ Reason: this establishes routing, prompt guidance, Git safety, tool boundaries, 
 
 ### Level B: Task-Required Context
 
-Load only the files returned under `required context` by `scripts/resolve_task_context.py`.
+Load only the files returned under `required context` by `workspace task resolve`.
 
 Examples:
 
@@ -48,8 +48,8 @@ Reason: task-required context should be enough to start work safely.
 
 The resolver normally omits these routing files from model context after consuming them:
 
-- `PROJECT_CONTEXT/task_registry.yaml`
-- `PROJECT_CONTEXT/context_budget.md`
+- `PROJECT_CONTEXT/tasks/registry/index.yaml`
+- `PROJECT_CONTEXT/governance/context_budget.md`
 - `USAGE_GUIDES/prompt_registry.yaml`
 
 Tasks that maintain those files retain them explicitly.
@@ -66,7 +66,7 @@ Load optional files only when one of these is true:
 Examples:
 
 - `ARCHITECTURE.md`
-- `PROJECT_CONTEXT/session_handoff.md`
+- `PROJECT_CONTEXT/continuity/session_handoff.md`
 - `WORKSPACE_ENGINEERING/`
 - skill-local docs, prompts, checklists, or examples
 - previous generated reports
@@ -82,6 +82,8 @@ Do not read these by default:
 - generated character outputs such as `packages/character-system/engineering/generation/character-generator/characters/`
 - large skill reference folders not named by the task
 - task-ledger months older than the current continuity window
+- `PROJECT_CONTEXT/potential_for_future/history/` unless a task explicitly
+  audits, migrates, or names a historical entry
 - platform data roots such as `${DATA_ROOT}/`
 - tool install roots such as `${WORKSPACE_ROOT}/tools/`
 - raw external skill repositories under `workspace_manifest.yaml -> external_roots.raw_skills`
@@ -138,14 +140,15 @@ Before edits:
 1. Run `git status --short --untracked-files=all`.
 2. Identify existing modified or untracked files.
 3. Do not overwrite unexplained user changes.
-4. Prefer a short-lived feature branch for governance changes, then delete it
-   after the validated work is merged.
+4. Perform governance changes on the agent's registered long-lived branch
+   (normally `codex` or `claude`); integrate only through the approved
+   fast-forward workflow in `AGENTS.md`.
 
 After edits:
 
 1. Run focused validation from the task registry.
 2. Run `git diff --check`.
-3. Add the human decision note to the appropriate `PROJECT_CONTEXT/task_ledger/YYYY/MM/DD.md` file when the task materially changes workspace maintenance state.
+3. Add the human decision note to the appropriate `PROJECT_CONTEXT/tasks/ledger/YYYY/MM/DD.md` file when the task materially changes workspace maintenance state.
 4. Summarize changed files and whether the work should be committed.
 
 ## Conflict Rules
@@ -163,7 +166,7 @@ When sources disagree:
 The machine-readable thresholds live under:
 
 ```text
-PROJECT_CONTEXT/task_registry.yaml -> default_rules.context_budget.token_meter
+PROJECT_CONTEXT/tasks/registry/index.yaml -> default_rules.context_budget.token_meter
 ```
 
 The root `AGENTS.md` has its own regression ceiling under `root_agents_warn_tokens`. Keep task-specific commands and explanations in resolver-owned context instead of expanding the always-loaded file.

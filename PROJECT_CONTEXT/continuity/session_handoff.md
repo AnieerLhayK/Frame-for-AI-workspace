@@ -9,6 +9,10 @@ skill, protocol, and platform-projection boundaries.
 
 `workspace_manifest.yaml -> workspace.source_of_truth`
 
+PROJECT_CONTEXT navigation starts at `PROJECT_CONTEXT/context_index.yaml`.
+Canonical task facts live under `PROJECT_CONTEXT/tasks/`; historical path names
+in older ledgers remain unchanged and are explained by the context index.
+
 ## Most Important Rules
 
 - Treat `workspace_manifest.yaml` as the machine-readable source of truth.
@@ -20,7 +24,7 @@ skill, protocol, and platform-projection boundaries.
 - Do not infer skill authority from its source directory or invoking platform.
 - Treat `skills[].exposures[]` as visibility declarations, not permission grants.
 - Before any source path migration, run `workspace sessions audit` and preserve
-  the mappings in `PROJECT_CONTEXT/session_migrations.json`.
+  the mappings in `PROJECT_CONTEXT/continuity/session_migrations.json`.
 - Treat old projection roots in historical reports or prompts as stale until confirmed against `workspace_manifest.yaml`.
 - Do not copy shared protocols into skills.
 - Do not rebuild junctions unless explicitly asked.

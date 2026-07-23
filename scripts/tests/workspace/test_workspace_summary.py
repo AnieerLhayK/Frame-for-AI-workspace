@@ -81,12 +81,16 @@ class WorkspaceSummaryTests(unittest.TestCase):
 
     @patch("scripts.workspace_summary.parse_recent_ledger")
     @patch("scripts.workspace_summary.cli_commands")
+    @patch("scripts.workspace_summary.load_knowledge_registry")
+    @patch("scripts.workspace_summary.load_task_registry")
     @patch("scripts.workspace_summary.load_yaml")
     @patch("scripts.workspace_summary.git_output")
     def test_build_summary_combines_live_sources(
         self,
         git_output,
         load_yaml,
+        task_registry,
+        knowledge_registry,
         cli_command_list,
         recent_entries,
     ) -> None:
@@ -111,9 +115,9 @@ class WorkspaceSummaryTests(unittest.TestCase):
                 "projections": [{}],
                 "protocols": [{}, {}, {}],
             },
-            {"tasks": {"one": {}, "two": {}}},
-            {"topics": {"overview": {}}},
         ]
+        task_registry.return_value = {"tasks": {"one": {}, "two": {}}}
+        knowledge_registry.return_value = {"topics": {"overview": {}}}
         cli_command_list.return_value = ["health", "summary"]
         recent_entries.return_value = [{"id": "TASK-1", "title": "Example"}]
 

@@ -91,7 +91,11 @@ def classify_path(path: str, skill_roots: tuple[str, ...]) -> str:
         return "external_or_projection"
     if normalized == "workspace_manifest.yaml":
         return "registry"
-    if normalized in {"PROJECT_CONTEXT/task_registry.yaml", "USAGE_GUIDES/prompt_registry.yaml"}:
+    if normalized in {
+        "PROJECT_CONTEXT/tasks/registry/index.yaml",
+        "PROJECT_CONTEXT/tasks/registry/index.yaml",
+        "USAGE_GUIDES/prompt_registry.yaml",
+    }:
         return "routing"
     if normalized == "reports" or normalized.startswith("reports/"):
         return "generated_report"

@@ -231,14 +231,21 @@ def push_to_remote(staging: str) -> bool:
             print(f"[FAIL] git add failed: {result.stderr.strip()}", file=sys.stderr)
             return False
 
-        result = subprocess.run(
-            ["git", "commit", "-m", "sync: regenerate public workspace skeleton"],
+        has_changes = subprocess.run(
+            ["git", "status", "--porcelain"],
             capture_output=True, text=True, cwd=staging_path,
         )
-        if result.returncode != 0:
-            print(f"[FAIL] git commit failed: {result.stderr.strip()}", file=sys.stderr)
-            return False
-        print(f"[INFO] Commit: {result.stdout.strip()}")
+        if not has_changes.stdout.strip():
+            print("[INFO] No remote changes to commit.")
+        else:
+            result = subprocess.run(
+                ["git", "commit", "-m", "sync: regenerate public workspace skeleton"],
+                capture_output=True, text=True, cwd=staging_path,
+            )
+            if result.returncode != 0:
+                print(f"[FAIL] git commit failed: {result.stderr.strip()}", file=sys.stderr)
+                return False
+            print(f"[INFO] Commit: {result.stdout.strip()}")
     else:
         print("[INFO] No changes — nothing to commit.")
 

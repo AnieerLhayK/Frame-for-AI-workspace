@@ -84,6 +84,10 @@
     "active_lease_refs": {
       "type": "array",
       "items": {"type": "string"}
+    },
+    "git_branch": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
     }
   },
   "additionalProperties": true

@@ -1,0 +1,21 @@
+# Canonical knowledge topic.
+topics:
+  prompt_engineering:
+    title: Prompt reuse, boundaries, and prompt-first workflows
+    aliases:
+    - prompt
+    - prompt library
+    - meta prompt
+    - 提示词
+    - prompt 库
+    - 元提示词
+    entries:
+    - path: WORKSPACE_ENGINEERING/skill_engineering/prompt_engineering.md
+      layer: workspace_engineering
+      purpose: Reusable prompt construction lessons.
+    - path: USAGE_GUIDES/prompt_registry.yaml
+      layer: usage_guides
+      purpose: Machine-readable prompt ids and template routing.
+    - path: USAGE_GUIDES/PROMPT_TEMPLATES/README.md
+      layer: usage_guides
+      purpose: Prompt template usage conventions.

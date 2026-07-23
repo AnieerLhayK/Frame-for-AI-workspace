@@ -11,19 +11,23 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import sys
 from pathlib import Path
 from typing import Any
 
+from scripts.workspace.project_context import TASK_RECORDS_ROOT
 from scripts.workspace.runtime import WORKSPACE_ROOT as ROOT
-RECORD_ROOT = ROOT / "PROJECT_CONTEXT" / "task_records"
+RECORD_ROOT = TASK_RECORDS_ROOT
 SCHEMA_PATH = RECORD_ROOT / "schema.json"
 TASK_ID = re.compile(r"^TASK-\d{8}-[A-Za-z0-9-]+$")
 STATUSES = {"in_progress", "successful", "failed", "cancelled"}
 VALIDATIONS = {"not_run", "passed", "failed", "blocked"}
 USABILITY = {"unknown", "usable", "limited", "unusable"}
 OPERATIONS = {"workspace_write", "external_write"}
+MERGE_REVIEW_STATUSES = {"completed", "skipped_user_approved"}
+USAGE_STATUSES = {"recorded", "unavailable", "manual"}
 
 
 def timestamp(value: str | None = None) -> str:
@@ -90,7 +94,7 @@ def initial_record(
     if unknown:
         raise ValueError(f"invalid registration operation: {', '.join(unknown)}")
     return {
-        "schema_version": "1.1",
+        "schema_version": "1.3",
         "task_id": task_id,
         "task_type": task_type,
         "started_at": started_at,
@@ -105,8 +109,124 @@ def initial_record(
             "saved": None,
             "currency_cost": None,
         },
+        "usage": {
+            "status": "unavailable",
+            "source": None,
+            "transport": None,
+            "observed_at": None,
+            "reason": "no_host_usage_source",
+        },
         "usability": {"status": "unknown", "evidence": []},
         "notes": [],
+    }
+
+
+def resolve_tokens_estimated(task_type: str, bindings: list[str]) -> int:
+    """Measure the initial routed context when a caller did not supply it."""
+    from scripts.workspace.resolve_task_context import parse_bindings, resolve_task
+
+    resolved = resolve_task(
+        workspace_root=ROOT,
+        task_id=task_type,
+        bindings=parse_bindings(bindings),
+        include_optional=False,
+        include_template=False,
+        count_tokens=True,
+    )
+    errors = resolved.get("errors", [])
+    if errors:
+        raise ValueError(
+            f"could not measure tokens for {task_type}: {'; '.join(errors)}; "
+            "pass --tokens-estimated after resolving the task context"
+        )
+    estimate = resolved.get("token_budget", {}).get("initial_tokens")
+    if not isinstance(estimate, int) or estimate < 0:
+        raise ValueError(f"resolver returned an invalid token estimate for {task_type}")
+    return estimate
+
+
+def tokens_estimated(args: argparse.Namespace) -> int:
+    if args.tokens_estimated is not None:
+        return args.tokens_estimated
+    return resolve_tokens_estimated(args.task_type, args.bind)
+
+
+def usage_unavailable(reason: str, *, transport: str | None = None) -> dict[str, Any]:
+    return {
+        "status": "unavailable",
+        "source": None,
+        "transport": transport,
+        "observed_at": None,
+        "reason": reason,
+    }
+
+
+def optional_nonnegative_int(payload: dict[str, Any], key: str) -> int | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"usage field {key} must be a non-negative integer")
+    return value
+
+
+def optional_nonnegative_number(payload: dict[str, Any], key: str) -> float | int | None:
+    value = payload.get(key)
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+        raise ValueError(f"usage field {key} must be a non-negative number")
+    return value
+
+
+def host_usage(task_id: str) -> dict[str, Any]:
+    """Read one explicit host payload; this never contacts a usage provider."""
+    raw = os.environ.get("WORKSPACE_TASK_USAGE_JSON")
+    file_path = os.environ.get("WORKSPACE_TASK_USAGE_FILE")
+    transport: str | None = None
+    if raw:
+        transport = "environment"
+    elif file_path:
+        transport = "file"
+        try:
+            raw = Path(file_path).read_text(encoding="utf-8")
+        except OSError:
+            return usage_unavailable("usage_file_unreadable", transport=transport)
+    else:
+        return usage_unavailable("no_host_usage_source")
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return usage_unavailable("usage_payload_invalid_json", transport=transport)
+    if not isinstance(payload, dict):
+        return usage_unavailable("usage_payload_not_object", transport=transport)
+    if payload.get("task_id") not in (None, task_id):
+        return usage_unavailable("usage_task_id_mismatch", transport=transport)
+    try:
+        total = optional_nonnegative_int(payload, "total_tokens")
+        input_tokens = optional_nonnegative_int(payload, "input_tokens")
+        output_tokens = optional_nonnegative_int(payload, "output_tokens")
+        if total is None and input_tokens is not None and output_tokens is not None:
+            total = input_tokens + output_tokens
+        if total is None:
+            return usage_unavailable("usage_total_missing", transport=transport)
+        cost = optional_nonnegative_number(payload, "currency_cost")
+    except ValueError as error:
+        return usage_unavailable(str(error), transport=transport)
+    source = payload.get("source")
+    if not isinstance(source, str) or not source.strip():
+        return usage_unavailable("usage_source_missing", transport=transport)
+    observed_at = payload.get("observed_at")
+    return {
+        "status": "recorded",
+        "source": source.strip(),
+        "transport": transport,
+        "observed_at": observed_at if isinstance(observed_at, str) else None,
+        "reason": None,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "total_tokens": total,
+        "currency_cost": cost,
     }
 
 
@@ -143,6 +263,38 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             not isinstance(tokens[key], int) or tokens[key] < 0
         ):
             errors.append(f"tokens.{key} must be a non-negative integer or null")
+    if tokens.get("currency_cost") is not None and (
+        isinstance(tokens["currency_cost"], bool)
+        or not isinstance(tokens["currency_cost"], (int, float))
+        or tokens["currency_cost"] < 0
+    ):
+        errors.append("tokens.currency_cost must be a non-negative number or null")
+    usage = record.get("usage")
+    if usage is not None:
+        if not isinstance(usage, dict) or usage.get("status") not in USAGE_STATUSES:
+            errors.append("usage must be an object with a valid status")
+        elif usage["status"] in {"recorded", "manual"}:
+            if not isinstance(usage.get("source"), str) or not usage["source"]:
+                errors.append("recorded usage requires a source")
+            if usage["status"] == "recorded" and tokens.get("actual") is None:
+                errors.append("recorded usage requires tokens.actual")
+    notes = record.get("notes", [])
+    if not isinstance(notes, list):
+        errors.append("notes must be a list")
+    for note in notes if isinstance(notes, list) else []:
+        if isinstance(note, str):
+            continue
+        if not isinstance(note, dict):
+            errors.append("notes entries must be strings or objects")
+            continue
+        if note.get("kind") == "merge_review":
+            if note.get("status") not in MERGE_REVIEW_STATUSES:
+                errors.append("merge_review note has invalid status")
+            for key in ("source_branch", "target_branch", "strategy", "review_base"):
+                if not isinstance(note.get(key), str) or not note[key]:
+                    errors.append(f"merge_review note missing {key}")
+            if note.get("status") == "skipped_user_approved" and not note.get("reason"):
+                errors.append("skipped merge_review note requires reason")
     registration = record.get("registration")
     if registration is not None:
         operations = registration.get("operations") if isinstance(registration, dict) else None
@@ -194,7 +346,7 @@ def init(args: argparse.Namespace) -> dict[str, Any]:
         args.task_id,
         task_type=args.task_type,
         started_at=started_at,
-        tokens_estimated=args.tokens_estimated,
+        tokens_estimated=tokens_estimated(args),
         operations=args.operation,
     )
     try:
@@ -213,6 +365,7 @@ def start(args: argparse.Namespace) -> dict[str, Any]:
         for path in folder.glob(f"TASK-{parsed:%Y%m%d}-*.json")
         if path.is_file()
     }
+    estimate = tokens_estimated(args)
     for sequence in range(1, 10_000):
         task_id = f"TASK-{parsed:%Y%m%d}-{sequence:03d}"
         if task_id in existing:
@@ -222,7 +375,7 @@ def start(args: argparse.Namespace) -> dict[str, Any]:
             task_id,
             task_type=args.task_type,
             started_at=started_at,
-            tokens_estimated=args.tokens_estimated,
+            tokens_estimated=estimate,
             operations=args.operation,
         )
         try:
@@ -245,13 +398,26 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
     record["validation"]["status"] = args.validation
     record["validation"]["commands"] = args.command
     record["usability"]["status"] = args.usability
-    record["tokens"].update(
-        {
-            "actual": args.tokens_actual,
-            "saved": args.tokens_saved,
-            "currency_cost": args.currency_cost,
+    record["schema_version"] = "1.3"
+    usage = host_usage(record["task_id"])
+    if args.tokens_actual is not None:
+        record["tokens"]["actual"] = args.tokens_actual
+        usage = {
+            "status": "manual",
+            "source": "finalize_cli",
+            "transport": "command_argument",
+            "observed_at": None,
+            "reason": None,
         }
-    )
+    elif usage["status"] == "recorded":
+        record["tokens"]["actual"] = usage["total_tokens"]
+    if args.tokens_saved is not None:
+        record["tokens"]["saved"] = args.tokens_saved
+    if args.currency_cost is not None:
+        record["tokens"]["currency_cost"] = args.currency_cost
+    elif usage["status"] == "recorded" and usage["currency_cost"] is not None:
+        record["tokens"]["currency_cost"] = usage["currency_cost"]
+    record["usage"] = usage
     errors = validate_record(record)
     if errors:
         raise ValueError("; ".join(errors))
@@ -259,6 +425,29 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
     from scripts.workspace.task_ledger import upsert_task_record
 
     upsert_task_record(path, record)
+    return record
+
+
+def add_merge_review_note(args: argparse.Namespace) -> dict[str, Any]:
+    path, record = read_record(args.task_id)
+    if record.get("status") != "in_progress":
+        raise ValueError("merge review notes require an active task record")
+    if args.status == "skipped_user_approved" and not args.reason:
+        raise ValueError("--reason is required when review is skipped")
+    note = {
+        "kind": "merge_review",
+        "status": args.status,
+        "source_branch": args.source_branch,
+        "target_branch": args.target_branch,
+        "strategy": args.strategy,
+        "review_base": args.review_base,
+        "reason": args.reason,
+    }
+    record.setdefault("notes", []).append(note)
+    errors = validate_record(record)
+    if errors:
+        raise ValueError("; ".join(errors))
+    write_record(path, record)
     return record
 
 
@@ -287,12 +476,14 @@ def main() -> int:
     p.add_argument("--operation", action="append", choices=sorted(OPERATIONS), required=True)
     p.add_argument("--started-at")
     p.add_argument("--tokens-estimated", type=int)
+    p.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
     p = sub.add_parser("init", help="Register a caller-supplied task record id.")
     p.add_argument("task_id")
     p.add_argument("--task-type", required=True)
     p.add_argument("--operation", action="append", choices=sorted(OPERATIONS), required=True)
     p.add_argument("--started-at")
     p.add_argument("--tokens-estimated", type=int)
+    p.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
     p = sub.add_parser("require", help="Verify an active task registration for a write.")
     p.add_argument("task_id")
     p.add_argument("--operation", choices=sorted(OPERATIONS), required=True)
@@ -307,6 +498,14 @@ def main() -> int:
     p.add_argument("--tokens-actual", type=int)
     p.add_argument("--tokens-saved", type=int)
     p.add_argument("--currency-cost", type=float)
+    p = sub.add_parser("note-merge-review", help="Record merge review or a user-approved skip.")
+    p.add_argument("task_id")
+    p.add_argument("--status", choices=sorted(MERGE_REVIEW_STATUSES), required=True)
+    p.add_argument("--source-branch", required=True)
+    p.add_argument("--target-branch", default="main")
+    p.add_argument("--strategy", choices=("ff-only", "merge-commit"), default="ff-only")
+    p.add_argument("--review-base", default="main")
+    p.add_argument("--reason")
     p = sub.add_parser("show")
     p.add_argument("task_id")
     p = sub.add_parser("sync-ledger", help="Backfill finalized records into the task ledger.")
@@ -324,6 +523,8 @@ def main() -> int:
             output = active_registration(args.task_id, args.operation)
         elif args.action == "finalize":
             output = finalize(args)
+        elif args.action == "note-merge-review":
+            output = add_merge_review_note(args)
         elif args.action == "show":
             _, output = read_record(args.task_id)
         elif args.action == "sync-ledger":
@@ -350,6 +551,8 @@ def main() -> int:
                 "token_estimated": sum(item["tokens"]["estimated"] or 0 for item in items),
                 "token_actual": sum(item["tokens"]["actual"] or 0 for item in items),
                 "token_saved": sum(item["tokens"]["saved"] or 0 for item in items),
+                "usage_recorded": sum(item.get("usage", {}).get("status") == "recorded" for item in items),
+                "usage_unavailable": sum(item.get("usage", {}).get("status") == "unavailable" for item in items),
             }
         print(json.dumps(output, ensure_ascii=False, indent=2))
         return 0

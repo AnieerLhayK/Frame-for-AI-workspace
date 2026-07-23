@@ -1,0 +1,23 @@
+# Canonical knowledge topic.
+topics:
+  runtime_drift:
+    title: Runtime diagnosis, patch, validation, and generalization loop
+    aliases:
+    - runtime drift
+    - style drift
+    - diagnosis
+    - patch loop
+    - 风格漂移
+    - 运行时漂移
+    - 运行时纠错
+    - 诊断修复
+    entries:
+    - path: packages/character-system/shared/runtime_loop_policy.md
+      layer: shared
+      purpose: Enforceable runtime drift workflow.
+    - path: WORKSPACE_ENGINEERING/skill_engineering/runtime_loop_patterns.md
+      layer: workspace_engineering
+      purpose: Reusable runtime loop design lessons.
+    - path: packages/character-system/shared/future_drift_policy.md
+      layer: shared
+      purpose: Prevention and generalization boundaries.

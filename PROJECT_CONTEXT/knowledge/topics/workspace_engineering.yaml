@@ -1,0 +1,27 @@
+# Canonical knowledge topic.
+topics:
+  workspace_engineering:
+    title: Reusable AI workspace engineering methodology
+    aliases:
+    - workspace engineering
+    - AI engineering reference
+    - workspace architecture experience
+    - knowledge provenance
+    - 工作区工程
+    - AI 工程经验
+    entries:
+    - path: WORKSPACE_ENGINEERING/README.md
+      layer: workspace_engineering
+      purpose: Scope, book structure, evidence levels, and sharing principles.
+    - path: WORKSPACE_ENGINEERING/workspace_patterns.md
+      layer: workspace_engineering
+      purpose: Reusable repository and workspace organization patterns.
+    - path: WORKSPACE_ENGINEERING/knowledge_provenance.md
+      layer: workspace_engineering
+      purpose: External-source attribution, validation, and promotion rules.
+    - path: WORKSPACE_ENGINEERING/case_studies/agent_registration_contract.md
+      layer: workspace_engineering
+      purpose: Validated Agent registration and lifecycle governance case study.
+    - path: WORKSPACE_ENGINEERING/context_structure_refactoring.md
+      layer: workspace_engineering
+      purpose: Deep-module method for directory restructuring, path migration, and compatibility projections.

@@ -57,6 +57,7 @@ agents:
       reviewed_at: "2026-06-20T18:30:00+08:00"
       expires_at: null
     active_lease_refs: []
+    git_branch: codex
 
   claude:
     id: claude
@@ -97,6 +98,7 @@ agents:
       reviewed_at: "2026-06-20T18:30:00+08:00"
       expires_at: null
     active_lease_refs: []
+    git_branch: claude
 
   opencode:
     id: opencode
@@ -158,7 +160,6 @@ agents:
     path_scopes:
       - packages/character-system/reports/runtime-loop/diagnoses/**
       - packages/character-system/reports/runtime-loop/handoffs/**
-      - reports/hermes/**
       - reports/agent-requests/**
     platforms:
       - id: hermes

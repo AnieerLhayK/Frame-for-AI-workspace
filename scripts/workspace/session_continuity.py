@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Any
 
 
+from scripts.workspace.project_context import PROJECT_CONTEXT_ROOT
 from scripts.workspace.runtime import WORKSPACE_ROOT
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
-REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "session_migrations.json"
+REGISTRY_PATH = PROJECT_CONTEXT_ROOT / "continuity" / "session_migrations.json"
 
 
 def load_json(path: Path) -> dict[str, Any]:

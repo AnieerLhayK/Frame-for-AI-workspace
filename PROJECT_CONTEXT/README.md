@@ -1,49 +1,43 @@
 # PROJECT_CONTEXT
 
-`PROJECT_CONTEXT/` is the workspace's active task-memory layer. It records
-current state, decisions, continuity, and future work; it is not the source of
-truth for paths, protocols, or generated reports.
+`PROJECT_CONTEXT/` is the workspace memory and routing façade. The manifest,
+shared policy, source code, and generated reports remain authoritative for
+their own facts.
 
-## Authority map
+## Startup interface
 
-- `workspace_manifest.yaml`: machine-readable roots, roles, authority, exposures,
-  projections, protocols, and portability facts.
-- `ARCHITECTURE.md`: workspace scope and physical layout.
-- `shared/`: enforceable workspace protocols.
-- `packages/character-system/shared/`: package-local protocols.
-- `reports/`: generated or authored snapshots.
-- `packages/character-system/reports/runtime-loop/`: runtime diagnosis records.
-- `PROJECT_CONTEXT/`: active memory only.
+- `context_index.yaml`: machine-readable domain map and loading rules.
+- `README.md` / `README.zh-CN.md`: human navigation and boundaries.
+- `workspace summary` and `workspace explain`: live AI/developer summaries.
 
-## Contents
+## Domains
 
-- `current_status.md`: latest verified state, open risks, and recent validation.
-- `decisions.md`: durable architectural and governance decisions.
-- `task_registry.yaml`: task routing and write-scope rules.
-- `task_records/`: machine-readable task outcomes.
-- `task_ledger/`: lightweight dated continuity index.
-- `todo/`: active future work and intake queues.
-- `knowledge_registry.yaml`: bounded topic index for reusable knowledge.
-- `doc_pair_registry.yaml`: Markdown companion coverage rules.
-- `change_surface_policy.md`: comparison rules for alternative writable surfaces.
-- `potential_for_future/`: non-active risks and improvement options.
+- `continuity/`: current status, session handoff, and protected migrations.
+- `governance/`: context budget and change-surface policy.
+- `documentation/`: canonical Markdown companion registry.
+- `memory/`: durable decisions and glossary.
+- `references/`: external project boundary records.
+- `tasks/`: task routing, structured records, and dated ledger.
+- `knowledge/`: topic index and topic-local entries.
+- `potential_for_future/`: active options and risks; terminal history is read
+  only for named audits or migrations.
+- `todo/`: unfinished or trigger-based work.
+- `reports/`: context-local reports; `history/` is excluded from startup.
 
-## New-session workflow
+The root registry YAML compatibility projections were retired on 2026-07-19.
+Use `tasks/registry/index.yaml`, `knowledge/index.yaml`, and
+`documentation/doc_pair_registry.yaml` directly. Historical ledgers and
+reports retain path text that was true when written, but it is not an active
+route or alias.
 
-1. Read root `AGENTS.md` and run `git status --short --untracked-files=all`.
-2. Resolve the exact task with `scripts/resolve_task_context.py`.
-3. Read only the resolver's required context before broad discovery.
-4. Start the task record before workspace or external writes.
-5. Edit the narrowest owning source layer; use the manifest for paths.
-6. Run routed validation and `workspace workflow check` while the record is active.
-7. Update this layer only when state, decisions, risks, or continuity change.
+## Workflow
 
-When Markdown has a registered companion, update the existing `.zh-CN.md`
-semantically. Missing companions are documented exceptions, not automatic new
-files.
+1. Read root `AGENTS.md`, check Git status, and resolve the exact task.
+2. Read only the resolver's required context.
+3. Start a task record before workspace or external writes.
+4. Edit the narrowest owning source layer and preserve manifest authority.
+5. Run routed validation and `workspace workflow check` before finalizing.
 
-## Keep out
-
-Do not copy shared policy, generated report bodies, private corpus material,
-runtime packet instances, or machine-readable manifest/protocol data here.
-Do not use `task_ledger/` as a replacement for reports or Git history.
+Markdown edits use `PROJECT_CONTEXT/documentation/doc_pair_registry.yaml` and
+update an existing `.zh-CN.md` companion when one is registered. Missing
+companions remain documented exceptions.

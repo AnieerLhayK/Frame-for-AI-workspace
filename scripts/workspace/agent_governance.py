@@ -3,7 +3,9 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import json
-from datetime import datetime
+import os
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
@@ -11,10 +13,30 @@ import yaml
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
 from scripts.workspace.task_records import active_registration
+from scripts.workspace.governance.hermes_approval import (
+    HERMES_GUARD_EVENTS,
+    approve_hermes_guard as _approve_hermes_guard,
+    inspect_hermes_guard_approval as _inspect_hermes_guard_approval,
+)
 POLICY_PATH = WORKSPACE_ROOT / "shared" / "agent_governance.yaml"
 REGISTRY_PATH = WORKSPACE_ROOT / "shared" / "agent_registry.yaml"
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
 REQUEST_ROOT = WORKSPACE_ROOT / "reports" / "agent-requests"
+HERMES_HOME = Path(os.environ.get("HERMES_HOME", r"${DATA_ROOT}/hermes"))
+HERMES_CONFIG_PATH = HERMES_HOME / "config.yaml"
+HERMES_ALLOWLIST_PATH = HERMES_HOME / "shell-hooks-allowlist.json"
+HERMES_GUARD_SCRIPT = WORKSPACE_ROOT / "scripts" / "hermes_workspace_guard.py"
+
+
+def current_git_branch() -> str:
+    result = subprocess.run(
+        ["git", "branch", "--show-current"],
+        cwd=WORKSPACE_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.stdout.strip() if result.returncode == 0 else "(detached)"
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -924,12 +946,49 @@ def check_access(
     acting_skill: str | None = None,
     lease: dict[str, Any] | None = None,
     registry: dict[str, Any] | None = None,
+    integration: bool = False,
+    branch: str | None = None,
 ) -> dict[str, Any]:
     registry = registry or load_registry()
     resolved = effective_registration(
         policy, registry, manifest, agent_name
     )
     target = classify_path(policy, manifest, raw_path)
+
+    branch_payload: dict[str, Any] | None = None
+    branch_policy = policy.get("git_branch_governance", {})
+    expected_branch = registry.get("agents", {}).get(resolved["agent"], {}).get("git_branch")
+    if operation == "write" and expected_branch and target["workspace_relative"]:
+        actual_branch = branch or current_git_branch()
+        integration_branch = str(branch_policy.get("integration_branch", "main"))
+        allowed_paths = branch_policy.get("integration_paths", [])
+        comparable_path = target["workspace_relative"] or target["path"]
+        integration_allowed = (
+            integration
+            and actual_branch == integration_branch
+            and any(path_matches(comparable_path, str(item)) for item in allowed_paths)
+        )
+        branch_payload = {
+            "expected": expected_branch,
+            "actual": actual_branch,
+            "integration": integration_allowed,
+        }
+        if actual_branch != expected_branch and not integration_allowed:
+            return {
+                "status": "DENY",
+                "agent": resolved["agent"],
+                "role": resolved["role"],
+                "registration_status": resolved["registration_status"],
+                "degraded": resolved["degraded"],
+                "operation": operation,
+                **target,
+                "branch": branch_payload,
+                "reason": (
+                    f"{resolved['agent']} writes require branch {expected_branch}; "
+                    f"current branch is {actual_branch}"
+                ),
+                "next_action": "Switch to the registered agent branch, or use the limited --integration exception on main after user approval.",
+            }
 
     if operation == "read":
         allowed = target["surface"] != "external_environment"
@@ -991,6 +1050,20 @@ def check_access(
             None,
         )
         if skill is None:
+            skill = next(
+                (
+                    item
+                    for item in manifest.get("plugin_skills", [])
+                    if isinstance(item, dict)
+                    and acting_skill.casefold()
+                    in {
+                        str(item.get("id", "")).casefold(),
+                        str(item.get("qualified_id", "")).casefold(),
+                    }
+                ),
+                None,
+            )
+        if skill is None:
             allowed = False
             skill_authorization = {
                 "skill": acting_skill,
@@ -1042,6 +1115,7 @@ def check_access(
         "reason": reason,
         "lease": lease_result,
         "acting_skill": skill_authorization,
+        "branch": branch_payload,
         "next_action": (
             None
             if allowed
@@ -1359,6 +1433,41 @@ def create_request(
     }
 
 
+def inspect_hermes_guard_approval(
+    *,
+    config_path: Path = HERMES_CONFIG_PATH,
+    allowlist_path: Path = HERMES_ALLOWLIST_PATH,
+    guard_script: Path = HERMES_GUARD_SCRIPT,
+) -> dict[str, Any]:
+    """Compatibility facade for the Hermes approval deep module."""
+    return _inspect_hermes_guard_approval(
+        config_path=config_path,
+        allowlist_path=allowlist_path,
+        guard_script=guard_script,
+        guard_events=HERMES_GUARD_EVENTS,
+    )
+
+
+def approve_hermes_guard(
+    *,
+    record_id: str | None,
+    approve: bool,
+    config_path: Path = HERMES_CONFIG_PATH,
+    allowlist_path: Path = HERMES_ALLOWLIST_PATH,
+    guard_script: Path = HERMES_GUARD_SCRIPT,
+) -> dict[str, Any]:
+    """Compatibility facade for the Hermes approval deep module."""
+    return _approve_hermes_guard(
+        record_id=record_id,
+        approve=approve,
+        config_path=config_path,
+        allowlist_path=allowlist_path,
+        guard_script=guard_script,
+        registration_lookup=active_registration,
+        guard_events=HERMES_GUARD_EVENTS,
+    )
+
+
 def render(payload: dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         print(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
@@ -1409,6 +1518,16 @@ def render(payload: dict[str, Any], output_format: str) -> None:
         for error in payload["errors"]:
             print(f"- {error}")
         return
+    if payload.get("operation") == "hermes_guard_approval":
+        print(f"Hermes guard approval: {payload['status']}")
+        if payload.get("reason"):
+            print(f"Reason: {payload['reason']}")
+        for update in payload.get("updates", []):
+            print(
+                f"- {update['event']}: {update['script_path']} "
+                f"({update['script_mtime_at_approval']})"
+            )
+        return
     print(f"Access: {payload['status']}")
     print(f"Agent: {payload['agent']} ({payload['role']})")
     print(f"Registration: {payload.get('registration_status')}")
@@ -1456,6 +1575,7 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--record-id")
     check.add_argument("--skill")
     check.add_argument("--lease")
+    check.add_argument("--integration", action="store_true")
     check.add_argument("--format", choices=("text", "json"), default="text")
 
     request = commands.add_parser("request", help="Create a reviewable change request.")
@@ -1469,6 +1589,14 @@ def build_parser() -> argparse.ArgumentParser:
     request.add_argument("--path", action="append", default=[])
     request.add_argument("--output")
     request.add_argument("--format", choices=("text", "json"), default="text")
+
+    hermes_approval = commands.add_parser(
+        "approve-hermes-guard",
+        help="Preview or explicitly approve the configured Hermes workspace guard hooks.",
+    )
+    hermes_approval.add_argument("--approve", action="store_true")
+    hermes_approval.add_argument("--record-id")
+    hermes_approval.add_argument("--format", choices=("text", "json"), default="text")
 
     lease = commands.add_parser("lease", help="Validate an external capability lease.")
     lease_commands = lease.add_subparsers(dest="action", required=True)
@@ -1526,6 +1654,7 @@ def main() -> int:
                 acting_skill=args.skill,
                 lease=lease,
                 registry=registry,
+                integration=args.integration,
             )
             if registration:
                 payload["task_registration"] = registration
@@ -1545,6 +1674,11 @@ def main() -> int:
                 summary=args.summary,
                 paths=args.path,
                 output=args.output,
+            )
+        elif args.command == "approve-hermes-guard":
+            payload = approve_hermes_guard(
+                record_id=args.record_id,
+                approve=args.approve,
             )
         else:
             payload = validate_lease(policy, load_yaml(Path(args.lease_file)))

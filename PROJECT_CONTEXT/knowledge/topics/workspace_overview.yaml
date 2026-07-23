@@ -1,0 +1,23 @@
+# Canonical knowledge topic.
+topics:
+  workspace_overview:
+    title: Workspace overview and monorepo boundaries
+    aliases:
+    - workspace
+    - monorepo
+    - workspace structure
+    - 工作区
+    - 目录结构
+    - 多 skill
+    entries:
+    - path: ARCHITECTURE.md
+      layer: documentation
+      purpose: Why the workspace exists and its current source, projection, package,
+        and skill architecture.
+    - path: packages/character-system/README.md
+      layer: documentation
+      purpose: Runtime, engineering, shared, and report boundaries for the character-system
+        package.
+    - path: skills/README.md
+      layer: documentation
+      purpose: Placement rules for unrelated standalone skills.

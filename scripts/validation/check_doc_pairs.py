@@ -10,8 +10,9 @@ from typing import Any
 import yaml
 
 
+from scripts.workspace.project_context import DOC_REGISTRY_PATH, load_doc_pair_registry
 from scripts.workspace.runtime import WORKSPACE_ROOT
-REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "doc_pair_registry.yaml"
+REGISTRY_PATH = DOC_REGISTRY_PATH
 ZH_SUFFIX = ".zh-CN.md"
 MD_SUFFIX = ".md"
 
@@ -41,6 +42,11 @@ def primary_for(companion: str) -> str:
 
 
 def load_registry(path: Path = REGISTRY_PATH) -> dict[str, Any]:
+    if path == REGISTRY_PATH:
+        payload = load_doc_pair_registry()
+        payload.setdefault("directories", [])
+        payload.setdefault("pairs", [])
+        return payload
     payload = yaml.safe_load(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError("doc pair registry must be a mapping")

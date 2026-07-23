@@ -11,6 +11,7 @@ from typing import Any, Sequence
 import yaml
 
 
+from scripts.workspace.project_context import TASK_LEDGER_ROOT, load_knowledge_registry, load_task_registry
 from scripts.workspace.runtime import WORKSPACE_ROOT
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
@@ -19,9 +20,9 @@ from scripts.workspace.workspace_cli import build_parser
 
 
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
-TASK_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "task_registry.yaml"
-KNOWLEDGE_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "knowledge_registry.yaml"
-LEDGER_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "task_ledger"
+TASK_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
+KNOWLEDGE_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "knowledge" / "index.yaml"
+LEDGER_PATH = TASK_LEDGER_ROOT
 
 ENTRY_PATTERN = re.compile(
     r"^### (?P<id>TASK-\d{8}-\d+) - (?P<title>.+?)\n"
@@ -101,8 +102,8 @@ def workspace_describe(workspace_version: str | None) -> str:
 
 def build_summary(recent: int = 5) -> dict[str, Any]:
     manifest = load_yaml(MANIFEST_PATH)
-    tasks = load_yaml(TASK_REGISTRY_PATH).get("tasks", {})
-    topics = load_yaml(KNOWLEDGE_REGISTRY_PATH).get("topics", {})
+    tasks = load_task_registry().get("tasks", {})
+    topics = load_knowledge_registry().get("topics", {})
     workspace = manifest.get("workspace", {})
     workspace_version = workspace.get("workspace_version")
     workspace_tag, commits_ahead = workspace_tag_state(workspace_version)

@@ -1,0 +1,228 @@
+# Canonical task registry index. Root compatibility projections are retired.
+schema_version: '0.2'
+purpose: Canonical task routing index; task bodies live in domains/*.yaml.
+truth_sources:
+- workspace_manifest.yaml
+- shared/
+- current git state
+default_rules:
+  first_steps:
+  - Read AGENTS.md.
+  - Run git status --short --untracked-files=all.
+  - Use workspace task list when the exact task id is unknown.
+  - Resolve the exact task through workspace task resolve before broad discovery.
+  - Treat the resolver output as the bounded task registry and prompt registry view.
+  - Read the latest 5 entries in PROJECT_CONTEXT/tasks/ledger/README.md when continuity
+    or previous decisions matter.
+  - Load only the resolver-declared required context first.
+  - Expand optional context only from evidence and measure it with --include-optional.
+  git_guard:
+    require_clean_or_explained_worktree: true
+    do_not_overwrite_user_changes: true
+    no_auto_commit_without_user_request: true
+    prefer_branch_for_governance_changes: true
+  source_rules:
+    source_root: workspace_manifest.yaml -> workspace.source_of_truth
+    do_not_edit_loading_surfaces: true
+    reports_are_snapshots: true
+  tool_policy:
+    enforcement: deny_unlisted
+    default_profile: workspace_readonly
+    profiles:
+      workspace_readonly:
+        allow:
+        - workspace.read
+        - workspace.search
+        - workspace.resolve
+        - git.read
+        - shell.readonly
+        - validation.readonly
+        - documentation.read
+        confirm: []
+        deny:
+        - workspace.write
+        - filesystem.delete
+        - filesystem.move
+        - git.write
+        - platform.write
+        - environment.write
+        - browser.session
+        - email
+        - messaging
+        - office.write
+        - credentials
+      workspace_maintenance:
+        allow:
+        - workspace.read
+        - workspace.search
+        - workspace.resolve
+        - workspace.write_scoped
+        - git.read
+        - git.stage
+        - shell.focused
+        - validation.run
+        - documentation.read
+        confirm:
+        - git.commit
+        - git.push
+        deny:
+        - filesystem.delete
+        - filesystem.move
+        - platform.write
+        - environment.write
+        - browser.session
+        - email
+        - messaging
+        - office.write
+        - credentials
+      platform_maintenance:
+        allow:
+        - workspace.read
+        - workspace.search
+        - workspace.resolve
+        - workspace.write_scoped
+        - git.read
+        - git.stage
+        - shell.focused
+        - validation.run
+        - platform.read
+        - documentation.read
+        confirm:
+        - git.commit
+        - git.push
+        - platform.write
+        - environment.write
+        deny:
+        - filesystem.delete
+        - filesystem.move
+        - browser.session
+        - email
+        - messaging
+        - office.write
+        - credentials
+      cleanup_migration:
+        allow:
+        - workspace.read
+        - workspace.search
+        - workspace.resolve
+        - workspace.write_scoped
+        - git.read
+        - git.stage
+        - shell.focused
+        - validation.run
+        - platform.read
+        confirm:
+        - filesystem.delete
+        - filesystem.move
+        - git.commit
+        - git.push
+        - platform.write
+        - environment.write
+        deny:
+        - browser.session
+        - email
+        - messaging
+        - office.write
+        - credentials
+  default_ignore:
+  - .git/
+  - reports/legacy_git_metadata/
+  - ${DATA_ROOT}/
+  - ${WORKSPACE_ROOT}/tools/
+  - ${SCRATCH_ROOT}/
+  - archive*/
+  - archives/
+  - backups/
+  - ${WORKSPACE_ROOT}/research/skills/
+  - mcp/servers/
+  - mcp/downloads/
+  - mcp/logs/
+  context_budget:
+    policy_file: PROJECT_CONTEXT/governance/context_budget.md
+    initial_level: resolver_required
+    expand_only_from_evidence: true
+    reports_default: avoid
+    archives_default: prohibited_without_explicit_approval
+    token_meter:
+      encoding: o200k_base
+      enforcement: warn
+      required_warn_tokens: 10000
+      expanded_warn_tokens: 16000
+      hard_max_tokens: null
+      max_file_bytes: 2097152
+      top_file_count: 10
+      fallback_method: ascii_chars_div_4_plus_non_ascii_chars
+      root_agents_warn_tokens: 900
+    resolver:
+      preloaded_files:
+      - AGENTS.md
+      consumed_files:
+      - PROJECT_CONTEXT/tasks/registry/index.yaml
+      - PROJECT_CONTEXT/governance/context_budget.md
+      - USAGE_GUIDES/prompt_registry.yaml
+      retain_consumed_for_tasks:
+      - startup_context_optimization
+      - context_resolution_tooling
+      - task_registry_update
+      - prompt_usage_update
+  task_ledger:
+    path: PROJECT_CONTEXT/tasks/ledger/
+    read_recent_entries: 5
+    append_when:
+    - source-of-truth boundaries change
+    - task routing, context budget, or prompt routing changes
+    - platform exposure or local loading surfaces change
+    - shared protocol, runtime loop, or validation behavior changes
+    - cleanup, migration, archival, or deletion decisions are made
+    - reports or validation snapshots are regenerated
+    not_source_of_truth_for:
+    - machine-readable paths
+    - shared protocol contracts
+    - current git state
+  prompt_registry:
+    path: USAGE_GUIDES/prompt_registry.yaml
+    use_for:
+    - mapping task prompt ids to reusable prompt frames
+    - finding existing copy-ready prompt templates
+    - avoiding repeated meta-prompt reconstruction
+    not_source_of_truth_for:
+    - task classification
+    - workspace paths
+    - protocol contracts
+task_files:
+  agent_governance_update: domains/governance.yaml
+  change_scope_verification: domains/governance.yaml
+  change_surface_planning: domains/workspace.yaml
+  claude_project_boundary: domains/governance.yaml
+  cleanup_migration: domains/continuity.yaml
+  context_resolution_tooling: domains/knowledge.yaml
+  developer_interface_tooling: domains/workspace.yaml
+  failure_diagnostics_tooling: domains/workspace.yaml
+  github_ci_governance: domains/skills.yaml
+  governance_summary_tooling: domains/workspace.yaml
+  governance_workflow_simplification: domains/governance.yaml
+  ignore_policy_update: domains/workspace.yaml
+  knowledge_interface_tooling: domains/knowledge.yaml
+  platform_exposure: domains/skills.yaml
+  project_memory_maintenance: domains/knowledge.yaml
+  prompt_usage_update: domains/knowledge.yaml
+  public_projection_synchronization: domains/publishing.yaml
+  raw_material_filter_tooling: domains/skills.yaml
+  report_freshness_tooling: domains/publishing.yaml
+  report_regeneration: domains/publishing.yaml
+  runtime_authorization_enforcement: domains/governance.yaml
+  runtime_drift_fix: domains/skills.yaml
+  session_continuity: domains/continuity.yaml
+  shared_policy_update: domains/governance.yaml
+  skill_architecture_update: domains/skills.yaml
+  skill_lifecycle_tooling: domains/skills.yaml
+  skill_metadata_update: domains/skills.yaml
+  skill_release_packaging: domains/skills.yaml
+  source_of_truth_dedup: domains/knowledge.yaml
+  startup_context_optimization: domains/knowledge.yaml
+  task_outcome_records: domains/continuity.yaml
+  task_registry_update: domains/knowledge.yaml
+  workspace_developer_experience: domains/workspace.yaml
+  workspace_engineering_knowledge: domains/knowledge.yaml
+  workspace_health_tooling: domains/workspace.yaml
+  workspace_launcher_tooling: domains/workspace.yaml

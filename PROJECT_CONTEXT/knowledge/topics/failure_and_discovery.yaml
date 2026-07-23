@@ -1,0 +1,19 @@
+# Canonical knowledge topic.
+topics:
+  failure_and_discovery:
+    title: Missing resources and bounded discovery
+    aliases:
+    - missing file
+    - failure policy
+    - discovery
+    - file not found
+    - 文件不存在
+    - 错误处理
+    - 寻找文件
+    entries:
+    - path: shared/failure_policy.md
+      layer: shared
+      purpose: Required versus optional failure behavior.
+    - path: shared/discovery_rules.md
+      layer: shared
+      purpose: Bounded lookup order and stop conditions.

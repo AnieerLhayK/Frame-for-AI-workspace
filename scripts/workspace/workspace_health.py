@@ -597,28 +597,41 @@ def check_tests(
     result = runner(
         [
             sys.executable,
-            "-m",
-            "unittest",
-            "discover",
-            "-s",
-            str(SCRIPTS_DIR / "tests"),
-            "-t",
-            str(WORKSPACE_ROOT),
-            "-p",
-            "test_*.py",
+            str(SCRIPTS_DIR / "ci_run.py"),
+            "--format",
+            "json",
         ]
     )
-    if result.returncode != 0:
+    payload = parse_json_output(result)
+    if payload is None:
         return CheckResult(
             "tests",
-            "FAIL",
-            "Workspace script tests failed.",
+            "ERROR",
+            "CI test aggregator returned invalid JSON.",
             {
                 "stdout_tail": result.stdout[-2000:],
                 "stderr_tail": result.stderr[-2000:],
             },
         )
-    return CheckResult("tests", "PASS", "Workspace script tests passed.")
+    core_failures = payload.get("core_failures", [])
+    infra_failures = payload.get("infra_failures", [])
+    if not isinstance(core_failures, list) or not isinstance(infra_failures, list):
+        return CheckResult("tests", "ERROR", "CI test aggregator returned invalid failure details.", payload)
+    if result.returncode != 0 or payload.get("status") != "PASS" or core_failures:
+        return CheckResult(
+            "tests",
+            "FAIL",
+            "Workspace core script tests failed.",
+            payload,
+        )
+    if infra_failures:
+        return CheckResult(
+            "tests",
+            "PASS",
+            f"Workspace core tests passed; {len(infra_failures)} infrastructure failure(s) are non-blocking.",
+            payload,
+        )
+    return CheckResult("tests", "PASS", "Workspace script tests passed.", payload)
 
 
 def run_health(

@@ -1,0 +1,20 @@
+# Canonical knowledge topic.
+topics:
+  session_continuity:
+    title: Claude Code and OpenCode conversation continuity
+    aliases:
+    - session migration
+    - conversation backup
+    - resume old session
+    - session path
+    entries:
+    - path: shared/session_continuity_policy.md
+      layer: shared
+      purpose: Required inventory, backup, mapping, and recovery rules before source
+        moves.
+    - path: PROJECT_CONTEXT/continuity/session_migrations.json
+      layer: project_context
+      purpose: Recorded source path mappings and external backup evidence.
+    - path: scripts/session_continuity.py
+      layer: tooling
+      purpose: Read-only live session and backup audit.

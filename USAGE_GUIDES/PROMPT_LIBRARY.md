@@ -20,8 +20,8 @@ maintenance work. The intended savings are practical and bounded:
 - keep high-risk guardrails inside reusable templates;
 - keep task routing, write scope, and authority checks outside prompt text.
 
-The library does not replace `PROJECT_CONTEXT/task_registry.yaml`,
-`PROJECT_CONTEXT/context_budget.md`, shared protocols, or model authority
+The library does not replace `PROJECT_CONTEXT/tasks/registry/index.yaml`,
+`PROJECT_CONTEXT/governance/context_budget.md`, shared protocols, or model authority
 boundaries.
 
 ## Current Maturity

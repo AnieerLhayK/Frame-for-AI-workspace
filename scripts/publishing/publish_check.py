@@ -78,7 +78,7 @@ REQUIRED_PATHS: set[str] = {
     "scripts/agent_governance.py",
     "scripts/workspace_health.py",
     "scripts/setup_public_workspace.py",
-    "PROJECT_CONTEXT/task_registry.yaml",
+    "PROJECT_CONTEXT/tasks/registry/index.yaml",
     "USAGE_GUIDES/prompt_registry.yaml",
     ".claude/rules/workspace-boundary.md",
     ".claude/project-boundary.json",

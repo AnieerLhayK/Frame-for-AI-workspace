@@ -1,0 +1,31 @@
+# Canonical knowledge topic.
+topics:
+  platform_loading_guides:
+    title: Platform-specific skill loading and safety guidance
+    aliases:
+    - platform loading
+    - skill loading
+    - Codex loading
+    - OpenCode loading
+    - Hermes loading
+    - Hermes skills
+    - 平台加载
+    - skill 加载
+    - Codex 技能加载
+    - OpenCode 技能加载
+    entries:
+    - path: USAGE_GUIDES/QUICK_START/codex.md
+      layer: usage_guides
+      purpose: Current Codex skill discovery and invocation guidance.
+    - path: USAGE_GUIDES/REFERENCE/platforms/codex-safety.md
+      layer: usage_guides
+      purpose: Codex-specific loading and safety notes.
+    - path: USAGE_GUIDES/QUICK_START/opencode.md
+      layer: usage_guides
+      purpose: Current OpenCode skill discovery and invocation guidance.
+    - path: USAGE_GUIDES/REFERENCE/platforms/opencode-safety.md
+      layer: usage_guides
+      purpose: OpenCode-specific loading and safety notes.
+    - path: USAGE_GUIDES/QUICK_START/hermes.md
+      layer: usage_guides
+      purpose: Current Hermes skill discovery, deployment, and invocation guidance.

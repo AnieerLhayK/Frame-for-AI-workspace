@@ -82,7 +82,7 @@ python scripts/sync_public_repo.py --push --skip-tests
 - `scripts/` 核心脚本变更（非 skill 相关）
 - `.claude/` 边界配置变更（rules、project-boundary）
 - `AGENTS.md` / `ARCHITECTURE.md` 变更
-- `task_registry.yaml` / `prompt_registry.yaml` 变更
+- `tasks/registry/index.yaml` / `prompt_registry.yaml` 变更
 - `.github/workflows/` CI 配置变更
 
 ### 不触发同步的变更

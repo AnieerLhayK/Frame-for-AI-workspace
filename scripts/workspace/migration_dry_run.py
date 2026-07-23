@@ -170,6 +170,9 @@ def write_report(scenario: str, changes: list[dict[str, str]], notes: list[str])
     lines = [
         "---",
         "report_name: migration_dry_run_report",
+        "lifecycle: historical",
+        "status: retired",
+        "historical_reason: Retained as a migration simulation snapshot; newer simulations supersede it.",
         f"generated_at: {now}",
         "generated_by: scripts/migration_dry_run.py",
         f"source_root: {WORKSPACE_ROOT}",

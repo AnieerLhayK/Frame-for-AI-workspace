@@ -35,6 +35,7 @@ override Manifest, policy, source, or current Git state.
 - `architecture_patterns.md`: reusable system structures.
 - `workspace_patterns.md`: repository and workspace organization.
 - `governance_patterns.md`: authority, validation, and continuity.
+- `context_structure_refactoring.md`: reusable deep-module and path-migration method.
 - `portability_patterns.md`: movement and machine-boundary lessons.
 - `anti_patterns.md`: recurring failure modes.
 - `knowledge_provenance.md`: intake and attribution rules.
@@ -75,7 +76,7 @@ Add an entry only when a completed task produces at least one of:
 4. A validated or refuted experiment.
 5. A material change in long-term risk or architecture.
 
-Ordinary task status stays in `PROJECT_CONTEXT/task_ledger.md`.
+Ordinary task status stays in `PROJECT_CONTEXT/tasks/ledger/`.
 
 ## Completion Writeback Check
 
@@ -89,7 +90,7 @@ knowledge writeback decision:
   lesson.
 
 Use the smallest durable home. Add operational continuity to
-`PROJECT_CONTEXT/task_ledger.md`, reusable methodology to this directory, and
+`PROJECT_CONTEXT/tasks/ledger/`, reusable methodology to this directory, and
 enforceable rules to `shared/` only when a policy contract actually changes.
 
 ## Evidence Levels

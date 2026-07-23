@@ -13,7 +13,7 @@
 - `USAGE_GUIDES/prompt_registry.yaml`
 - `USAGE_GUIDES/PROMPT_TEMPLATES/README.md`
 - `PROJECT_CONTEXT/todo/README.md`
-- `PROJECT_CONTEXT/task_ledger/README.md` 中的最新条目
+- `PROJECT_CONTEXT/tasks/ledger/README.md` 中的最新条目
 
 目标：
 添加或优化 prompt id 和可复制模板，使常见的 AI 维护工作能够复用稳定的指令，而非每次重新生成长 prompt。

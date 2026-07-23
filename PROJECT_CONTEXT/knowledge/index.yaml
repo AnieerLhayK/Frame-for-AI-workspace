@@ -1,0 +1,34 @@
+# Canonical knowledge index. Legacy root projection is generated.
+schema_version: '0.2'
+purpose: Canonical knowledge index; topic bodies live in topics/*.yaml.
+rules:
+- This registry is an index, not a source of truth.
+- Return entry paths and purposes; read file content only after the user or task needs
+  it.
+- Prefer PROJECT_CONTEXT for current workspace state, shared for enforceable policy,
+  and WORKSPACE_ENGINEERING for reusable methodology.
+- Reports are snapshots and require freshness checks before decision use.
+topic_files:
+  agent_governance: topics/agent_governance.yaml
+  current_status: topics/current_status.yaml
+  developer_interfaces: topics/developer_interfaces.yaml
+  external_knowledge_planning: topics/external_knowledge_planning.yaml
+  failure_and_discovery: topics/failure_and_discovery.yaml
+  governance: topics/governance.yaml
+  personal_corpus_preparation: topics/personal_corpus_preparation.yaml
+  platform_exposure: topics/platform_exposure.yaml
+  platform_loading_guides: topics/platform_loading_guides.yaml
+  portability: topics/portability.yaml
+  project_boundaries: topics/project_boundaries.yaml
+  prompt_engineering: topics/prompt_engineering.yaml
+  reporting: topics/reporting.yaml
+  runtime_drift: topics/runtime_drift.yaml
+  runtime_skill_usage: topics/runtime_skill_usage.yaml
+  session_continuity: topics/session_continuity.yaml
+  skill_design: topics/skill_design.yaml
+  skill_engineering_operations: topics/skill_engineering_operations.yaml
+  skill_workflows: topics/skill_workflows.yaml
+  task_and_context_routing: topics/task_and_context_routing.yaml
+  workspace_engineering: topics/workspace_engineering.yaml
+  workspace_optimization_options: topics/workspace_optimization_options.yaml
+  workspace_overview: topics/workspace_overview.yaml

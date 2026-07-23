@@ -1,0 +1,61 @@
+schema_version: "0.2"
+purpose: "Tracked historical registry for mitigated, accepted, or retired potential risks."
+
+rules:
+  - "Keep original risk fields intact so the control and its trigger remain reviewable."
+  - "Every entry records when it left the active registry and its source registry."
+  - "Do not place candidate or observed risks here."
+
+statuses:
+  mitigated: "A durable control exists; verify it when the surrounding system changes."
+  accepted: "The tradeoff is intentional and documented."
+  retired: "The risk no longer applies or has moved to a more authoritative register."
+
+risks:
+
+  - id: "RISK-20260718-006"
+    title: "Stale Claude local command permissions obscure intended governance"
+    status: "mitigated"
+    trigger_when:
+      - "A local `permissions.allow` entry contains a one-off PowerShell diagnostic rather than a stable command contract."
+    impact:
+      - "Readers cannot tell whether a command is an intentional permission, a hook, or forgotten diagnostic residue."
+    current_handling:
+      - "The two stale PowerShell diagnostic permissions were removed after reference checks found no active dependency."
+      - "Any future recurring probe must use a named hook rather than a blanket command permission."
+    related_files:
+      - ".claude/settings.local.json"
+    archived_at: "2026-07-18"
+    source_registry: "PROJECT_CONTEXT/potential_for_future/risk_register.yaml"
+  - id: "RISK-20260715-001"
+    title: "Public projection accidentally includes corpus-preparation tooling"
+    status: "mitigated"
+    archived_at: "2026-07-18"
+    source_registry: "PROJECT_CONTEXT/potential_for_future/risk_register.yaml"
+    trigger_when:
+      - "The Chatty public publisher recursively copies packages/character-system/engineering."
+      - "A new private or local-only engineering tool is added below that root."
+    impact:
+      - "Private path assumptions or local corpus-processing behavior can enter a public repository."
+    current_handling:
+      - "The Chatty publisher explicitly excludes corpus-preparation/qq-raw-material-filter."
+      - "The generated public projection checker rejects the excluded path."
+    related_files:
+      - "scripts/publish_chatty_ch_system.py"
+      - "scripts/publish_check_chatty_ch_system.py"
+
+  - id: "RISK-20260715-002"
+    title: "Subtree prefix changes can break standalone remote history"
+    status: "mitigated"
+    archived_at: "2026-07-18"
+    source_registry: "PROJECT_CONTEXT/potential_for_future/risk_register.yaml"
+    trigger_when:
+      - "A workspace-owned tool changes its local directory while its remote is published as a subtree."
+    impact:
+      - "A force push can disconnect or rewrite the remote repository history."
+    current_handling:
+      - "qq-chat-raw-filter uses a generated root projection and normal remote commits."
+      - "The sync script regenerates from the workspace source and does not use git subtree."
+    related_files:
+      - "scripts/publish_qq_raw_filter.py"
+      - "scripts/sync_qq_raw_filter_repo.py"

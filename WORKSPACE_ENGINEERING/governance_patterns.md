@@ -44,7 +44,7 @@ Portability is not path removal. It is the ability to explain, validate, and dry
 
 ### Task Registry As Context Gate
 
-The task registry (`PROJECT_CONTEXT/task_registry.yaml`) prevents broad context loading before work begins:
+The task registry (`PROJECT_CONTEXT/tasks/registry/index.yaml`) prevents broad context loading before work begins:
 
 ```yaml
 - id: startup_context_optimization
@@ -70,7 +70,7 @@ This is read-only policy enforcement — the guard reads `project-boundary.json`
 
 ### Context Budget Layering
 
-The context budget (`PROJECT_CONTEXT/context_budget.md`) defines escalation levels:
+The context budget (`PROJECT_CONTEXT/governance/context_budget.md`) defines escalation levels:
 
 1. Resolver output (always loaded)
 2. Required context (loaded on task resolve)

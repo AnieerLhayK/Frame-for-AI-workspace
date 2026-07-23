@@ -61,6 +61,28 @@ Action-based MCP tools must expose a resolvable external output path or fail
 closed. A short `pre_llm_call` context explains the correct route, but the hook
 is the actual boundary.
 
+## Reapprove A Changed Hermes Guard
+
+Changing the tracked guard script intentionally invalidates its Hermes
+allowlist approval. Inspect the exact three configured hooks first; this is a
+dry run and writes nothing:
+
+```powershell
+workspace agent approve-hermes-guard
+```
+
+After a reviewed script change, use an active task record that includes
+`external_write` and make the external write explicit:
+
+```powershell
+workspace agent approve-hermes-guard --approve --record-id <TASK-ID>
+```
+
+The command accepts only the configured `pre_tool_call`, `post_tool_call`, and
+`pre_llm_call` workspace guards. It refuses missing or ambiguous hooks and
+preserves unrelated Hermes allowlist entries. It never changes the hook
+commands, MCP permissions, or guard policy.
+
 OpenCode and Reasonix use the same record-producer authority:
 
 ```powershell

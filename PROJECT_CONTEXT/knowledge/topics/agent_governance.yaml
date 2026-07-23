@@ -1,0 +1,30 @@
+# Canonical knowledge topic.
+topics:
+  agent_governance:
+    title: Agent registration, authority, structural access, requests, and temporary
+      leases
+    aliases:
+    - agent authority
+    - agent governance
+    - agent registration
+    - agent registry
+    - temporary lease
+    - change request
+    - agent 权限
+    - 临时授权
+    - 结构性修改
+    entries:
+    - path: shared/agent_governance_policy.md
+      layer: shared
+      purpose: Enforceable agent roles, surface classes, request flow, and lease lifecycle.
+    - path: shared/agent_governance.yaml
+      layer: shared
+      purpose: Machine-readable roles, capabilities, registration constraints, leases,
+        and surface classification.
+    - path: shared/agent_registry.yaml
+      layer: shared
+      purpose: Concrete agent identity, status, scope, platform, storage, and lifecycle
+        registrations.
+    - path: USAGE_GUIDES/QUICK_START/agent_governance.md
+      layer: usage_guides
+      purpose: Commands for checking writes, creating requests, and validating leases.

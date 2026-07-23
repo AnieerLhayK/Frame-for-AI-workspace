@@ -4,7 +4,7 @@ purpose: "Map task prompt ids to reusable prompt guidance and existing copy-read
 source_boundaries:
   source_of_truth:
     - "workspace_manifest.yaml"
-    - "PROJECT_CONTEXT/task_registry.yaml"
+    - "PROJECT_CONTEXT/tasks/registry/index.yaml"
     - "shared/"
   this_registry_is:
     - "a prompt selection index"
@@ -17,7 +17,7 @@ source_boundaries:
 
 default_rules:
   resolve_order:
-    - "Classify the task in PROJECT_CONTEXT/task_registry.yaml."
+    - "Classify the task in PROJECT_CONTEXT/tasks/registry/index.yaml."
     - "Read only the prompt ids listed by that task."
     - "Use this registry to select the smallest matching prompt frame or template path."
     - "Open full prompt templates only when the user is preparing to run or edit that prompt."
@@ -59,16 +59,16 @@ prompts:
       - "The task changes registry, budget, ledger, prompt routing, or startup workflow."
     read:
       - "AGENTS.md"
-      - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger/README.md latest 5 entries"
+      - "PROJECT_CONTEXT/tasks/registry/index.yaml"
+      - "PROJECT_CONTEXT/governance/context_budget.md"
+      - "PROJECT_CONTEXT/tasks/ledger/README.md latest 5 entries"
     ignore:
       - "reports/"
       - "platform loading surfaces unless explicitly named"
       - "skill implementation folders unless the task owns them"
     prompt_frame:
-      - "Classify the user request against PROJECT_CONTEXT/task_registry.yaml."
-      - "Apply PROJECT_CONTEXT/context_budget.md before optional reads."
+      - "Classify the user request against PROJECT_CONTEXT/tasks/registry/index.yaml."
+      - "Apply PROJECT_CONTEXT/governance/context_budget.md before optional reads."
       - "Name required, optional, ignored, writable, and validation surfaces."
       - "Make the smallest source-truth-preserving edit."
 
@@ -97,7 +97,7 @@ prompts:
       - "A local tool path or junction needs review."
     read:
       - "workspace_manifest.yaml"
-      - "PROJECT_CONTEXT/current_status.md"
+      - "PROJECT_CONTEXT/continuity/current_status.md"
       - "USAGE_GUIDES/QUICK_START/codex.md"
       - "USAGE_GUIDES/QUICK_START/opencode.md"
       - "actual platform debug output"
@@ -190,9 +190,9 @@ prompts:
       - "A maintenance pass should reduce drift between manifest, PROJECT_CONTEXT, USAGE_GUIDES, and shared policies."
     read:
       - "workspace_manifest.yaml"
-      - "PROJECT_CONTEXT/task_registry.yaml"
-      - "PROJECT_CONTEXT/context_budget.md"
-      - "PROJECT_CONTEXT/task_ledger/README.md latest 5 entries"
+      - "PROJECT_CONTEXT/tasks/registry/index.yaml"
+      - "PROJECT_CONTEXT/governance/context_budget.md"
+      - "PROJECT_CONTEXT/tasks/ledger/README.md latest 5 entries"
       - "target docs that duplicate path facts"
     ignore:
       - "reports/ unless the task is report regeneration"

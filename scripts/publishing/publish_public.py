@@ -144,9 +144,10 @@ EXCLUDED_PATHS = {
     "reasonix.toml",
     "README.zh-CN.md",
     "PROJECT_CONTEXT/todo",
-    "PROJECT_CONTEXT/external_projects.yaml",
-    "PROJECT_CONTEXT/task_ledger",
-    "PROJECT_CONTEXT/task_records",
+    "PROJECT_CONTEXT/references/external_projects.yaml",
+    "PROJECT_CONTEXT/reports/history",
+    "PROJECT_CONTEXT/tasks/ledger",
+    "PROJECT_CONTEXT/tasks/records",
     "USAGE_GUIDES/PROMPT_TEMPLATES/character-system",
     "opencode.json",
     "scripts/report_status.py",
@@ -181,11 +182,11 @@ SCRUB_FILES: set[str] = {
     "shared/agent_governance.yaml",
     "shared/templates/agent_registration.example.yaml",
     "shared/templates/agent_capability_lease.example.yaml",
-    "PROJECT_CONTEXT/task_registry.yaml",
-    "PROJECT_CONTEXT/session_migrations.json",
-    "PROJECT_CONTEXT/task_ledger/README.md",
-    "PROJECT_CONTEXT/current_status.md",
-    "PROJECT_CONTEXT/context_budget.md",
+    "PROJECT_CONTEXT/tasks/registry/index.yaml",
+    "PROJECT_CONTEXT/continuity/session_migrations.json",
+    "PROJECT_CONTEXT/tasks/ledger/README.md",
+    "PROJECT_CONTEXT/continuity/current_status.md",
+    "PROJECT_CONTEXT/governance/context_budget.md",
     "WORKSPACE_ENGINEERING/external_knowledge/external_rag_planning.md",
     "USAGE_GUIDES/QUICK_START/claude_code.md",
     "USAGE_GUIDES/QUICK_START/agent_governance.md",
@@ -206,6 +207,7 @@ SCRUB_FILES: set[str] = {
     "scripts/publishing/sync_public_repo.py",
     "scripts/publishing/sync_qq_raw_filter_repo.py",
     "scripts/workspace/hermes_workspace_guard.py",
+    "scripts/workspace/agent_governance.py",
     "scripts/workspace/workspace_health.py",
     "scripts/tests/workspace/test_workspace_cli.py",
     "scripts/tests/workspace/test_hermes_workspace_guard.py",
@@ -409,9 +411,9 @@ def needs_scrub(rel_path: str) -> bool:
         return True
     # Task history and outcomes may quote environment-specific paths in
     # evidence; public snapshots keep their structure but scrub their text.
-    if norm.startswith("PROJECT_CONTEXT/task_ledger/"):
+    if norm.startswith("PROJECT_CONTEXT/tasks/ledger/"):
         return True
-    if norm.startswith("PROJECT_CONTEXT/task_records/"):
+    if norm.startswith("PROJECT_CONTEXT/tasks/records/"):
         return True
     # Public context keeps generic governance notes but must not carry the
     # source workspace's machine paths.
@@ -943,6 +945,14 @@ def copy_and_scrub(src_root: Path, out_dir: Path, rel_path: str) -> None:
     write_file(out_dir, rel_path, scrubbed)
 
 
+def create_required_public_context_dirs(out_dir: Path) -> None:
+    """Keep empty canonical task directories visible in the public skeleton."""
+    for relative in ("PROJECT_CONTEXT/tasks/ledger", "PROJECT_CONTEXT/tasks/records"):
+        placeholder = out_dir / relative / ".gitkeep"
+        placeholder.parent.mkdir(parents=True, exist_ok=True)
+        placeholder.write_text("", encoding="utf-8")
+
+
 def strip_skeleton_dir(
     out_dir: Path, rel_path: str, stub_files: list[str], purpose: str
 ) -> None:
@@ -1141,6 +1151,7 @@ def main() -> int:
         write_file(out_dir, "scripts/setup_public_workspace.py", generate_public_setup_py())
         for layer in PUBLIC_EXTENSION_LAYERS:
             write_file(out_dir, f"{layer}/README.md", EXTENSION_LAYER_READMES[layer])
+        create_required_public_context_dirs(out_dir)
         counts["copied"] += 11
 
     print()

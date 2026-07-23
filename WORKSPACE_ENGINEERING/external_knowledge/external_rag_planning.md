@@ -8,18 +8,18 @@
 > deploy services.
 >
 > **Do not use this document as an index or data source.** Use
-> `PROJECT_CONTEXT/knowledge_registry.yaml` for current topic routing and
-> `PROJECT_CONTEXT/task_registry.yaml` for task resolution.
+> `PROJECT_CONTEXT/knowledge/index.yaml` for current topic routing and
+> `PROJECT_CONTEXT/tasks/registry/index.yaml` for task resolution.
 
 ## Purpose
 
 The workspace has established:
 
-- task routing through `PROJECT_CONTEXT/task_registry.yaml`;
-- context budgets through `PROJECT_CONTEXT/context_budget.md`;
-- change surface planning through `PROJECT_CONTEXT/change_surface_policy.md`;
+- task routing through `PROJECT_CONTEXT/tasks/registry/index.yaml`;
+- context budgets through `PROJECT_CONTEXT/governance/context_budget.md`;
+- change surface planning through `PROJECT_CONTEXT/governance/change_surface_policy.md`;
 - scope verification through `scripts/verify_change_scope.py`;
-- knowledge topic discovery through `PROJECT_CONTEXT/knowledge_registry.yaml`;
+- knowledge topic discovery through `PROJECT_CONTEXT/knowledge/index.yaml`;
 - workspace engineering methodology through `WORKSPACE_ENGINEERING/`;
 - reusable governance, architecture, and anti-pattern records.
 
@@ -313,7 +313,7 @@ an unknown package, but that is an edge case, not a daily need.
 
 These cost almost nothing and improve the current system directly:
 
-1. **Audit Chinese aliases in `knowledge_registry.yaml`.**
+1. **Audit Chinese aliases in `knowledge/index.yaml`.**
    - Check each topic's `aliases` for missing Chinese variants.
    - Add common Chinese typos / alternative phrasings.
    - Verify that `workspace knowledge find "<中文>"` returns the expected
@@ -334,7 +334,7 @@ These cost almost nothing and improve the current system directly:
      `--list` does not produce an obvious match, try:
      ```
      workspace knowledge find "<keywords>"
-     grep -r "use_when" PROJECT_CONTEXT/task_registry.yaml
+     grep -r "use_when" PROJECT_CONTEXT/tasks/registry/index.yaml
      ```
    - This replaces nothing; it adds a recovery path for ambiguous queries.
 
@@ -379,7 +379,7 @@ Option B: ${WORKSPACE_ROOT}\knowledge\workspace\
 - `${DATA_ROOT}\` already holds workspace data (`claude`, `opencode`,
   `projection-backups`).
 - It is already excluded from workspace traversal
-  (`task_registry.yaml` → `default_ignore` → `${DATA_ROOT}/`).
+  (`tasks/registry/index.yaml` → `default_ignore` → `${DATA_ROOT}/`).
 - `${WORKSPACE_ROOT}\knowledge\` does not exist yet — creating it is an additional
   decision without clear benefit over reusing `${DATA_ROOT}\`.
 
@@ -387,14 +387,14 @@ Option B: ${WORKSPACE_ROOT}\knowledge\workspace\
 
 Document the index schema for a future BM25 or SQLite-based system:
 
-- For each source file (from `PROJECT_CONTEXT/knowledge_registry.yaml`,
+- For each source file (from `PROJECT_CONTEXT/knowledge/index.yaml`,
   `WORKSPACE_ENGINEERING/`, `PROJECT_CONTEXT/`):
   - `path`: workspace-relative path
   - `commit`: commit hash at index time
   - `timestamp`: ISO 8601 index time
   - `content_hash`: SHA-256 of file content at index time
-  - `layer`: from knowledge_registry.yaml (or "workspace_engineering")
-  - `topics`: array of topic ids from knowledge_registry.yaml
+  - `layer`: from knowledge/index.yaml (or "workspace_engineering")
+  - `topics`: array of topic ids from knowledge/index.yaml
 
 - For task registry entries:
   - `task_id`: exact task-id
@@ -458,7 +458,7 @@ suggested_required_context:
     reason: "Book structure and evidence level rules"
   - path: "WORKSPACE_ENGINEERING/knowledge_provenance.md"
     reason: "External-source attribution rules"
-  - path: "PROJECT_CONTEXT/knowledge_registry.yaml"
+  - path: "PROJECT_CONTEXT/knowledge/index.yaml"
     reason: "Topic indexing rules"
 optional_context:
   - path: "WORKSPACE_ENGINEERING/architecture_patterns.md"
@@ -509,10 +509,10 @@ Design (do not implement):
 
 | File | Change |
 |------|--------|
-| `PROJECT_CONTEXT/knowledge_registry.yaml` | Add topic for `external_knowledge_planning` |
+| `PROJECT_CONTEXT/knowledge/index.yaml` | Add topic for `external_knowledge_planning` |
 | `PROJECT_CONTEXT/todo/workspace-optimization.md` | Add P2 entry for external knowledge evaluation |
-| `PROJECT_CONTEXT/task_ledger.md` | Record this planning task |
-| `PROJECT_CONTEXT/current_status.md` | Add note that RAG planning is in evaluation |
+| `PROJECT_CONTEXT/tasks/ledger.md` | Record this planning task |
+| `PROJECT_CONTEXT/continuity/current_status.md` | Add note that RAG planning is in evaluation |
 | `WORKSPACE_ENGINEERING/README.md` | Add `external_knowledge/` to book structure |
 
 ### Files NOT To Touch
@@ -562,9 +562,9 @@ P5: 评估是否转向向量 RAG (Chroma/LanceDB)
 
 - `workspace_manifest.yaml` — canonical path registry
 - `shared/` — enforceable protocols
-- `PROJECT_CONTEXT/task_registry.yaml` — task routing
-- `PROJECT_CONTEXT/context_budget.md` — context policy
-- `PROJECT_CONTEXT/knowledge_registry.yaml` — topic index
+- `PROJECT_CONTEXT/tasks/registry/index.yaml` — task routing
+- `PROJECT_CONTEXT/governance/context_budget.md` — context policy
+- `PROJECT_CONTEXT/knowledge/index.yaml` — topic index
 - `WORKSPACE_ENGINEERING/` — reviewed methodology
 - `AGENTS.md` — startup instructions
 - Git current state — dynamic source truth
@@ -587,10 +587,10 @@ P5: 评估是否转向向量 RAG (Chroma/LanceDB)
 | Rule | How |
 |------|-----|
 | Never write RAG data into workspace. | External directory lives under `${DATA_ROOT}\`. |
-| Never import RAG as a truth source. | Always resolve through `task_registry.yaml` first. |
+| Never import RAG as a truth source. | Always resolve through `tasks/registry/index.yaml` first. |
 | RAG output is suggestion, not command. | CLI commands are read-only. Agent still validates paths exist. |
 | Git is the boundary. | Workspace is Git-tracked. External directory is not part of the workspace repo. |
-| `default_ignore` already excludes `${DATA_ROOT}/`. | `task_registry.yaml` line 129. RAG directory is covered. |
+| `default_ignore` already excludes `${DATA_ROOT}/`. | `tasks/registry/index.yaml` default rules. RAG directory is covered. |
 | No symlinks or junctions from workspace to RAG directory. | Enforce during P2 directory creation. |
 
 ### 6. 如何证明未来方案真的节省 token？
@@ -621,7 +621,7 @@ Token savings should be measured empirically (using the existing
 
 ### 8. 下一步最小可行动作是什么？
 
-1. **审计 `knowledge_registry.yaml` 的中文 alias**，补充缺失的中文
+1. **审计 `knowledge/index.yaml` 的中文 alias**，补充缺失的中文
    variant（~30分钟）。
 2. **为 10–15 个高频 task-id 添加 `use_when_zh` 注释**（~20分钟）。
 3. **在 `AGENTS.md` 中添加 task suggest 兜底指令**（~5分钟）。
@@ -633,7 +633,7 @@ Token savings should be measured empirically (using the existing
 ## Appendix: Task-ids And Their `use_when_zh` Candidates
 
 (The top 15 most-used task-ids that would benefit from Chinese
-`use_when` summaries. Edit `task_registry.yaml` to add these.)
+`use_when` summaries. Edit `tasks/registry/index.yaml` to add these.)
 
 | task-id | use_when_zh candidate |
 |---------|----------------------|

@@ -1,0 +1,45 @@
+schema_version: "0.2"
+purpose: "Tracked historical registry for completed or rejected potential optimization options."
+
+rules:
+  - "Keep original option fields intact so the decision remains understandable without Git archaeology."
+  - "Every entry records when it left the active registry and its source registry."
+  - "Do not place candidate or active options here."
+
+statuses:
+  implemented: "Implemented in workspace rules, routing, docs, or tooling."
+  rejected: "Considered and intentionally not pursued."
+
+options:
+  - id: "OPT-20260703-001"
+    title: "Markdown zh-CN companion synchronization"
+    status: "implemented"
+    archived_at: "2026-07-18"
+    source_registry: "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml"
+    trigger_when:
+      - "A Markdown usage guide, prompt template, or project-context doc has a same-name .zh-CN.md companion."
+      - "A developer notices that an English doc update left a Chinese companion stale."
+    current_resolution:
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml tracks registered pairs and watched directories."
+      - "AGENTS.md requires checking that registry for Markdown edits."
+      - "scripts/check_doc_pairs.py reports changed registered primaries whose companions were not changed."
+    related_files:
+      - "PROJECT_CONTEXT/doc_pair_registry.yaml"
+      - "scripts/check_doc_pairs.py"
+
+  - id: "OPT-20260703-002"
+    title: "Capture direct developer adjustments before they become residual drift"
+    status: "implemented"
+    archived_at: "2026-07-18"
+    source_registry: "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml"
+    trigger_when:
+      - "The user or a developer says a rule should be remembered for future work."
+      - "A useful adjustment exists only in conversation or a one-off edit, with no route or policy home."
+    current_resolution:
+      - "AGENTS.md instructs agents to encode reusable guidance in the smallest owning layer or record it here."
+      - "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml keeps low-status candidates outside the active todo list."
+      - "PROJECT_CONTEXT/knowledge_registry.yaml registers this file for bounded retrieval."
+    related_files:
+      - "AGENTS.md"
+      - "PROJECT_CONTEXT/potential_for_future/optimization_options.yaml"
+      - "PROJECT_CONTEXT/knowledge_registry.yaml"

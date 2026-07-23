@@ -28,6 +28,16 @@ bounded low-risk records from a validated testing registration, inside that
 agent's exact subdirectory. Experiment records are evidence, not activation or
 authority.
 
+`reports/agent-requests/` and `reports/agent-experiments/` are controlled
+recording surfaces, not generated snapshot collections. They may remain empty
+when no request or experiment is active. `agent-experiments` is opt-in and
+should not be populated merely to make the directory appear non-empty.
+
+Historical context reports belong under `PROJECT_CONTEXT/reports/history/` and
+are not included in current report freshness checks. The historical Hermes
+diagnostics were moved there; `reports/hermes/` is retired and is no longer an
+authorized write surface.
+
 `PROJECT_CONTEXT/` is a human and agent memory layer, not a generated report layer. Its summaries may point to reports, but they do not replace snapshot headers or report regeneration rules.
 
 ## Truth Sources
@@ -132,5 +142,9 @@ Keep historical governance reports unless superseded intentionally:
 - `manifest_validation_report.md`
 - `migration_dry_run_report.md`
 - `manifest_portability_report.md`
+
+These retained reports must declare `lifecycle: historical` and
+`status: retired` in their front matter when they no longer represent current
+state.
 
 Generated per-character reports may be retained or ignored according to each character's Git/privacy policy.

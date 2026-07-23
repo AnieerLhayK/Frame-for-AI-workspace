@@ -1,0 +1,19 @@
+# Canonical knowledge topic.
+topics:
+  reporting:
+    title: Snapshot reports, freshness, and regeneration
+    aliases:
+    - report
+    - freshness
+    - stale report
+    - health report
+    - 工程报告
+    - 报告过期
+    - 报告刷新
+    entries:
+    - path: shared/reporting_policy.md
+      layer: shared
+      purpose: Authoritative report snapshot and regeneration policy.
+    - path: scripts/report_status.py
+      layer: tooling
+      purpose: Read-only current report freshness checker.

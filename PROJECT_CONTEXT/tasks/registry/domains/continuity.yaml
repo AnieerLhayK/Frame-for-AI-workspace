@@ -1,0 +1,167 @@
+# Canonical task definitions for the PROJECT_CONTEXT task domain.
+tasks:
+  cleanup_migration:
+    use_when:
+    - Deleting legacy directories, moving tool binaries, migrating data, or changing
+      local deployment paths.
+    use_when_zh:
+    - 删除遗留目录、移动工具二进制文件、迁移数据或更改本地部署路径
+    required:
+    - AGENTS.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - workspace_manifest.yaml
+    - shared/manifest_portability_policy.md
+    - shared/workspace_path_policy.md
+    - git status --short --untracked-files=all
+    - explicit user approval for every destructive path
+    optional:
+    - scripts/migration_dry_run.py
+    - scripts/check_links.ps1
+    - shared/session_continuity_policy.md
+    - PROJECT_CONTEXT/continuity/session_migrations.json
+    - scripts/session_continuity.py
+    ignore:
+    - reports/legacy_git_metadata/
+    - private corpus material
+    prompt:
+    - cleanup_migration
+    tool_profile: cleanup_migration
+    ledger: true
+    write_scope:
+      - AGENTS.md
+      - ARCHITECTURE.md
+      - README.md
+      - README.zh-CN.md
+      - PROJECT_CONTEXT/
+      - reports/
+      - scripts/
+      - shared/
+      - USAGE_GUIDES/
+      - WORKSPACE_ENGINEERING/
+    validation:
+    - python scripts/validate_manifest.py when manifest changes
+    - powershell -ExecutionPolicy Bypass -File scripts/check_links.ps1 when projections
+      change
+    - python scripts/workspace_cli.py sessions audit when source paths used by agents
+      move
+  session_continuity:
+    use_when:
+    - Auditing, backing up, mapping, or recovering Claude Code or OpenCode sessions
+      after source paths move.
+    use_when_zh:
+    - 审计、备份、映射或恢复 Claude Code 或 OpenCode 会话（在源路径移动后）
+    required:
+    - workspace_manifest.yaml
+    - shared/session_continuity_policy.md
+    - PROJECT_CONTEXT/continuity/session_migrations.json
+    - scripts/session_continuity.py
+    optional:
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/continuity/session_handoff.md
+    - tool-native session list or export output
+    ignore:
+    - private conversation content beyond metadata needed for continuity
+    - unrelated skill implementation
+    - reports/
+    prompt:
+    - cleanup_migration
+    tool_profile: cleanup_migration
+    ledger: true
+    write_scope:
+    - workspace_manifest.yaml
+    - shared/session_continuity_policy.md
+    - PROJECT_CONTEXT/continuity/session_migrations.json
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/continuity/session_handoff.md
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - scripts/session_continuity.py
+    - scripts/tests/workspace/test_session_continuity.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - explicitly approved external session backup paths
+    validation:
+    - python -m unittest scripts.tests.workspace.test_session_continuity scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py sessions audit
+    - python scripts/validate_manifest.py
+    - git diff --check
+  task_outcome_records:
+    use_when:
+    - Creating, validating, summarizing, or evolving structured task outcome records
+      and their ledger integration.
+    use_when_zh:
+    - 创建、验证、汇总或演进结构化任务结果记录及其与任务台账的集成。
+    required:
+    - PROJECT_CONTEXT/tasks/records/README.md
+    - PROJECT_CONTEXT/tasks/records/schema.json
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - scripts/task_records.py
+    - scripts/workspace/task_records.py
+    - scripts/workspace/resolve_task_context.py
+    - scripts/task_ledger.py
+    - scripts/workflow_check.py
+    - scripts/verify_change_scope.py
+    - scripts/agent_governance.py
+    - scripts/tests/workspace/test_task_records.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/tests/workspace/test_workflow_check.py
+    - scripts/workspace_cli.py
+    - AGENTS.md
+    - shared/workspace_policy.md
+    - shared/agent_governance_policy.md
+    optional:
+    - scripts/workspace_summary.py
+    - scripts/tests/workspace/test_workspace_summary.py
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    ignore:
+    - provider transcripts, credentials, raw prompts, and volatile tool logs
+    - generated reports unless a report task explicitly owns them
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/
+    - PROJECT_CONTEXT/tasks/ledger/
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/README.md
+    - PROJECT_CONTEXT/README.zh-CN.md
+    - PROJECT_CONTEXT/tasks/ledger.md
+    - ARCHITECTURE.md
+    - USAGE_GUIDES/prompt_registry.yaml
+    - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.md
+    - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.zh-CN.md
+    - scripts/publish_public.py
+    - scripts/resolve_task_context.py
+    - scripts/workspace/resolve_task_context.py
+    - scripts/task_records.py
+    - scripts/workspace/task_records.py
+    - scripts/task_ledger.py
+    - scripts/workflow_check.py
+    - scripts/verify_change_scope.py
+    - scripts/agent_governance.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workflow_check.py
+    - scripts/tests/platform/test_platform_agent_guards.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - AGENTS.md
+    - shared/workspace_policy.md
+    - shared/agent_governance_policy.md
+    - .claude/hooks/workspace_boundary_guard.ps1
+    - .opencode/plugins/workspace-governance.js
+    - reasonix.toml
+    - scripts/workspace_summary.py
+    - scripts/tests/workspace/test_task_records.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/tests/workspace/test_workspace_summary.py
+    validation:
+    - python -m unittest scripts.tests.workspace.test_task_records scripts.tests.workspace.test_resolve_task_context
+      scripts.tests.workspace.test_workflow_check scripts.tests.workspace.test_workspace_summary
+      scripts.tests.workspace.test_workspace_cli scripts.tests.workspace.test_agent_governance
+      scripts.tests.platform.test_platform_agent_guards
+    - python scripts/task_ledger.py validate
+    - python scripts/task_records.py validate
+    - python scripts/workspace_cli.py records summary
+    - git diff --check

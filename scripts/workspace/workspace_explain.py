@@ -8,10 +8,11 @@ from typing import Any
 import yaml
 
 
+from scripts.workspace.project_context import load_knowledge_registry, load_task_registry
 from scripts.workspace.runtime import WORKSPACE_ROOT
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
-TASK_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "task_registry.yaml"
-KNOWLEDGE_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "knowledge_registry.yaml"
+TASK_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
+KNOWLEDGE_REGISTRY_PATH = WORKSPACE_ROOT / "PROJECT_CONTEXT" / "knowledge" / "index.yaml"
 
 MECHANISMS: dict[str, dict[str, Any]] = {
     "task-routing": {
@@ -23,8 +24,8 @@ MECHANISMS: dict[str, dict[str, Any]] = {
             "workspace preflight <task-id>",
         ],
         "sources": [
-            "PROJECT_CONTEXT/task_registry.yaml",
-            "PROJECT_CONTEXT/context_budget.md",
+            "PROJECT_CONTEXT/tasks/registry/index.yaml",
+            "PROJECT_CONTEXT/governance/context_budget.md",
             "USAGE_GUIDES/prompt_registry.yaml",
             "scripts/resolve_task_context.py",
         ],
@@ -224,8 +225,8 @@ def test_candidates(path: str) -> list[str]:
 def explain_path(path: str) -> dict[str, Any]:
     normalized = normalize_path(path)
     manifest = load_yaml(MANIFEST_PATH)
-    tasks = load_yaml(TASK_REGISTRY_PATH)
-    knowledge = load_yaml(KNOWLEDGE_REGISTRY_PATH)
+    tasks = load_task_registry()
+    knowledge = load_knowledge_registry()
     exists = (WORKSPACE_ROOT / normalized).exists()
     return {
         "mode": "path",
@@ -261,7 +262,7 @@ def score_topic(query: str, topic_id: str, topic: dict[str, Any]) -> int:
 
 
 def explain_topic(query: str, limit: int) -> dict[str, Any]:
-    registry = load_yaml(KNOWLEDGE_REGISTRY_PATH)
+    registry = load_knowledge_registry()
     matches = []
     for topic_id, topic in (registry.get("topics") or {}).items():
         score = score_topic(query, topic_id, topic)

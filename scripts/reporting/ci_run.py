@@ -18,9 +18,12 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
+import json
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
@@ -40,6 +43,41 @@ INFRA_DEPENDENT_MODULES: set[str] = {
 FAILED_LINE_RE = re.compile(
     r"^FAILED\s+(?P<module>.+?\.py)",
 )
+
+
+@dataclass(frozen=True)
+class TestSuite:
+    """A pytest suite with the import root required by its tests."""
+
+    name: str
+    cwd: Path
+    test_path: Path
+
+
+def build_test_suites(root: Path | None = None) -> tuple[TestSuite, ...]:
+    """Return governed suites with isolated working directories.
+
+    Some standalone packages intentionally use local imports (for example,
+    ``qq_raw_filter`` and the disk-scan ``scripts`` package). Running all
+    tests from the workspace root makes the root ``scripts`` package shadow
+    those local packages. Each suite therefore runs from its own package
+    root, while the workspace suite keeps the historical root import surface.
+    """
+    workspace_root = root or get_workspace_root()
+    qq_root = (
+        workspace_root
+        / "packages"
+        / "character-system"
+        / "engineering"
+        / "corpus-preparation"
+        / "qq-raw-material-filter"
+    )
+    disk_scan_root = workspace_root / "skills" / "disk-scan-reporter"
+    return (
+        TestSuite("workspace", workspace_root, Path("scripts/tests")),
+        TestSuite("qq-raw-material-filter", qq_root, Path("tests")),
+        TestSuite("disk-scan-reporter", disk_scan_root, Path("tests")),
+    )
 
 
 def get_workspace_root() -> Path:
@@ -67,6 +105,33 @@ def run_pytest(extra_args: list[str] | None = None) -> subprocess.CompletedProce
         timeout=180,
     )
     return result
+
+
+def run_test_suites(
+    extra_args: list[str] | None = None,
+    *,
+    verbose: bool = True,
+) -> list[tuple[TestSuite, subprocess.CompletedProcess[str]]]:
+    """Run all pytest suites from their package-local import roots."""
+    results: list[tuple[TestSuite, subprocess.CompletedProcess[str]]] = []
+    for suite in build_test_suites():
+        cmd = [sys.executable, "-m", "pytest", "-q", str(suite.test_path)]
+        if extra_args:
+            cmd.extend(extra_args)
+        if verbose:
+            print(f"[ci_run] Suite:   {suite.name}")
+            print(f"[ci_run] Running: {' '.join(cmd)}")
+            print(f"[ci_run] CWD:     {suite.cwd}")
+            print()
+        result = subprocess.run(
+            cmd,
+            cwd=suite.cwd,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        results.append((suite, result))
+    return results
 
 
 def classify_failures(stdout: str) -> tuple[set[str], set[str]]:
@@ -108,55 +173,81 @@ def has_collection_error(stdout: str) -> bool:
     )
 
 
-def main() -> int:
-    extra_args = sys.argv[1:] if len(sys.argv) > 1 else []
-    result = run_pytest(extra_args)
+def summarize_results(
+    suite_results: list[tuple[TestSuite, subprocess.CompletedProcess[str]]],
+) -> dict[str, object]:
+    """Return the stable, machine-readable CI classification."""
+    core_failures: set[str] = set()
+    infra_failures: set[str] = set()
+    suites: list[dict[str, object]] = []
 
-    core_failures, infra_failures = classify_failures(result.stdout)
-    if has_collection_error(result.stdout):
-        core_failures.add("<pytest collection>")
-    elif result.returncode != 0 and not core_failures and not infra_failures:
-        core_failures.add(f"<pytest exit {result.returncode}>")
+    for suite, result in suite_results:
+        suite_core, suite_infra = classify_failures(result.stdout)
+        core_failures.update(
+            f"{suite.name}: {module}" for module in suite_core
+        )
+        infra_failures.update(
+            f"{suite.name}: {module}" for module in suite_infra
+        )
+        if has_collection_error(result.stdout):
+            core_failures.add(f"{suite.name}: <pytest collection>")
+        elif result.returncode != 0 and not suite_core and not suite_infra:
+            core_failures.add(f"{suite.name}: <pytest exit {result.returncode}>")
+        suites.append({"name": suite.name, "returncode": result.returncode})
 
-    # Print test output (last section, most useful)
-    lines = result.stdout.strip().split("\n")
-    summary_lines = [l for l in lines if l.startswith("===") or l.startswith("FAILED") or l.startswith("PASSED") or "passed" in l and "failed" in l]
-    if summary_lines:
+    return {
+        "status": "FAIL" if core_failures else "PASS",
+        "core_failures": sorted(core_failures),
+        "infra_failures": sorted(infra_failures),
+        "suites": suites,
+    }
+
+
+def render_text(
+    payload: dict[str, object],
+    suite_results: list[tuple[TestSuite, subprocess.CompletedProcess[str]]],
+) -> None:
+    """Render the legacy human-oriented output without changing exit semantics."""
+    for suite, result in suite_results:
         print(result.stdout)
-    else:
-        # Full output if no summary found
-        print(result.stdout)
+        if result.stderr.strip():
+            print(
+                f"stderr ({suite.name}): {result.stderr.strip()[-500:]}",
+                file=sys.stderr,
+            )
 
-    if result.stderr.strip():
-        print("stderr:", result.stderr.strip()[-500:], file=sys.stderr)
-
-    # Report
     print()
     print("─" * 48)
+    core_failures = list(payload["core_failures"])
+    infra_failures = list(payload["infra_failures"])
     print(f"  CORE failures: {len(core_failures)} module(s)")
-    for m in sorted(core_failures):
+    for m in core_failures:
         print(f"    {m}")
     print(f"  INFRA failures: {len(infra_failures)} module(s)")
-    for m in sorted(infra_failures):
+    for m in infra_failures:
         print(f"    {m}")
     print("─" * 48)
     print()
 
-    if core_failures:
+    if payload["status"] == "FAIL":
         print("[ci_run] FAIL — core tests failed (blocking)")
-        return 1
-
-    if infra_failures and not core_failures:
+    elif infra_failures:
         print("[ci_run] PASS — only infra-dependent tests failed (non-blocking)")
-        return 0
-
-    if result.returncode == 0:
+    else:
         print("[ci_run] PASS — all tests passed")
-        return 0
 
-    # Fallback (shouldn't reach here)
-    print("[ci_run] PASS — no core failures detected")
-    return 0
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run governed CI test suites.")
+    parser.add_argument("--format", choices=("text", "json"), default="text")
+    args, extra_args = parser.parse_known_args(argv)
+    suite_results = run_test_suites(extra_args, verbose=args.format == "text")
+    payload = summarize_results(suite_results)
+    if args.format == "json":
+        print(json.dumps(payload, sort_keys=True))
+    else:
+        render_text(payload, suite_results)
+    return 1 if payload["status"] == "FAIL" else 0
 
 
 if __name__ == "__main__":

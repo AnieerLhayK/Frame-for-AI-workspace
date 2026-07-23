@@ -1,0 +1,25 @@
+# Canonical knowledge topic.
+topics:
+  skill_design:
+    title: Reusable skill design and architecture methodology
+    aliases:
+    - skill design
+    - skill architecture
+    - skill development
+    - skill 设计
+    - skill 开发
+    - 搭建经验
+    entries:
+    - path: WORKSPACE_ENGINEERING/skill_engineering/skill_design_patterns.md
+      layer: workspace_engineering
+      purpose: Reusable skill role, boundary, and collaboration patterns.
+    - path: WORKSPACE_ENGINEERING/skill_engineering/personal_corpus_preparation.md
+      layer: workspace_engineering
+      purpose: How to define source roles, normalization layers, and personal profiles
+        for character-skill corpora.
+    - path: WORKSPACE_ENGINEERING/architecture_patterns.md
+      layer: workspace_engineering
+      purpose: Workspace and ecosystem architecture patterns.
+    - path: WORKSPACE_ENGINEERING/anti_patterns.md
+      layer: workspace_engineering
+      purpose: Known failure modes and safer alternatives.

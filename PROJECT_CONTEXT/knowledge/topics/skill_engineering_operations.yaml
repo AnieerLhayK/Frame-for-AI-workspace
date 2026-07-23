@@ -1,0 +1,36 @@
+# Canonical knowledge topic.
+topics:
+  skill_engineering_operations:
+    title: Skill generation, diagnosis, and maintenance operations
+    aliases:
+    - character generator
+    - character maintainer
+    - style doctor
+    - skill generation
+    - skill diagnosis
+    - skill maintenance
+    - 工程端
+    - skill 生成
+    - skill 诊断
+    - skill 维护
+    entries:
+    - path: USAGE_GUIDES/REFERENCE/README.md
+      layer: usage_guides
+      purpose: Role-oriented map for runtime, engineering, workflow, and platform
+        reference material.
+    - path: USAGE_GUIDES/REFERENCE/engineering/generation/character-generator.md
+      layer: usage_guides
+      purpose: Detailed character generation responsibilities and invocation guidance.
+    - path: USAGE_GUIDES/REFERENCE/engineering/diagnosis/style-doctor.md
+      layer: usage_guides
+      purpose: Detailed style diagnosis responsibilities and safe usage.
+    - path: USAGE_GUIDES/REFERENCE/engineering/maintenance/character-maintainer.md
+      layer: usage_guides
+      purpose: Detailed character maintenance responsibilities and patch guidance.
+    - path: USAGE_GUIDES/REFERENCE/engineering/production-maintenance-relationships.md
+      layer: usage_guides
+      purpose: Boundaries between generation, diagnosis, and maintenance roles.
+    - path: WORKSPACE_ENGINEERING/skill_engineering/personal_corpus_preparation.md
+      layer: workspace_engineering
+      purpose: Reusable method for preparing uneven personal corpora, source READMEs,
+        and profile guidance before character generation.

@@ -1,0 +1,356 @@
+# Canonical task definitions for the PROJECT_CONTEXT task domain.
+tasks:
+  change_surface_planning:
+    use_when:
+    - Changing the read-only planner that compares alternative file sets for one maintenance
+      goal.
+    use_when_zh:
+    - 修改只读方案规划器（比较一个维护目标的多组备选文件集）
+    required:
+    - PROJECT_CONTEXT/governance/change_surface_policy.md
+    - scripts/plan_change_surface.py
+    - scripts/tests/workspace/test_plan_change_surface.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    optional:
+    - README.md
+    - ARCHITECTURE.md
+    - shared/workspace_policy.md
+    - shared/workspace_path_policy.md
+    ignore:
+    - reports/
+    - private corpus material
+    - platform loading surfaces
+    - unrelated skill implementation
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - AGENTS.md
+    - PROJECT_CONTEXT/governance/change_surface_policy.md
+    - PROJECT_CONTEXT/README.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - README.md
+    - scripts/plan_change_surface.py
+    - scripts/tests/workspace/test_plan_change_surface.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    validation:
+    - python -m unittest scripts.tests.workspace.test_plan_change_surface scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py changes plan developer_interface_tooling --intent
+      tooling
+    - python scripts/resolve_task_context.py change_surface_planning --format json
+    - git diff --check
+  developer_interface_tooling:
+    use_when:
+    - Changing the unified workspace CLI or its command delegation without changing
+      underlying tool behavior.
+    use_when_zh:
+    - 修改统一工作区 CLI 或命令委托行为，不改变底层工具行为
+    required:
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    optional:
+    - README.md
+    - USAGE_GUIDES/QUICK_START/
+    - scripts/resolve_task_context.py
+    - scripts/bootstrap_workspace.py
+    - scripts/validate_manifest.py
+    - scripts/validate_protocols.py
+    - scripts/check_links.ps1
+    - scripts/*_model_advice.py
+    - scripts/tests/workspace/test_*model_advice.py
+    ignore:
+    - reports/
+    - private corpus material
+    - platform loading surfaces
+    - unrelated skill implementation
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - README.md
+    - scripts/workspace_cli.py
+    - scripts/*_model_advice.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/tests/workspace/test_*model_advice.py
+    - USAGE_GUIDES/QUICK_START/
+    validation:
+    - python -m unittest scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py task list
+    - python scripts/workspace_cli.py prompt list
+    - python scripts/workspace_cli.py bootstrap --print-json
+    - git diff --check
+  failure_diagnostics_tooling:
+    use_when:
+    - Changing the read-only developer explanation of required, optional, placeholder,
+      or path-policy failures.
+    use_when_zh:
+    - 修改只读的开发者错误解释界面（解释必需、可选、占位符或路径策略的失败原因）
+    required:
+    - shared/failure_policy.md
+    - scripts/failure_check.py
+    - scripts/tests/workspace/test_failure_check.py
+    optional:
+    - scripts/resolve_task_context.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    ignore:
+    - reports/
+    - private corpus material
+    - platform loading surfaces
+    - skill implementation
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - README.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - scripts/failure_check.py
+    - scripts/tests/workspace/test_failure_check.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    validation:
+    - python -m unittest scripts.tests.workspace.test_failure_check scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py failure check skill_metadata_update --bind target-skill=packages/character-system/engineering/generation/character-generator
+    - python scripts/resolve_task_context.py failure_diagnostics_tooling --format
+      json
+    - git diff --check
+  governance_summary_tooling:
+    use_when:
+    - Changing the read-only workspace version, inventory, Git, or recent-governance
+      summary.
+    use_when_zh:
+    - 修改只读工作区版本、清单、Git 或近期治理摘要
+    required:
+    - workspace_manifest.yaml
+    - scripts/workspace_summary.py
+    - scripts/tests/workspace/test_workspace_summary.py
+    optional:
+    - README.md
+    - PROJECT_CONTEXT/knowledge/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    ignore:
+    - reports/ contents
+    - private corpus material
+    - skill implementation details
+    - task ledger entries beyond the requested recent limit
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - README.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - scripts/workspace_summary.py
+    - scripts/tests/workspace/test_workspace_summary.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    validation:
+    - python -m unittest scripts.tests.workspace.test_workspace_summary scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py summary
+    - python scripts/workspace_cli.py summary --format json
+    - python scripts/resolve_task_context.py governance_summary_tooling
+    - git diff --check
+  ignore_policy_update:
+    use_when:
+    - Splitting root .gitignore rules into independently owned subdirectory ignore
+      files, or documenting where future ignore rules belong, while preserving matching
+      semantics.
+    use_when_zh:
+    - 在保持匹配语义不变的前提下，将根 .gitignore 规则拆分到独立子目录的 ignore 文件。
+    required:
+    - AGENTS.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - .gitignore
+    - existing nested .gitignore files
+    optional:
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - workspace_manifest.yaml
+    - shared/manifest_portability_policy.md
+    - shared/workspace_path_policy.md
+    ignore:
+    - private corpus material
+    - platform projections as editable source
+    - unrelated skill-specific ignore conventions
+    prompt:
+    - minimal_edit
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - AGENTS.md
+    - .gitignore
+    - .claude/
+    - mcp/
+    - reports/
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    validation:
+    - python -m unittest scripts.tests.validation.test_check_doc_pairs
+    - python scripts/check_doc_pairs.py --validate-coverage
+    - git diff --check
+  workspace_developer_experience:
+    use_when:
+    - Changing the integrated human-facing workspace CLI experience across health
+      summaries, task list rendering, help text, explain output, report freshness
+      messaging, or quick-start guidance.
+    use_when_zh:
+    - 改进面向人的 workspace CLI 综合体验，包括 health 分层、任务列表渲染、帮助文本、explain 输出、报告 freshness 提示或
+      quick-start 指南
+    required:
+    - scripts/workspace_cli.py
+    - scripts/workspace_health.py
+    - scripts/check_links.ps1
+    - scripts/setup_links.ps1
+    - scripts/resolve_task_context.py
+    - scripts/workspace_explain.py
+    - scripts/report_status.py
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/tests/workspace/test_workspace_explain.py
+    - scripts/tests/reporting/test_report_status.py
+    optional:
+    - README.md
+    - ARCHITECTURE.md
+    - PROJECT_CONTEXT/knowledge/index.yaml
+    - reports/ current snapshots
+    ignore:
+    - external platform configuration
+    - private corpus material
+    - skill implementation
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - scripts/workspace_cli.py
+    - scripts/workspace_health.py
+    - scripts/check_links.ps1
+    - scripts/setup_links.ps1
+    - scripts/resolve_task_context.py
+    - scripts/workspace_explain.py
+    - scripts/report_status.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/tests/workspace/test_workspace_explain.py
+    - scripts/tests/reporting/test_report_status.py
+    - reports/manifest_validation_report.md
+    - reports/protocol_validation_report.md
+    - reports/workspace_health_report.md
+    - reports/workspace_setup_report.md
+    validation:
+    - python -m unittest scripts.tests.workspace.test_workspace_cli scripts.tests.workspace.test_workspace_health
+      scripts.tests.workspace.test_resolve_task_context scripts.tests.workspace.test_workspace_explain
+      scripts.tests.reporting.test_report_status
+    - python -m unittest discover -s scripts/tests -p "test_*.py"
+    - workspace task list
+    - workspace explain mechanism task-routing
+    - workspace explain path scripts/workspace_cli.py
+    - workspace validate links
+    - workspace --help
+    - workspace reports status --strict
+    - workspace health --with-tests
+    - git diff --check
+  workspace_health_tooling:
+    use_when:
+    - Changing the live read-only workspace health aggregator or its check summaries.
+    use_when_zh:
+    - 修改只读工作区健康聚合器或检查摘要
+    required:
+    - scripts/workspace_health.py
+    - scripts/tests/workspace/test_workspace_health.py
+    optional:
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/workspace_health.py
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - scripts/bootstrap_workspace.py
+    - scripts/find_knowledge.py
+    - scripts/report_status.py
+    - scripts/check_links.ps1
+    ignore:
+    - reports/ contents
+    - private corpus material
+    - skill implementation
+    - platform directories beyond the existing link checker
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - README.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - scripts/workspace_health.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    validation:
+    - python -m unittest scripts.tests.workspace.test_workspace_health scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py health --format json
+    - python scripts/workspace_cli.py health --with-tests
+    - python scripts/resolve_task_context.py workspace_health_tooling --format json
+    - git diff --check
+  workspace_launcher_tooling:
+    use_when:
+    - Changing or installing the user-local short workspace command.
+    use_when_zh:
+    - 修改或安装用户本地的快捷 workspace 命令
+    required:
+    - scripts/workspace_launcher.py
+    - scripts/tests/workspace/test_workspace_launcher.py
+    - the selected user-local bin directory is on PATH
+    - no unmanaged workspace.cmd exists at the target
+    optional:
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    ignore:
+    - PowerShell profile files
+    - system-wide PATH
+    - unrelated commands in user-local bin
+    - skill implementation
+    prompt:
+    - minimal_edit
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - README.md
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
+    - scripts/workspace_launcher.py
+    - scripts/tests/workspace/test_workspace_launcher.py
+    - scripts/workspace_cli.py
+    - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/workspace_health.py
+    - the explicitly selected managed workspace.cmd
+    validation:
+    - python -m unittest scripts.tests.workspace.test_workspace_launcher scripts.tests.workspace.test_workspace_cli
+    - python scripts/workspace_cli.py launcher install --dry-run
+    - python scripts/workspace_cli.py launcher status
+    - python scripts/resolve_task_context.py workspace_launcher_tooling --format json
+    - git diff --check

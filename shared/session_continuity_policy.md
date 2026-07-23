@@ -17,7 +17,7 @@ Before moving a directory that may have been used as an agent working directory:
 2. Create a consistent external backup without overwriting the live store.
 3. Export tool-supported portable session files when available.
 4. Record old-to-new path mappings in
-   `PROJECT_CONTEXT/session_migrations.json`.
+   `PROJECT_CONTEXT/continuity/session_migrations.json`.
 5. Move source and rebuild platform projections.
 6. Run `python scripts/workspace_cli.py sessions audit`.
 

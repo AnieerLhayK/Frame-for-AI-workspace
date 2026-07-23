@@ -1,0 +1,22 @@
+# Canonical knowledge topic.
+topics:
+  governance:
+    title: Authority, versioning, and source-of-truth governance
+    aliases:
+    - governance
+    - authority
+    - source of truth
+    - versioning
+    - 治理
+    - 权限边界
+    - 事实来源
+    entries:
+    - path: shared/workspace_policy.md
+      layer: shared
+      purpose: Workspace-wide role, authority, execution, and exposure policy.
+    - path: packages/character-system/shared/versioning_policy.md
+      layer: shared
+      purpose: Version and report history boundaries.
+    - path: WORKSPACE_ENGINEERING/governance_patterns.md
+      layer: workspace_engineering
+      purpose: Reusable governance patterns.

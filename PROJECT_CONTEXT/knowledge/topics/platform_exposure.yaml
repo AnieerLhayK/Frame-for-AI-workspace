@@ -1,0 +1,22 @@
+# Canonical knowledge topic.
+topics:
+  platform_exposure:
+    title: Platform skill discovery surfaces
+    aliases:
+    - projection
+    - junction
+    - codex skills
+    - opencode skills
+    - 平台暴露
+    - 技能加载
+    - 软链接
+    entries:
+    - path: shared/workspace_path_policy.md
+      layer: shared
+      purpose: Source versus platform projection path rules.
+    - path: shared/workspace_policy.md
+      layer: shared
+      purpose: Exposure, authority, and link ownership policy.
+    - path: workspace_manifest.yaml
+      layer: manifest
+      purpose: Canonical skill, exposure, and projection registry.

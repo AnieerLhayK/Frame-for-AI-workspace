@@ -30,6 +30,8 @@ ENTRYPOINT_MODULES = MappingProxyType(
         "workspace_summary.py": "scripts.workspace.workspace_summary",
         "check_doc_pairs.py": "scripts.validation.check_doc_pairs",
         "validate_manifest.py": "scripts.validation.validate_manifest",
+        "validate_future_register.py": "scripts.validation.validate_future_register",
+        "validate_project_context.py": "scripts.validation.validate_project_context",
         "validate_protocols.py": "scripts.validation.validate_protocols",
         "ci_run.py": "scripts.reporting.ci_run",
         "report_routing_quality.py": "scripts.reporting.report_routing_quality",
@@ -43,6 +45,20 @@ ENTRYPOINT_MODULES = MappingProxyType(
         "qq_raw_filter_public_checks.py": "scripts.publishing.qq_raw_filter_public_checks",
         "sync_chatty_ch_system_repo.py": "scripts.publishing.sync_chatty_ch_system_repo",
         "sync_public_repo.py": "scripts.publishing.sync_public_repo",
+        "sync_public_projections.py": "scripts.publishing.sync_public_projections",
         "sync_qq_raw_filter_repo.py": "scripts.publishing.sync_qq_raw_filter_repo",
+    }
+)
+
+# Root adapters remain behavior-compatible during the staged scripts migration.
+# Entries absent from this registry have been formally retired instead of being
+# kept as empty compatibility shells.
+ENTRYPOINT_LIFECYCLE = MappingProxyType(
+    {
+        name: (
+            "deprecated" if module.startswith(("scripts.workspace", "scripts.validation", "scripts.reporting"))
+            else "supported_until_replacement"
+        )
+        for name, module in ENTRYPOINT_MODULES.items()
     }
 )

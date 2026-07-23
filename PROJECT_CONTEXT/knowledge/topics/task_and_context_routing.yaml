@@ -1,0 +1,43 @@
+# Canonical knowledge topic.
+topics:
+  task_and_context_routing:
+    title: Task routing, context budget, and alternative change surfaces
+    aliases:
+    - task registry
+    - context budget
+    - change surface
+    - token saving
+    - 任务管理
+    - 上下文预算
+    - 节省 token
+    - 修改方案
+    entries:
+    - path: PROJECT_CONTEXT/tasks/registry/index.yaml
+      layer: project_context
+      purpose: Exact task ids, bounded context, write scope, and validation.
+    - path: PROJECT_CONTEXT/governance/context_budget.md
+      layer: project_context
+      purpose: Token measurement and context expansion policy.
+    - path: PROJECT_CONTEXT/governance/change_surface_policy.md
+      layer: project_context
+      purpose: How to compare multiple plausible file sets.
+    - path: PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+      layer: project_context
+      purpose: Lightweight registry for Markdown files and directories with same-name
+        zh-CN companions.
+    - path: PROJECT_CONTEXT/potential_for_future/README.md
+      layer: project_context
+      purpose: Index for potential improvements and potential risks that are not active
+        work.
+    - path: PROJECT_CONTEXT/potential_for_future/optimization_options.yaml
+      layer: project_context
+      purpose: Low-status registry for potential integration improvements that are
+        not active todo items.
+    - path: PROJECT_CONTEXT/potential_for_future/risk_register.yaml
+      layer: project_context
+      purpose: Low-status registry for potential structural, privacy, publication,
+        and migration risks.
+    - path: PROJECT_CONTEXT/potential_for_future/history/
+      layer: project_context
+      purpose: Tracked terminal optimization and risk decisions; load only for named
+        audits or migrations.
