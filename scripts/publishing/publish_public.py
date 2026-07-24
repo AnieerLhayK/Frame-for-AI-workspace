@@ -124,6 +124,13 @@ EXCLUDED_PATHS = {
     "scripts/tests/publishing/test_publish_chatty_ch_system.py",
     "scripts/tests/publishing/test_publish_qq_raw_filter.py",
     "scripts/tests/publishing/test_sync_qq_raw_filter_repo.py",
+    # The public skill-collection publisher depends on the private skills
+    # source, which Frame intentionally excludes.
+    "scripts/publishing/publish_skill_collection.py",
+    "scripts/publishing/publish_check_skill_collection.py",
+    "scripts/publishing/sync_skill_collection_repo.py",
+    "scripts/sync_skill_collection_repo.py",
+    "scripts/tests/publishing/test_publish_skill_collection.py",
     # This test exercises the private generator's machine-path substitution
     # table. The public skeleton receives a scrubbed generator, so retaining
     # the test would make the generated public suite fail by design.

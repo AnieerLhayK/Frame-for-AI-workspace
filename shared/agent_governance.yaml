@@ -115,6 +115,13 @@ managed_platform_publishers:
     staging_path: ${DATA_ROOT}/codex/cache/staging/qq-chat-raw-filter
     remote_urls:
       - git@github.com:AnieerLhayK/qq-chat-raw-filter.git
+  anieer_skills:
+    publisher_script: scripts/sync_skill_collection_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/Anieer_skills
+    remote_urls:
+      - git@github.com:AnieerLhayK/Anieer_skills.git
+    contract_file: skills/far-repo-governor/references/skill-collection.contract.json
+    license_file: skills/far-repo-governor/assets/licenses/MIT.txt
 
 change_risk_policy:
   elevated_path_patterns:

@@ -56,8 +56,13 @@ tasks:
     - scripts/publishing/sync_public_repo.py
     - scripts/publishing/sync_chatty_ch_system_repo.py
     - scripts/publishing/sync_qq_raw_filter_repo.py
+    - scripts/publishing/publish_skill_collection.py
+    - scripts/publishing/publish_check_skill_collection.py
+    - scripts/publishing/sync_skill_collection_repo.py
+    - scripts/sync_skill_collection_repo.py
     - scripts/tests/publishing/test_publish_public.py
     - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
+    - scripts/tests/publishing/test_publish_skill_collection.py
     - scripts/tests/validation/test_validate_project_context.py
     validation:
     - python -m pytest -q scripts/tests/publishing/test_sync_public_projections.py
