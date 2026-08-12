@@ -63,6 +63,31 @@ Key rules demonstrated in practice:
 - **Backups** of replaced projection content may be preserved under a machine-local backup root, but they are not authoritative.
 - **Projection backups are read-only archives** — they document what was replaced, not what should be restored.
 
+### Managed Public Projection Release Gate
+
+**Evidence level: validated locally (2026-08).** A public projection is ready
+only after its registered publisher regenerates a clean staging checkout,
+validates the generated tree, and audits the pushed remote revision. Treat a
+successful source test as necessary but insufficient evidence for a release.
+
+- Invoke generators and checkers as Python modules (for example,
+  `python -m package.module`), not by executing a file path. Module invocation
+  preserves the import root after script directories move.
+- Keep release tests portable: derive paths from the runtime workspace root so
+  the same checks pass in a managed staging worktree and a normal checkout.
+- Make the projection contract executable: assert required public entrypoints,
+  reject forbidden paths and text, and run the relevant functional tests in
+  staging before a remote commit.
+- Emit a small machine-readable provenance record with the source revision,
+  publisher, and generator. Re-read that record from the remote after push.
+- If any generated-tree check fails, repair the authoritative source or
+  publisher and regenerate. Never patch the public checkout to make an audit
+  pass.
+
+The release gate is most valuable when the publisher registry contains several
+different projections: one successful repository does not prove that the
+remaining publishers still have valid entrypoints, boundaries, or contracts.
+
 ### Context Resolver As Single Entry Point
 
 The resolver (`scripts/workspace/resolve_task_context.py`) unifies three registries into one bounded task view:
