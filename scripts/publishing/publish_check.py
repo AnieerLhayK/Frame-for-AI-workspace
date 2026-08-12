@@ -58,6 +58,7 @@ REQUIRED_EXTENSION_LAYER_FILES: dict[str, set[str]] = {
 # Paths that MUST exist
 REQUIRED_PATHS: set[str] = {
     "workspace_manifest.yaml",
+    "PROJECTION_SOURCE.json",
     "skills/README.md",
     "external-skills/README.md",
     "AGENTS.md",

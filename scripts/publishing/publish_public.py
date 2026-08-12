@@ -949,6 +949,28 @@ def write_file(out_dir: Path, rel_path: str, content: str) -> None:
     target.write_text(content, encoding="utf-8")
 
 
+def projection_source_record(publisher: str, generator: str) -> str:
+    """Return public-safe provenance for a generated projection."""
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=WORKSPACE_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode or not result.stdout.strip():
+        raise RuntimeError("cannot resolve workspace source revision")
+    return json.dumps(
+        {
+            "schema_version": "1.0",
+            "source_revision": result.stdout.strip(),
+            "publisher": publisher,
+            "generator": generator,
+        },
+        ensure_ascii=False,
+        indent=2,
+    ) + "\n"
+
+
 def copy_and_scrub(src_root: Path, out_dir: Path, rel_path: str) -> None:
     """Copy a file, scrubbing its content in transit."""
     src = (src_root / rel_path).resolve()
@@ -1160,6 +1182,14 @@ def main() -> int:
         write_file(out_dir, "PATH_MAPPING_REFERENCE.md", generate_path_mapping_md())
         write_file(out_dir, "BEGINNER_GUIDE.md", generate_beginner_guide_md(repo_name))
         write_file(out_dir, "ONBOARDING.md", generate_onboarding_md(repo_name))
+        write_file(
+            out_dir,
+            "PROJECTION_SOURCE.json",
+            projection_source_record(
+                "scripts/publishing/sync_public_repo.py",
+                "scripts/publishing/publish_public.py",
+            ),
+        )
         write_file(out_dir, "scripts/setup_public_workspace.py", generate_public_setup_py())
         for layer in PUBLIC_EXTENSION_LAYERS:
             write_file(out_dir, f"{layer}/README.md", EXTENSION_LAYER_READMES[layer])

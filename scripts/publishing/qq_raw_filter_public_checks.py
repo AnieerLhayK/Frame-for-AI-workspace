@@ -7,6 +7,7 @@ from pathlib import Path
 
 REQUIRED_PATHS = {
     "README.md",
+    "PROJECTION_SOURCE.json",
     ".github/workflows/ci.yml",
     "pyproject.toml",
     "qce_block_filter.py",
