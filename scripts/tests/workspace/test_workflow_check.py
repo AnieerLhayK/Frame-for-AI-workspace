@@ -4,7 +4,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from scripts.workflow_check import check_workflow
+from scripts.workspace.workflow_check import check_workflow
 
 
 class WorkflowCheckTests(unittest.TestCase):
@@ -23,14 +23,14 @@ class WorkflowCheckTests(unittest.TestCase):
             "recommended_next_steps": [],
         }
         with (
-            patch("scripts.workflow_check.resolve_task", return_value=task),
-            patch("scripts.workflow_check.active_registration", return_value={
+            patch("scripts.workspace.workflow_check.resolve_task", return_value=task),
+            patch("scripts.workspace.workflow_check.active_registration", return_value={
                 "task_id": "TASK-20260715-001",
                 "operation": "workspace_write",
                 "path": "PROJECT_CONTEXT/tasks/records/2026/07/15/TASK-20260715-001.json",
                 "status": "active",
             }),
-            patch("scripts.workflow_check.verify_changes", return_value=verification) as verify,
+            patch("scripts.workspace.workflow_check.verify_changes", return_value=verification) as verify,
         ):
             result = check_workflow(
                 "demo",
@@ -59,8 +59,8 @@ class WorkflowCheckTests(unittest.TestCase):
             "recommended_next_steps": [],
         }
         with (
-            patch("scripts.workflow_check.resolve_task", return_value=task),
-            patch("scripts.workflow_check.verify_changes", return_value=verification),
+            patch("scripts.workspace.workflow_check.resolve_task", return_value=task),
+            patch("scripts.workspace.workflow_check.verify_changes", return_value=verification),
         ):
             result = check_workflow(
                 "demo",

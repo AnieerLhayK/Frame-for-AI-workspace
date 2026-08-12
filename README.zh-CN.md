@@ -16,7 +16,7 @@
 
 ```bash
 python scripts/setup_public_workspace.py
-python scripts/workspace_cli.py health
+python -m scripts.workspace.workspace_cli health
 python -m pytest scripts/tests -q
 ```
 

@@ -75,6 +75,12 @@ directories:
     companion_suffix: ".zh-CN.md"
     sync_level: "semantic"
     note: "Report-area READMEs with bilingual companions."
+  - path: "shared"
+    pattern: "README.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Shared workspace and package ownership READMEs with bilingual companions."
   - path: "packages/character-system"
     pattern: "README.md"
     recursive: true
@@ -89,7 +95,7 @@ directories:
     note: "Tracked adapted external-skill landing area with bilingual entry documentation."
 
 pairs:
-  - primary: "WORKSPACE_ENGINEERING/context_structure_refactoring.md"
-    companion: "WORKSPACE_ENGINEERING/context_structure_refactoring.zh-CN.md"
+  - primary: "WORKSPACE_ENGINEERING/methods/context_structure_refactoring.md"
+    companion: "WORKSPACE_ENGINEERING/methods/context_structure_refactoring.zh-CN.md"
     sync_level: "semantic"
     note: "Bilingual reusable method for PROJECT_CONTEXT and scripts structural migrations."

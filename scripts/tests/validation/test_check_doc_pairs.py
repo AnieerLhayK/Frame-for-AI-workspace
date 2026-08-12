@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.check_doc_pairs import (
+from scripts.validation.check_doc_pairs import (
     analyze_changes,
     companion_for,
     primary_for,

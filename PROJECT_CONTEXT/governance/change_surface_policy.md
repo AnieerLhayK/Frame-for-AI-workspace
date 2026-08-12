@@ -54,7 +54,7 @@ The verifier reads unstaged, staged, and untracked paths by default. It marks
 high-risk changes but permits them when the task explicitly declares the path.
 It never reverts, deletes, cleans, stages, commits, or moves a file.
 
-Risk classification is owned by `shared/agent_governance.yaml`, reusing the
+Risk classification is owned by `shared/governance/agent_governance.yaml`, reusing the
 existing surface classes rather than creating a parallel permission system.
 The verifier reports `normal`, `elevated`, or `high`, plus affected surfaces,
 confirmation requirements, and worktree recommendations. High risk is a review

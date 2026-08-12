@@ -53,17 +53,17 @@ pip install pytest
 python -m pytest scripts/tests -q
 
 # Check workspace health
-python scripts/workspace_cli.py health
+python -m scripts.workspace.workspace_cli health
 
 # List available tasks
-python scripts/workspace_cli.py task list
+python -m scripts.workspace.workspace_cli task list
 
 # Explain how a mechanism or path connects to the workspace
-python scripts/workspace_cli.py explain mechanism task-routing
-python scripts/workspace_cli.py explain path scripts/workspace_cli.py
+python -m scripts.workspace.workspace_cli explain mechanism task-routing
+python -m scripts.workspace.workspace_cli explain path scripts/workspace/workspace_cli.py
 
 # View agent registrations
-python scripts/workspace_cli.py agent list
+python -m scripts.workspace.workspace_cli agent list
 ```
 
 ## Step 5: Register Your Own Skills
@@ -78,4 +78,4 @@ Each skill needs:
 4. `execution_modes` specifying write permissions
 5. `exposures[]` declaring which platforms can discover the skill
 
-Use `python scripts/workspace_cli.py skill init <id>` to scaffold a new skill.
+Use `python -m scripts.workspace.workspace_cli skill init <id>` to scaffold a new skill.

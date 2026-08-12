@@ -7,9 +7,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from scripts.workspace.runtime import SCRIPTS_ROOT as SCRIPTS_DIR
 from scripts.workspace.runtime import WORKSPACE_ROOT
-from scripts.workspace.entrypoints import ENTRYPOINT_MODULES
 
 
 def powershell_executable() -> str:
@@ -21,38 +19,15 @@ def powershell_executable() -> str:
     return shutil.which("powershell.exe") or shutil.which("pwsh") or "powershell.exe"
 
 
-def canonical_command(command: Sequence[str]) -> list[str]:
-    """Resolve an internal root-adapter invocation to its canonical module.
-
-    The root files remain public, behavior-compatible adapters during the
-    staged migration.  Workspace-owned orchestration does not execute them,
-    however: it invokes their deep implementation directly.
-    """
-    resolved = list(command)
-    if len(resolved) < 2 or Path(resolved[1]).suffix != ".py":
-        return resolved
-
-    try:
-        entrypoint = Path(resolved[1]).resolve()
-    except OSError:
-        return resolved
-    if entrypoint.parent != SCRIPTS_DIR:
-        return resolved
-
-    module = ENTRYPOINT_MODULES.get(entrypoint.name)
-    if module is None:
-        return resolved
-    return [resolved[0], "-m", module, *resolved[2:]]
-
-
 def run_command(command: Sequence[str]) -> int:
-    return subprocess.run(canonical_command(command), cwd=WORKSPACE_ROOT, check=False).returncode
+    return subprocess.run(list(command), cwd=WORKSPACE_ROOT, check=False).returncode
 
 
 def resolver_command(args: argparse.Namespace, *, strict_budget: bool = False) -> list[str]:
     command = [
         sys.executable,
-        str(SCRIPTS_DIR / "resolve_task_context.py"),
+        "-m",
+        "scripts.workspace.resolve_task_context",
     ]
 
     if args.action == "list":
@@ -118,7 +93,7 @@ def build_parser() -> argparse.ArgumentParser:
             "      Register a task before its first workspace mutation.\n"
             "  workspace knowledge find \"topic\"\n"
             "      Find the smallest registered reading entry points.\n"
-            "  workspace explain path scripts/workspace_cli.py\n"
+            "  workspace explain path scripts/workspace/workspace_cli.py\n"
             "      Explain a path's layer, related tasks, topics, and likely tests.\n"
             "  workspace workflow check <task-id> --record-id TASK-YYYYMMDD-001\n"
             "      Verify registered work and current Git changes before finalization.\n"
@@ -487,7 +462,7 @@ def dispatch(args: argparse.Namespace) -> int:
         start_path = str(Path(args.start).resolve())
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "bootstrap_workspace.py"),
+            "-m", "scripts.workspace.bootstrap_workspace",
             "--start",
             start_path,
             "--max-parent-depth",
@@ -497,7 +472,7 @@ def dispatch(args: argparse.Namespace) -> int:
             command.append("--print-json")
         return run_command(command)
     if args.command == "health":
-        command = [sys.executable, str(SCRIPTS_DIR / "workspace_health.py")]
+        command = [sys.executable, "-m", "scripts.workspace.workspace_health"]
         if args.with_tests:
             command.append("--with-tests")
         command.extend(["--format", args.format])
@@ -506,7 +481,7 @@ def dispatch(args: argparse.Namespace) -> int:
         return run_command(
             [
                 sys.executable,
-                str(SCRIPTS_DIR / "workspace_summary.py"),
+                "-m", "scripts.workspace.workspace_summary",
                 "--recent",
                 str(max(1, args.recent)),
                 "--format",
@@ -516,7 +491,7 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "sessions":
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "session_continuity.py"),
+            "-m", "scripts.workspace.session_continuity",
             "--format",
             args.format,
         ]
@@ -526,7 +501,7 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "agent":
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "agent_governance.py"),
+            "-m", "scripts.workspace.agent_governance",
             args.action,
         ]
         if args.action == "check":
@@ -579,7 +554,7 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "skill":
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "skill_lifecycle.py"),
+            "-m", "scripts.workspace.skill_lifecycle",
             args.action,
         ]
         if args.action == "init":
@@ -608,7 +583,7 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "launcher":
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "workspace_launcher.py"),
+            "-m", "scripts.workspace.workspace_launcher",
             args.action,
             "--format",
             args.format,
@@ -623,7 +598,7 @@ def dispatch(args: argparse.Namespace) -> int:
             return run_command(
                 [
                     sys.executable,
-                    str(SCRIPTS_DIR / "claude_model_advice.py"),
+                    "-m", "scripts.workspace.claude_model_advice",
                     args.state,
                     "--project-root",
                     args.project_root,
@@ -634,7 +609,7 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "failure":
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "failure_check.py"),
+            "-m", "scripts.workspace.failure_check",
             args.task_id,
             "--format",
             args.format,
@@ -646,11 +621,11 @@ def dispatch(args: argparse.Namespace) -> int:
         return run_command(command)
     if args.command == "validate":
         if args.target == "manifest":
-            return run_command([sys.executable, str(SCRIPTS_DIR / "validate_manifest.py")])
+            return run_command([sys.executable, "-m", "scripts.validation.validate_manifest"])
         if args.target == "protocols":
-            return run_command([sys.executable, str(SCRIPTS_DIR / "validate_protocols.py")])
+            return run_command([sys.executable, "-m", "scripts.validation.validate_protocols"])
         if args.target == "future-register":
-            return run_command([sys.executable, str(SCRIPTS_DIR / "validate_future_register.py")])
+            return run_command([sys.executable, "-m", "scripts.validation.validate_future_register"])
         if args.target == "project-context":
             return run_command([sys.executable, "-m", "scripts.validation.validate_project_context"])
         command = [
@@ -659,13 +634,13 @@ def dispatch(args: argparse.Namespace) -> int:
             "-ExecutionPolicy",
             "Bypass",
             "-File",
-            str(SCRIPTS_DIR / "check_links.ps1"),
+            str(WORKSPACE_ROOT / "scripts" / "validation" / "check_links.ps1"),
         ]
         if args.manifest_path:
             command.extend(["-ManifestPath", args.manifest_path])
         return run_command(command)
     if args.command == "knowledge":
-        command = [sys.executable, str(SCRIPTS_DIR / "find_knowledge.py")]
+        command = [sys.executable, "-m", "scripts.workspace.find_knowledge"]
         if args.action == "list":
             command.append("--list")
         elif args.action == "validate":
@@ -677,9 +652,9 @@ def dispatch(args: argparse.Namespace) -> int:
         command.extend(["--format", args.format])
         return run_command(command)
     if args.command == "records":
-        return run_command([sys.executable, str(SCRIPTS_DIR / "task_records.py"), *args.args])
+        return run_command([sys.executable, "-m", "scripts.workspace.task_records", *args.args])
     if args.command == "merge":
-        command = [sys.executable, str(SCRIPTS_DIR / "merge_safety.py"), args.target, "--head", args.head, "--strategy", args.strategy, "--format", args.format]
+        command = [sys.executable, "-m", "scripts.workspace.merge_safety", args.target, "--head", args.head, "--strategy", args.strategy, "--format", args.format]
         if args.agent:
             command.extend(["--agent", args.agent])
         if args.record_id:
@@ -689,7 +664,7 @@ def dispatch(args: argparse.Namespace) -> int:
         if args.action == "verify":
             command = [
                 sys.executable,
-                str(SCRIPTS_DIR / "verify_change_scope.py"),
+                "-m", "scripts.workspace.verify_change_scope",
                 args.task_id,
                 "--format",
                 args.format,
@@ -709,7 +684,7 @@ def dispatch(args: argparse.Namespace) -> int:
             return run_command(command)
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "plan_change_surface.py"),
+            "-m", "scripts.workspace.plan_change_surface",
             args.task_id,
             "--intent",
             args.intent,
@@ -726,7 +701,7 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "workflow":
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "workflow_check.py"),
+            "-m", "scripts.workspace.workflow_check",
             args.task_id,
             "--record-id",
             args.record_id,
@@ -748,7 +723,7 @@ def dispatch(args: argparse.Namespace) -> int:
         return run_command(command)
     if args.command == "reports":
         if args.action == "status":
-            command = [sys.executable, str(SCRIPTS_DIR / "report_status.py")]
+            command = [sys.executable, "-m", "scripts.reporting.report_status"]
             for report_id in args.report_id:
                 command.extend(["--report-id", report_id])
             command.extend(["--format", args.format])
@@ -759,11 +734,11 @@ def dispatch(args: argparse.Namespace) -> int:
         refresh_commands = {
             "manifest-validation": [
                 sys.executable,
-                str(SCRIPTS_DIR / "validate_manifest.py"),
+                "-m", "scripts.validation.validate_manifest",
             ],
             "protocol-validation": [
                 sys.executable,
-                str(SCRIPTS_DIR / "validate_protocols.py"),
+                "-m", "scripts.validation.validate_protocols",
             ],
             "workspace": [
                 powershell_executable(),
@@ -771,7 +746,7 @@ def dispatch(args: argparse.Namespace) -> int:
                 "-ExecutionPolicy",
                 "Bypass",
                 "-File",
-                str(SCRIPTS_DIR / "sync_report.ps1"),
+                str(WORKSPACE_ROOT / "scripts" / "reporting" / "sync_report.ps1"),
             ],
         }
         targets = (
@@ -788,7 +763,7 @@ def dispatch(args: argparse.Namespace) -> int:
         output_format = args.format or args.global_format or "text"
         command = [
             sys.executable,
-            str(SCRIPTS_DIR / "workspace_explain.py"),
+            "-m", "scripts.workspace.workspace_explain",
             "--format",
             output_format,
             args.action,

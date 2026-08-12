@@ -14,15 +14,14 @@ tasks:
     - README.md
     - README.zh-CN.md
     - shared/INDEX.md
-    - shared/workspace_policy.md
-    - shared/agent_governance_policy.md
-    - shared/agent_governance.yaml
+    - shared/workspace/workspace_policy.md
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/agent_governance.yaml
     - scripts/publishing/sync_public_projections.py
     - scripts/publishing/sync_public_repo.py
     - scripts/publishing/sync_chatty_ch_system_repo.py
     - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/
-    - scripts/workspace/entrypoints.py
     optional:
     - .github/workflows/
     - PROJECT_CONTEXT/continuity/current_status.md
@@ -45,12 +44,11 @@ tasks:
     - PROJECT_CONTEXT/tasks/records/**
     - PROJECT_CONTEXT/tasks/ledger/**
     - shared/INDEX.md
-    - shared/workspace_policy.md
-    - shared/agent_governance_policy.md
-    - shared/agent_governance.yaml
+    - shared/workspace/workspace_policy.md
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/agent_governance.yaml
     - scripts/publishing/sync_public_projections.py
-    - scripts/sync_public_projections.py
-    - scripts/workspace/entrypoints.py
+    - scripts/publishing/sync_public_projections.py
     - scripts/tests/publishing/test_sync_public_projections.py
     - scripts/publishing/publish_public.py
     - scripts/publishing/sync_public_repo.py
@@ -59,7 +57,7 @@ tasks:
     - scripts/publishing/publish_skill_collection.py
     - scripts/publishing/publish_check_skill_collection.py
     - scripts/publishing/sync_skill_collection_repo.py
-    - scripts/sync_skill_collection_repo.py
+    - scripts/publishing/sync_skill_collection_repo.py
     - scripts/tests/publishing/test_publish_public.py
     - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/test_publish_skill_collection.py
@@ -67,9 +65,9 @@ tasks:
     validation:
     - python -m pytest -q scripts/tests/publishing/test_sync_public_projections.py
     - python -m unittest scripts.tests.publishing.test_publish_public
-    - python scripts/sync_public_projections.py --help
-    - python scripts/validate_protocols.py
-    - python scripts/resolve_task_context.py public_projection_synchronization --format json
+    - python -m scripts.publishing.sync_public_projections --help
+    - python -m scripts.validation.validate_protocols
+    - python -m scripts.workspace.resolve_task_context public_projection_synchronization --format json
     - git diff --check
   report_freshness_tooling:
     use_when:
@@ -78,11 +76,11 @@ tasks:
     use_when_zh:
     - 修改只读报告新鲜度检测或显式报告刷新接口
     required:
-    - shared/reporting_policy.md
-    - scripts/report_status.py
+    - shared/operations/reporting_policy.md
+    - scripts/reporting/report_status.py
     - scripts/tests/reporting/test_report_status.py
-    - scripts/sync_report.ps1
-    - scripts/workspace_cli.py
+    - scripts/reporting/sync_report.ps1
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
     optional:
     - README.md
@@ -101,18 +99,18 @@ tasks:
     - README.md
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/tasks/ledger/README.md
-    - shared/reporting_policy.md
-    - scripts/report_status.py
+    - shared/operations/reporting_policy.md
+    - scripts/reporting/report_status.py
     - scripts/tests/reporting/test_report_status.py
-    - scripts/sync_report.ps1
-    - scripts/workspace_cli.py
+    - scripts/reporting/sync_report.ps1
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
     - reports/
     validation:
     - python -m unittest scripts.tests.reporting.test_report_status scripts.tests.workspace.test_workspace_cli
-    - python scripts/workspace_cli.py reports status --format json
-    - python scripts/validate_protocols.py
-    - powershell -ExecutionPolicy Bypass -File scripts/sync_report.ps1
+    - python -m scripts.workspace.workspace_cli reports status --format json
+    - python -m scripts.validation.validate_protocols
+    - powershell -ExecutionPolicy Bypass -File scripts/reporting/sync_report.ps1
     - git diff --check
   report_regeneration:
     use_when:
@@ -123,7 +121,7 @@ tasks:
     - workspace_manifest.yaml
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/governance/context_budget.md
-    - shared/reporting_policy.md
+    - shared/operations/reporting_policy.md
     - relevant generator script
     optional:
     - previous report snapshot

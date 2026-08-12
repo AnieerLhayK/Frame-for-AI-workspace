@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.workspace_summary import (
+from scripts.workspace.workspace_summary import (
     build_summary,
     cli_commands,
     parse_recent_ledger,
@@ -58,7 +58,7 @@ class WorkspaceSummaryTests(unittest.TestCase):
             entries = parse_recent_ledger(root, limit=1)
         self.assertEqual(entries[0]["id"], "TASK-20260701-001")
 
-    @patch("scripts.workspace_summary.git_output")
+    @patch("scripts.workspace.workspace_summary.git_output")
     def test_workspace_tag_state_uses_manifest_version_tag(self, git_output) -> None:
         git_output.side_effect = ["v1.1.0", "6"]
 
@@ -70,7 +70,7 @@ class WorkspaceSummaryTests(unittest.TestCase):
             ["describe", "--tags", "--match", "v1.1.0", "--abbrev=0"]
         )
 
-    @patch("scripts.workspace_summary.git_output")
+    @patch("scripts.workspace.workspace_summary.git_output")
     def test_workspace_tag_state_ignores_unrelated_component_tag(self, git_output) -> None:
         git_output.return_value = ""
 
@@ -79,12 +79,12 @@ class WorkspaceSummaryTests(unittest.TestCase):
         self.assertIsNone(tag)
         self.assertIsNone(commits_ahead)
 
-    @patch("scripts.workspace_summary.parse_recent_ledger")
-    @patch("scripts.workspace_summary.cli_commands")
-    @patch("scripts.workspace_summary.load_knowledge_registry")
-    @patch("scripts.workspace_summary.load_task_registry")
-    @patch("scripts.workspace_summary.load_yaml")
-    @patch("scripts.workspace_summary.git_output")
+    @patch("scripts.workspace.workspace_summary.parse_recent_ledger")
+    @patch("scripts.workspace.workspace_summary.cli_commands")
+    @patch("scripts.workspace.workspace_summary.load_knowledge_registry")
+    @patch("scripts.workspace.workspace_summary.load_task_registry")
+    @patch("scripts.workspace.workspace_summary.load_yaml")
+    @patch("scripts.workspace.workspace_summary.git_output")
     def test_build_summary_combines_live_sources(
         self,
         git_output,

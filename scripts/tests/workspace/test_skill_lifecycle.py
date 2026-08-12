@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.skill_lifecycle import (
+from scripts.workspace.skill_lifecycle import (
     expose_skill,
     init_skill,
     list_skills,
@@ -131,9 +131,9 @@ class SkillLifecycleTests(unittest.TestCase):
     def test_projection_state_detects_broken_or_incorrect_link(self) -> None:
         self.create_valid_skill()
         with (
-            patch("scripts.skill_lifecycle.os.path.lexists", return_value=True),
+            patch("scripts.workspace.skill_lifecycle.os.path.lexists", return_value=True),
             patch(
-                "scripts.skill_lifecycle.os.path.realpath",
+                "scripts.workspace.skill_lifecycle.os.path.realpath",
                 return_value=str(self.root / "old-target"),
             ),
         ):

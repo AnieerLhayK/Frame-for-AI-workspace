@@ -2,9 +2,9 @@
 """sync_public_repo.py — Regenerate and push public workspace skeleton.
 
 Usage:
-    python scripts/sync_public_repo.py                              # dry-run
-    python scripts/sync_public_repo.py --dry-run                    # explicit dry-run
-    python scripts/sync_public_repo.py --push                       # regenerate + push
+    python -m scripts.publishing.sync_public_repo                              # dry-run
+    python -m scripts.publishing.sync_public_repo --dry-run                    # explicit dry-run
+    python -m scripts.publishing.sync_public_repo --push                       # regenerate + push
 
 Workflow:
     1. Check that the local workspace is clean (no uncommitted changes).
@@ -40,7 +40,7 @@ from scripts.workspace.agent_governance import (
 )
 from scripts.workspace.runtime import WORKSPACE_ROOT
 PUBLISHER_ID = "frame_for_ai_workspace"
-PUBLISHER_SCRIPT = "scripts/sync_public_repo.py"
+PUBLISHER_SCRIPT = "scripts/publishing/sync_public_repo.py"
 DEFAULT_STAGING_ROOT = Path(r"${DATA_ROOT}/codex\cache\staging")
 STAGING_DIR = os.environ.get(
     "PUBLIC_STAGING_DIR",
@@ -105,16 +105,12 @@ def check_workspace_clean() -> bool:
 
 def regenerate(staging: str, repo_name: str = "Frame-for-AI-workspace") -> bool:
     """Run publish_public.py. Return True on success."""
-    script = WORKSPACE_ROOT / "scripts" / "publish_public.py"
-    if not script.is_file():
-        print(f"[FAIL] {script} not found", file=sys.stderr)
-        return False
-
     print(f"[INFO] Regenerating public workspace → {staging}")
     result = subprocess.run(
         [
             sys.executable,
-            str(script),
+            "-m",
+            "scripts.publishing.publish_public",
             "--out-dir",
             staging,
             "--repo-name",
@@ -190,12 +186,7 @@ def prepare_staging_repo(staging: str, remote_url: str) -> bool:
 
 def verify(staging: str, skip_tests: bool = False) -> bool:
     """Run publish_check.py. Return True on success."""
-    script = WORKSPACE_ROOT / "scripts" / "publish_check.py"
-    if not script.is_file():
-        print(f"[FAIL] {script} not found", file=sys.stderr)
-        return False
-
-    cmd = [sys.executable, str(script), "--dir", staging]
+    cmd = [sys.executable, "-m", "scripts.publishing.publish_check", "--dir", staging]
     if skip_tests:
         cmd.append("--skip-tests")
         cmd.append("--skip-functional")

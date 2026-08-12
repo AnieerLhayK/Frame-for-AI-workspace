@@ -32,6 +32,7 @@
       "uniqueItems": true,
       "items": {
         "enum": [
+          "environment_write",
           "record_write",
           "source_write",
           "structural_write",

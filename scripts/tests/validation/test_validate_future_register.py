@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from scripts.validate_future_register import validate
+from scripts.validation.validate_future_register import validate
 
 
 class FutureRegisterValidationTests(unittest.TestCase):

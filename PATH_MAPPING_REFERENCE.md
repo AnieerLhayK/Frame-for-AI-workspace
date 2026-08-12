@@ -27,14 +27,14 @@ file and replace the variables with your local paths.
 3. **`mcp/configs/wps-agent.mcp.json`** — Fix the `python.exe` path for the
    WPS Office automation server.
 
-4. **`shared/agent_registry.yaml`** — Set `data_root` and `cache_root` for
+4. **`shared/governance/agent_registry.yaml`** — Set `data_root` and `cache_root` for
    each registered agent to match your local environment.
 
 ## Verification
 
 After configuration, run:
 ```bash
-python scripts/workspace_cli.py health --with-tests
-python scripts/resolve_task_context.py --list
-python scripts/workspace_cli.py agent list
+python -m scripts.workspace.workspace_cli health --with-tests
+python -m scripts.workspace.resolve_task_context --list
+python -m scripts.workspace.workspace_cli agent list
 ```

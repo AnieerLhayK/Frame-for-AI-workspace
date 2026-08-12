@@ -10,13 +10,13 @@ from typing import Any
 
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
-CLI_PATH = WORKSPACE_ROOT / "scripts" / "workspace_cli.py"
+CLI_MODULE = "scripts.workspace.workspace_cli"
 DEFAULT_INSTALL_DIR = Path.home() / ".local" / "bin"
 LAUNCHER_NAME = "workspace.cmd"
 MARKER = "workspace-cli-managed-launcher"
 
 
-def launcher_content(cli_path: Path = CLI_PATH) -> str:
+def launcher_content() -> str:
     return "\r\n".join(
         [
             "@echo off",
@@ -24,7 +24,7 @@ def launcher_content(cli_path: Path = CLI_PATH) -> str:
             (
                 "@setlocal EnableDelayedExpansion"
                 ' & set "PYTHONUTF8=1" & set "WORKSPACE_LAUNCHER_PATH=%~f0"'
-                f' & python "{cli_path}" %*'
+                f" & cd /d \"{WORKSPACE_ROOT}\" & python -m {CLI_MODULE} %*"
                 " & exit /b !errorlevel!"
             ),
             "",

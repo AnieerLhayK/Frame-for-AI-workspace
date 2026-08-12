@@ -174,9 +174,9 @@ The root `AGENTS.md` has its own regression ceiling under `root_agents_warn_toke
 Run:
 
 ```powershell
-python scripts\resolve_task_context.py <task-id>
-python scripts\resolve_task_context.py <task-id> --include-optional
-python scripts\resolve_task_context.py --prompt-id <prompt-id> --include-template
+python -m scripts.workspace.resolve_task_context <task-id>
+python -m scripts.workspace.resolve_task_context <task-id> --include-optional
+python -m scripts.workspace.resolve_task_context --prompt-id <prompt-id> --include-template
 ```
 
 The default mode warns rather than blocks. Use `--strict-budget` in CI or explicit audits when a warning should produce a non-zero exit code.

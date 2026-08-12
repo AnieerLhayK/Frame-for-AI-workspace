@@ -57,53 +57,67 @@
       },
       "registration": "installed_plugin",
       "source_of_instructions": "github:gh-fix-ci"
+    },
+    {
+      "id": "i-have-adhd",
+      "qualified_id": "i-have-adhd:i-have-adhd",
+      "plugin_id": "i-have-adhd",
+      "role": "governance",
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "registration": "installed_plugin",
+      "source_of_instructions": "i-have-adhd:i-have-adhd"
     }
   ],
   "projections": [],
   "protocols": [
     {
       "id": "workspace_policy",
-      "path": "shared/workspace_policy.md",
+      "path": "shared/workspace/workspace_policy.md",
       "required": true
     },
     {
       "id": "discovery_rules",
-      "path": "shared/discovery_rules.md",
+      "path": "shared/workspace/discovery_rules.md",
       "required": true
     },
     {
       "id": "failure_policy",
-      "path": "shared/failure_policy.md",
+      "path": "shared/workspace/failure_policy.md",
       "required": true
     },
     {
       "id": "workspace_path_policy",
-      "path": "shared/workspace_path_policy.md",
+      "path": "shared/workspace/workspace_path_policy.md",
       "required": true
     },
     {
       "id": "reporting_policy",
-      "path": "shared/reporting_policy.md",
+      "path": "shared/operations/reporting_policy.md",
       "required": true
     },
     {
       "id": "manifest_portability_policy",
-      "path": "shared/manifest_portability_policy.md",
+      "path": "shared/workspace/manifest_portability_policy.md",
       "required": true
     },
     {
       "id": "session_continuity_policy",
-      "path": "shared/session_continuity_policy.md",
+      "path": "shared/operations/session_continuity_policy.md",
       "required": true
     },
     {
       "id": "agent_governance_policy",
-      "path": "shared/agent_governance_policy.md",
+      "path": "shared/governance/agent_governance_policy.md",
       "required": true
     },
     {
       "id": "delivery_output_policy",
-      "path": "shared/delivery_output_policy.md",
+      "path": "shared/operations/delivery_output_policy.md",
       "required": true
     }
   ],

@@ -106,15 +106,15 @@ def main() -> int:
 
     if args.skip_checks:
         print("")
-        print("Skipped self-checks. Next: run `python scripts/workspace_cli.py health`.")
+        print("Skipped self-checks. Next: run `python -m scripts.workspace.workspace_cli health`.")
         return 0
 
     checks = [
-        ([sys.executable, "scripts/workspace_cli.py", "--help"], True),
-        ([sys.executable, "scripts/workspace_cli.py", "task", "list"], True),
-        ([sys.executable, "scripts/workspace_cli.py", "explain", "mechanism", "task-routing"], True),
-        ([sys.executable, "scripts/workspace_cli.py", "agent", "list"], False),
-        ([sys.executable, "scripts/workspace_cli.py", "health"], False),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "--help"], True),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "task", "list"], True),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "explain", "mechanism", "task-routing"], True),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "agent", "list"], False),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "health"], False),
     ]
 
     print("")

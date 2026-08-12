@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from scripts.failure_check import diagnose_payload
+from scripts.workspace.failure_check import diagnose_payload
 
 
 class FailureCheckTests(unittest.TestCase):

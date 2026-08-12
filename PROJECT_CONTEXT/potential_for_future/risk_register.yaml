@@ -15,6 +15,24 @@ statuses:
 # Terminal statuses belong in history/risk_register.yaml.
 risks:
 
+  - id: "RISK-20260725-001"
+    title: "Premature removal of root scripts adapters can break governed automation"
+    status: "observed"
+    trigger_when:
+      - "A root Python adapter is removed before every active caller has moved to its canonical module or workspace command."
+      - "A publishing or sync adapter is removed before a supported replacement and three-repository staging verification exist."
+    impact:
+      - "Workspace CLI delegation, OpenCode allowances, PowerShell reporting, generated public projections, CI, or user automation can fail at runtime."
+    current_handling:
+      - "Before removal, maintain a read-only retirement inventory that reports canonical modules and per-entry removal gates."
+      - "Keep deprecated adapters behavior-compatible until all declared and observed consumers migrate and a versioned breaking-release verification passes."
+      - "Keep publishing and sync adapters supported until an equivalent governed workspace interface exists and staging checks pass for every registered public projection."
+      - "Use an annotated pre-removal tag and git revert for the eventual removal migration; never bulk-delete based only on root-directory location."
+    related_files:
+      - "scripts/workspace/workspace_cli.py"
+      - "opencode.json"
+      - "scripts/publishing/"
+
   - id: "RISK-20260718-005"
     title: "Claude Code routing checks can add duplicate interaction latency"
     status: "observed"
@@ -44,7 +62,7 @@ risks:
     related_files:
       - "workspace_manifest.yaml"
       - "PROJECT_CONTEXT/tasks/registry/index.yaml"
-      - "shared/session_continuity_policy.md"
+      - "shared/operations/session_continuity_policy.md"
 
   - id: "RISK-20260715-004"
     title: "Concurrent task records contaminate migration baselines"

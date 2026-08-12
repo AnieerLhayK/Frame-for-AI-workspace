@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import yaml
 
-from scripts.resolve_task_context import (
+from scripts.workspace.resolve_task_context import (
     TokenCounter,
     budget_status,
     extract_markdown_section,
@@ -563,16 +563,11 @@ class ResolverTests(unittest.TestCase):
         data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
         data["tasks"]["demo"]["required"] = ["src/missing.md"]
         registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
-        script = (
-            Path(__file__).resolve().parents[3]
-            / "scripts"
-            / "resolve_task_context.py"
-        )
-
         completed = subprocess.run(
             [
                 sys.executable,
-                str(script),
+                "-m",
+                "scripts.workspace.resolve_task_context",
                 "demo",
                 "--start",
                 str(self.root),
@@ -584,6 +579,7 @@ class ResolverTests(unittest.TestCase):
             check=False,
             capture_output=True,
             text=True,
+            cwd=Path(__file__).resolve().parents[3],
         )
 
         self.assertEqual(completed.returncode, 1)

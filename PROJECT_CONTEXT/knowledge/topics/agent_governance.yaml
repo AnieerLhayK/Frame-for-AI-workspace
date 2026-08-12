@@ -14,14 +14,14 @@ topics:
     - 临时授权
     - 结构性修改
     entries:
-    - path: shared/agent_governance_policy.md
+    - path: shared/governance/agent_governance_policy.md
       layer: shared
       purpose: Enforceable agent roles, surface classes, request flow, and lease lifecycle.
-    - path: shared/agent_governance.yaml
+    - path: shared/governance/agent_governance.yaml
       layer: shared
       purpose: Machine-readable roles, capabilities, registration constraints, leases,
         and surface classification.
-    - path: shared/agent_registry.yaml
+    - path: shared/governance/agent_registry.yaml
       layer: shared
       purpose: Concrete agent identity, status, scope, platform, storage, and lifecycle
         registrations.

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import tempfile
 import unittest
@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import yaml
 
-from scripts import task_ledger, task_records
+from scripts.workspace import task_ledger, task_records
 
 
 class TaskRecordsTests(unittest.TestCase):
@@ -117,6 +117,46 @@ class TaskRecordsTests(unittest.TestCase):
             record = task_records.start(args)
         self.assertEqual(record["tokens"]["estimated"], 321)
         resolve.assert_called_once_with("demo", [])
+
+    def test_start_persists_workspace_session_owner_and_bindings(self) -> None:
+        args = type(
+            "Args",
+            (),
+            {
+                "task_type": "runtime_drift_fix",
+                "tokens_estimated": 123,
+                "bind": ["target-character=packages/character-system/runtime/characters/zyc"],
+                "operation": ["workspace_write"],
+                "started_at": "2026-07-15T00:00:00Z",
+                "owner_agent": "opencode",
+                "owner_session": "session-1",
+            },
+        )()
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            task_records, "RECORD_ROOT", Path(directory)
+        ):
+            record = task_records.start(args)
+        self.assertEqual(
+            record["owner"],
+            {
+                "kind": "workspace_session",
+                "agent": "opencode",
+                "session_id": "session-1",
+                "bindings": [
+                    "target-character=packages/character-system/runtime/characters/zyc"
+                ],
+            },
+        )
+        self.assertFalse(task_records.validate_record(record))
+
+    def test_workspace_session_owner_requires_both_identity_fields(self) -> None:
+        args = type(
+            "Args",
+            (),
+            {"owner_agent": "opencode", "owner_session": None, "bind": []},
+        )()
+        with self.assertRaisesRegex(ValueError, "supplied together"):
+            task_records.workspace_session_owner(args)
 
     def test_explicit_token_estimate_skips_resolution(self) -> None:
         args = type(

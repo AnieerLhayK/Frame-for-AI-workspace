@@ -18,7 +18,7 @@ scope are confirmed.
 
 Move implemented/rejected options and mitigated/accepted/retired risks into the
 matching history registry. Preserve the original entry and add `archived_at`
-plus `source_registry`; `scripts/validate_future_register.py` enforces this
+plus `source_registry`; `scripts/validation/validate_future_register.py` enforces this
 boundary.
 
 When adding a category, update this README, its Chinese companion, the

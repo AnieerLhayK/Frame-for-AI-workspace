@@ -25,38 +25,37 @@
 
 ## 手册结构
 
-### 工作空间工程
+本目录按经验所处的生命周期采用粗粒度分组，而不是为每一种经验都建立
+一个目录。更细的经验类型和证据等级应记录在文档及知识索引中，不应继续
+扩张目录树。
 
-- `philosophy.md`：通用工程姿态。
-- `architecture_patterns.md`：可复用的系统结构。
-- `workspace_patterns.md`：仓库与工作空间组织。
-- `governance_patterns.md`：权限、验证与连续性。
-- `portability_patterns.md`：迁移与机器边界相关的经验教训。
-- `anti_patterns.md`：反复出现的失败模式。
-- `knowledge_provenance.md`：知识引入与归属规则。
+### 方法
 
-### 外部知识
+- `methods/`：可复用的方法、模式、反模式与指导。
+- `methods/skill_engineering/`：技能专用方法子领域。
 
-`external_knowledge/` 包含关于引入外部知识检索（RAG、知识库、笔记系统）的有限评估，不涉及具体的实施或部署。
+当前方法文档覆盖通用工程姿态、架构、工作空间组织、治理、迁移、可移植性、
+反模式以及知识溯源。
 
-- `external_rag_planning.md`：分阶段评估与工具对比。
+### 规划
 
-### 技能工程
+`proposals/` 存放尚未沉淀为稳定可复用方法的有限规划和评估。
 
-`skill_engineering/` 包含可复用的技能专用方法：
-
-- 技能设计；
-- 提示词工程；
-- 运行时循环；
-- 漂移与风格对齐；
-- 经过验证的演进模式。
+- `proposals/external_rag_planning.md`：外部知识检索的分阶段评估。
+- `proposals/public-repo-plan.md`：公开仓库发布方案。
 
 ### 证据
 
-- `case_studies/`：真实事件与已完成变更。
-- `experiments/`：有限假设与结果；当前处于休眠状态，待开展真实实验。
-- `templates/`：可复用的编写结构。
-- `reports/`：关于该知识层的快照。
+`evidence/` 存放已观察或验证过的经验，包括案例、实验、复盘和报告。新增
+证据不需要为每个子类型建立新的顶层目录。
+
+- `evidence/agent_registration_contract.md`：已验证的 Agent 注册案例。
+- `evidence/skill_engineering_setup_report.md`：历史搭建快照。
+
+### 模板
+
+`templates/` 存放可复用的编写结构。运行时数据包模板应放在其所属的包中，
+而不是放入本知识层。
 
 ## 何时添加知识
 
@@ -93,4 +92,15 @@
 
 编写时应让另一位 AI 工程师无需访问本机器的私有数据即可理解上下文、权衡、失败模式和验证步骤。从可共享的指南中移除密钥、私有语料材料、本地身份详情和易变的绝对路径。
 
-外部思想仅能通过 `knowledge_provenance.md` 引入。将其总结并转化为经过本地审核的工程知识；不得复制大量第三方材料或抹去其原始出处。
+外部思想仅能通过 `methods/knowledge_provenance.md` 引入。将其总结并转化为经过本地审核的工程知识；不得复制大量第三方材料或抹去其原始出处。
+
+## 旧路径映射
+
+以下旧路径族已在 2026-07 迁移中合并：
+
+| 旧路径族 | 当前路径 |
+| --- | --- |
+| 根目录方法文档 | `methods/` |
+| `skill_engineering/` | `methods/skill_engineering/` |
+| `case_studies/`、`experiments/`、`reports/` | `evidence/` |
+| `plans/`、`external_knowledge/` | `proposals/` |

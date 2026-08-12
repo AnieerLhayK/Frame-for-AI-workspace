@@ -22,5 +22,5 @@
 
 ## Provenance
 
-Use the fields from `../knowledge_provenance.md` when external material
+Use the fields from `../methods/knowledge_provenance.md` when external material
 influenced the result.

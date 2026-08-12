@@ -38,8 +38,8 @@ prompts:
       - "Manifest compatibility fields or projection-aware validators need to change."
     read:
       - "workspace_manifest.yaml"
-      - "shared/workspace_policy.md"
-      - "shared/workspace_path_policy.md"
+      - "shared/workspace/workspace_policy.md"
+      - "shared/workspace/workspace_path_policy.md"
       - "affected skill SKILL.md files"
       - "manifest-aware scripts"
     ignore:
@@ -170,8 +170,8 @@ prompts:
       - "The user approves deleting, moving, importing, or retiring local directories."
     read:
       - "workspace_manifest.yaml"
-      - "shared/manifest_portability_policy.md"
-      - "shared/workspace_path_policy.md"
+      - "shared/workspace/manifest_portability_policy.md"
+      - "shared/workspace/workspace_path_policy.md"
       - "explicitly named target paths"
     ignore:
       - "whole-drive search"

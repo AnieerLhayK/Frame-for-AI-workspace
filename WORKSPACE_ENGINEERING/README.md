@@ -29,42 +29,40 @@ override Manifest, policy, source, or current Git state.
 
 ## Book Structure
 
-### Workspace Engineering
+The directory uses broad lifecycle buckets rather than one directory for
+every kind of experience. Fine-grained types and evidence levels belong in
+the document and knowledge indexes, not in a growing directory tree.
 
-- `philosophy.md`: general engineering posture.
-- `architecture_patterns.md`: reusable system structures.
-- `workspace_patterns.md`: repository and workspace organization.
-- `governance_patterns.md`: authority, validation, and continuity.
-- `context_structure_refactoring.md`: reusable deep-module and path-migration method.
-- `portability_patterns.md`: movement and machine-boundary lessons.
-- `anti_patterns.md`: recurring failure modes.
-- `knowledge_provenance.md`: intake and attribution rules.
+### Methods
 
-### External Knowledge
+- `methods/`: reusable methods, patterns, anti-patterns, and guidance.
+- `methods/skill_engineering/`: the Skill-specific methods subdomain.
 
-`external_knowledge/` contains bounded evaluations of adding external
-knowledge retrieval (RAG, knowledge base, note system) without
-implementing or deploying anything.
+The current method files cover general posture, architecture, workspace
+organization, governance, migration, portability, anti-patterns, and
+knowledge provenance.
 
-- `external_rag_planning.md`: staged evaluation and tool comparison.
+### Proposals
 
-### Skill Engineering
+`proposals/` contains bounded plans and evaluations that have not yet become
+stable reusable methods.
 
-`skill_engineering/` contains reusable Skill-specific methods:
-
-- Skill design;
-- prompt engineering;
-- runtime loops;
-- drift and style alignment;
-- validated evolution patterns.
+- `proposals/external_rag_planning.md`: staged evaluation and tool comparison.
+- `proposals/public-repo-plan.md`: public repository publication plan.
 
 ### Evidence
 
-- `case_studies/`: real incidents and completed changes.
-- `experiments/`: bounded hypotheses and results; currently dormant until a
-  real experiment is opened.
-- `templates/`: reusable authoring structures.
-- `reports/`: snapshots about this knowledge layer.
+`evidence/` contains observed or validated experience, including case studies,
+experiments, retrospectives, and reports. New evidence does not require a new
+top-level directory for each subtype.
+
+- `evidence/agent_registration_contract.md`: validated registration case study.
+- `evidence/skill_engineering_setup_report.md`: historical setup snapshot.
+
+### Templates
+
+`templates/` contains reusable authoring structures. Runtime packet templates
+belong to the package that owns the runtime, not this knowledge layer.
 
 ## When To Add Knowledge
 
@@ -112,6 +110,17 @@ Remove secrets, private corpus material, local identity details, and volatile
 absolute paths from shareable guidance.
 
 External ideas may be incorporated only through
-`knowledge_provenance.md`. Summarize and transform them into locally reviewed
+`methods/knowledge_provenance.md`. Summarize and transform them into locally reviewed
 engineering knowledge; do not copy substantial third-party material or erase
 its origin.
+
+## Legacy Path Mapping
+
+The following old paths were consolidated during the 2026-07 migration:
+
+| Old path family | Current path |
+| --- | --- |
+| Root method documents | `methods/` |
+| `skill_engineering/` | `methods/skill_engineering/` |
+| `case_studies/`, `experiments/`, `reports/` | `evidence/` |
+| `plans/`, `external_knowledge/` | `proposals/` |

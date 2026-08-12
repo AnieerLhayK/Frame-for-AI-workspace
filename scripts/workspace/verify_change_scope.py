@@ -22,7 +22,7 @@ from scripts.workspace.plan_change_surface import (
 
 GitRunner = Callable[[Sequence[str]], subprocess.CompletedProcess[str]]
 TaskResolver = Callable[[str, list[str]], dict[str, Any]]
-POLICY_PATH = WORKSPACE_ROOT / "shared" / "agent_governance.yaml"
+POLICY_PATH = WORKSPACE_ROOT / "shared" / "governance" / "agent_governance.yaml"
 
 
 @dataclass

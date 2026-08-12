@@ -7,7 +7,7 @@ from:
 
 - `USAGE_GUIDES/prompt_registry.yaml`: prompt ids, metadata, and template paths.
 - `USAGE_GUIDES/PROMPT_TEMPLATES/`: copy-ready prompt bodies.
-- `scripts/resolve_task_context.py --prompt-id`: direct prompt resolution.
+- `scripts/workspace/resolve_task_context.py --prompt-id`: direct prompt resolution.
 - `workspace prompt list` and `workspace prompt show`: user-facing CLI access.
 
 ## Purpose
@@ -71,7 +71,7 @@ workspace prompt show <prompt-id> --include-template
 Resolve through the underlying script when debugging:
 
 ```powershell
-python scripts/resolve_task_context.py --prompt-id <prompt-id> --include-template
+python -m scripts.workspace.resolve_task_context --prompt-id <prompt-id> --include-template
 ```
 
 ## First Workspace Maintenance Prompts

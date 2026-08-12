@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.session_continuity import run_audit
+from scripts.workspace.session_continuity import run_audit
 
 
 class SessionContinuityTests(unittest.TestCase):

@@ -6,7 +6,7 @@ Copies the workspace architecture, strips business code, replaces absolute
 paths with template variables, and produces a git-ready public repository.
 
 Usage:
-    python scripts/publish_public.py --out-dir <path> [--repo-name <name>]
+    python -m scripts.publishing.publish_public --out-dir <path> [--repo-name <name>]
 """
 
 from __future__ import annotations
@@ -105,6 +105,7 @@ SUBSTITUTIONS: list[tuple[re.Pattern[str], str]] = [
 EXCLUDED_PATHS = {
     # Entire directories
     "skills",
+    "agents",
     ".agents",
     ".codex",
     ".opencode",
@@ -115,12 +116,16 @@ EXCLUDED_PATHS = {
     # Frame is an architecture template, not a distribution of character
     # skills or product-specific publishers.
     "packages/character-system",
-    "scripts/publish_chatty_ch_system.py",
-    "scripts/publish_check_chatty_ch_system.py",
-    "scripts/sync_chatty_ch_system_repo.py",
-    "scripts/publish_qq_raw_filter.py",
-    "scripts/publish_check_qq_raw_filter.py",
-    "scripts/sync_qq_raw_filter_repo.py",
+    "shared/packages/character-system",
+    "packages/teaching-system/skills",
+    "WORKSPACE_ENGINEERING/evidence",
+    "WORKSPACE_ENGINEERING/proposals",
+    "scripts/publishing/publish_chatty_ch_system.py",
+    "scripts/publishing/publish_check_chatty_ch_system.py",
+    "scripts/publishing/sync_chatty_ch_system_repo.py",
+    "scripts/publishing/publish_qq_raw_filter.py",
+    "scripts/publishing/publish_check_qq_raw_filter.py",
+    "scripts/publishing/sync_qq_raw_filter_repo.py",
     "scripts/tests/publishing/test_publish_chatty_ch_system.py",
     "scripts/tests/publishing/test_publish_qq_raw_filter.py",
     "scripts/tests/publishing/test_sync_qq_raw_filter_repo.py",
@@ -129,7 +134,7 @@ EXCLUDED_PATHS = {
     "scripts/publishing/publish_skill_collection.py",
     "scripts/publishing/publish_check_skill_collection.py",
     "scripts/publishing/sync_skill_collection_repo.py",
-    "scripts/sync_skill_collection_repo.py",
+    "scripts/publishing/sync_skill_collection_repo.py",
     "scripts/tests/publishing/test_publish_skill_collection.py",
     # This test exercises the private generator's machine-path substitution
     # table. The public skeleton receives a scrubbed generator, so retaining
@@ -157,9 +162,9 @@ EXCLUDED_PATHS = {
     "PROJECT_CONTEXT/tasks/records",
     "USAGE_GUIDES/PROMPT_TEMPLATES/character-system",
     "opencode.json",
-    "scripts/report_status.py",
-    "scripts/report_routing_quality.py",
-    "scripts/validate_protocols.py",
+    "scripts/reporting/report_status.py",
+    "scripts/reporting/report_routing_quality.py",
+    "scripts/validation/validate_protocols.py",
     "scripts/sync_report.ps1",
     "scripts/tests/reporting/test_report_status.py",
     "mcp/servers",
@@ -185,8 +190,8 @@ EXCLUDED_PATHS = {
 SCRUB_FILES: set[str] = {
     "workspace_manifest.yaml",
     "AGENTS.md",
-    "shared/agent_registry.yaml",
-    "shared/agent_governance.yaml",
+    "shared/governance/agent_registry.yaml",
+    "shared/governance/agent_governance.yaml",
     "shared/templates/agent_registration.example.yaml",
     "shared/templates/agent_capability_lease.example.yaml",
     "PROJECT_CONTEXT/tasks/registry/index.yaml",
@@ -200,8 +205,8 @@ SCRUB_FILES: set[str] = {
     "scripts/start_hermes_gateway.ps1",
     "scripts/stop_hermes_gateway.ps1",
     "scripts/claude_long_task_notifications/hermes-mcp-client.js",
-    "scripts/hermes_workspace_guard.py",
-    "scripts/workspace_health.py",
+    "scripts/workspace/hermes_workspace_guard.py",
+    "scripts/workspace/workspace_health.py",
     # Responsibility-package implementations are copied into the framework
     # skeleton. Scrub their machine defaults too; otherwise the public checker
     # sees the implementation's own Windows literals as leaked private paths.
@@ -223,7 +228,7 @@ SCRUB_FILES: set[str] = {
     ".claude/rules/workspace-boundary.md",
     "reasonix.toml",
     "mcp/README.md",
-    "scripts/sync_public_repo.py",
+    "scripts/publishing/sync_public_repo.py",
     "WORKSPACE_ENGINEERING/PUBLISH.md",
 }
 
@@ -241,7 +246,7 @@ SKELETON_DIRS: list[tuple[str, list[str], str]] = [
         "packages/character-system/engineering/diagnosis/style-doctor",
         ["SKILL.md", "README.md", "SHARED_PROTOCOLS.md"],
         "Style-doctor skill scaffold — implements feedback-diagnosis role.\n"
-        "See shared/agent_governance.yaml → surface_classes for path conventions.",
+        "See shared/governance/agent_governance.yaml → surface_classes for path conventions.",
     ),
     (
         "packages/character-system/engineering/generation/character-generator",
@@ -306,7 +311,7 @@ for how to implement a skill in this category.
 
 Related:
 - workspace_manifest.yaml → skills[] for registration
-- shared/agent_governance.yaml → surface class conventions
+- shared/governance/agent_governance.yaml → surface class conventions
 - ARCHITECTURE.md → layer hierarchy
 """,
     "SKILL.md": """---
@@ -329,7 +334,7 @@ platform: claude
 # {dir_name}
 
 This is a structural placeholder. Implement your skill following the
-patterns defined in workspace_manifest.yaml and shared/agent_governance.yaml.
+patterns defined in workspace_manifest.yaml and shared/governance/agent_governance.yaml.
 
 ## Registration
 
@@ -500,7 +505,7 @@ projection generated by its registered publisher.
 
 ```bash
 python scripts/setup_public_workspace.py
-python scripts/workspace_cli.py health
+python -m scripts.workspace.workspace_cli health
 python -m pytest scripts/tests -q
 ```
 
@@ -534,7 +539,7 @@ def generate_public_readme_zh(repo_name: str) -> str:
 
 ```bash
 python scripts/setup_public_workspace.py
-python scripts/workspace_cli.py health
+python -m scripts.workspace.workspace_cli health
 python -m pytest scripts/tests -q
 ```
 
@@ -634,16 +639,16 @@ file and replace the variables with your local paths.
 3. **`mcp/configs/wps-agent.mcp.json`** — Fix the `python.exe` path for the
    WPS Office automation server.
 
-4. **`shared/agent_registry.yaml`** — Set `data_root` and `cache_root` for
+4. **`shared/governance/agent_registry.yaml`** — Set `data_root` and `cache_root` for
    each registered agent to match your local environment.
 
 ## Verification
 
 After configuration, run:
 ```bash
-python scripts/workspace_cli.py health --with-tests
-python scripts/resolve_task_context.py --list
-python scripts/workspace_cli.py agent list
+python -m scripts.workspace.workspace_cli health --with-tests
+python -m scripts.workspace.resolve_task_context --list
+python -m scripts.workspace.workspace_cli agent list
 ```
 """
 
@@ -758,15 +763,15 @@ def main() -> int:
 
     if args.skip_checks:
         print("")
-        print("Skipped self-checks. Next: run `python scripts/workspace_cli.py health`.")
+        print("Skipped self-checks. Next: run `python -m scripts.workspace.workspace_cli health`.")
         return 0
 
     checks = [
-        ([sys.executable, "scripts/workspace_cli.py", "--help"], True),
-        ([sys.executable, "scripts/workspace_cli.py", "task", "list"], True),
-        ([sys.executable, "scripts/workspace_cli.py", "explain", "mechanism", "task-routing"], True),
-        ([sys.executable, "scripts/workspace_cli.py", "agent", "list"], False),
-        ([sys.executable, "scripts/workspace_cli.py", "health"], False),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "--help"], True),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "task", "list"], True),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "explain", "mechanism", "task-routing"], True),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "agent", "list"], False),
+        ([sys.executable, "-m", "scripts.workspace.workspace_cli", "health"], False),
     ]
 
     print("")
@@ -823,13 +828,13 @@ you want to regenerate local config files from templates.
 ## Core Commands To Learn First
 
 ```bash
-python scripts/workspace_cli.py --help
-python scripts/workspace_cli.py task list
-python scripts/workspace_cli.py task resolve workspace_developer_experience
-python scripts/workspace_cli.py explain mechanism task-routing
-python scripts/workspace_cli.py explain path scripts/workspace_cli.py
-python scripts/workspace_cli.py agent list
-python scripts/workspace_cli.py health
+python -m scripts.workspace.workspace_cli --help
+python -m scripts.workspace.workspace_cli task list
+python -m scripts.workspace.workspace_cli task resolve workspace_developer_experience
+python -m scripts.workspace.workspace_cli explain mechanism task-routing
+python -m scripts.workspace.workspace_cli explain path scripts/workspace/workspace_cli.py
+python -m scripts.workspace.workspace_cli agent list
+python -m scripts.workspace.workspace_cli health
 ```
 
 These commands show the framework's own basic functions before you add your
@@ -841,7 +846,7 @@ own skills under `skills/` or separately reviewed external skills under
 After the helper runs, review:
 
 - `workspace_manifest.yaml` for your local source root and platform roots;
-- `shared/agent_registry.yaml` for per-agent data/cache roots;
+- `shared/governance/agent_registry.yaml` for per-agent data/cache roots;
 - `mcp/configs/*.json` only if you use those MCP servers;
 - platform-specific loading surfaces only after you understand the projection
   model in `ARCHITECTURE.md`.
@@ -908,17 +913,17 @@ pip install pytest
 python -m pytest scripts/tests -q
 
 # Check workspace health
-python scripts/workspace_cli.py health
+python -m scripts.workspace.workspace_cli health
 
 # List available tasks
-python scripts/workspace_cli.py task list
+python -m scripts.workspace.workspace_cli task list
 
 # Explain how a mechanism or path connects to the workspace
-python scripts/workspace_cli.py explain mechanism task-routing
-python scripts/workspace_cli.py explain path scripts/workspace_cli.py
+python -m scripts.workspace.workspace_cli explain mechanism task-routing
+python -m scripts.workspace.workspace_cli explain path scripts/workspace/workspace_cli.py
 
 # View agent registrations
-python scripts/workspace_cli.py agent list
+python -m scripts.workspace.workspace_cli agent list
 ```
 
 ## Step 5: Register Your Own Skills
@@ -933,7 +938,7 @@ Each skill needs:
 4. `execution_modes` specifying write permissions
 5. `exposures[]` declaring which platforms can discover the skill
 
-Use `python scripts/workspace_cli.py skill init <id>` to scaffold a new skill.
+Use `python -m scripts.workspace.workspace_cli skill init <id>` to scaffold a new skill.
 """
 
 

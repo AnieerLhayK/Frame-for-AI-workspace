@@ -14,7 +14,7 @@ from typing import Any
 
 WORKSPACE_ROOT = Path.cwd()
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
-REPORT_PATH = WORKSPACE_ROOT / "reports" / "manifest_validation_report.md"
+REPORT_PATH = WORKSPACE_ROOT / "reports" / "current" / "manifest_validation_report.md"
 
 
 @dataclass
@@ -558,7 +558,7 @@ def write_report(state: State) -> None:
         "---",
         "report_name: manifest_validation_report",
         f"generated_at: {now}",
-        "generated_by: scripts/validate_manifest.py",
+        "generated_by: scripts/validation/validate_manifest.py",
         f"source_root: {WORKSPACE_ROOT}",
         f"manifest_path: {MANIFEST_PATH}",
         f"source_commit: {get_source_commit()}",

@@ -11,9 +11,9 @@ topics:
     - 错误处理
     - 寻找文件
     entries:
-    - path: shared/failure_policy.md
+    - path: shared/workspace/failure_policy.md
       layer: shared
       purpose: Required versus optional failure behavior.
-    - path: shared/discovery_rules.md
+    - path: shared/workspace/discovery_rules.md
       layer: shared
       purpose: Bounded lookup order and stop conditions.

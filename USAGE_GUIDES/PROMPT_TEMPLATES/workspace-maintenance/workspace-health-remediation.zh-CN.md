@@ -9,7 +9,7 @@
 开始：
 1. 运行 `workspace health`。
 2. 如果报告已过时，在更改源码前运行 `workspace reports status --strict`。
-3. 使用 `workspace task list` 或 `python scripts/resolve_task_context.py --list` 选择最小的匹配任务 id。
+3. 使用 `workspace task list` 或 `python -m scripts.workspace.resolve_task_context --list` 选择最小的匹配任务 id。
 4. 在编辑前解析该任务。
 
 防护措施：

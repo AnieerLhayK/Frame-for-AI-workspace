@@ -55,7 +55,7 @@ The place for lessons that might affect generator or shared protocol design afte
 
 ## validator
 
-A script that checks workspace contracts. Current validators include `scripts/validate_protocols.py` and `scripts/validate_manifest.py`.
+A script that checks workspace contracts. Current validators include `scripts/validation/validate_protocols.py` and `scripts/validation/validate_manifest.py`.
 
 ## report snapshot
 

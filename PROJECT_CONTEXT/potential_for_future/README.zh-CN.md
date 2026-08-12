@@ -10,6 +10,6 @@
 
 这里的条目是检索入口，不是实施计划。只有在当前证据和范围得到确认后，才应将条目提升为任务路由、策略、活跃 todo 或源代码变更。
 
-implemented/rejected 的优化项，以及 mitigated/accepted/retired 的风险必须迁入对应的 history 登记；保留原条目并添加 `archived_at` 与 `source_registry`。`scripts/validate_future_register.py` 会强制检查这一边界。
+implemented/rejected 的优化项，以及 mitigated/accepted/retired 的风险必须迁入对应的 history 登记；保留原条目并添加 `archived_at` 与 `source_registry`。`scripts/validation/validate_future_register.py` 会强制检查这一边界。
 
 新增分类时，应同步更新本说明、英文 companion、`PROJECT_CONTEXT/knowledge/index.yaml` 以及需要发现它的任务路由规则。历史任务台账不会因为登记表迁移而重写。

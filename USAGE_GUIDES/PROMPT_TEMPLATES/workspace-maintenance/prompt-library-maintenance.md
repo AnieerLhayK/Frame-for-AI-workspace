@@ -38,7 +38,7 @@ Run focused checks after changing prompt library files:
 ```powershell
 workspace prompt list
 workspace prompt show prompt_library_maintenance --include-template
-python scripts/resolve_task_context.py --prompt-id prompt_library_maintenance --include-template
+python -m scripts.workspace.resolve_task_context --prompt-id prompt_library_maintenance --include-template
 git diff --check
 ```
 

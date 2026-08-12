@@ -119,13 +119,13 @@ READ_ONLY_TERMINAL_PATTERNS = (
     r"^\s*git\s+(status|diff|log|show|branch(\s+--show-current)?|rev-parse)\b",
     r"^\s*(rg|where|where\.exe|type|dir|ls)\b",
     r"^\s*(get-content|get-childitem|get-item|select-string|test-path)\b",
-    r"^\s*python\s+scripts[\\/](workspace_cli|agent_governance)\.py\s+"
+    r"^\s*python\s+-m\s+scripts\.workspace\.(workspace_cli|agent_governance)\s+"
     r"(agent\s+(status|list|show|validate|doctor|check)|health|summary|"
     r"reports\s+status|knowledge\s+(find|list|validate)|changes\s+(plan|verify)|"
     r"workflow\s+check)\b",
 )
 REQUEST_COMMAND_PATTERN = re.compile(
-    r"^\s*python\s+scripts[\\/](workspace_cli|agent_governance)\.py\s+"
+    r"^\s*python\s+-m\s+scripts\.workspace\.(workspace_cli|agent_governance)\s+"
     r"agent\s+request\b",
     re.IGNORECASE,
 )

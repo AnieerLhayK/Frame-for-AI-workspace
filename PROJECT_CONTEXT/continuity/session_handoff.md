@@ -71,8 +71,8 @@ for CNN work, stop and use `claude-cnn`; do not create a CNN directory here.
 
 1. Root `AGENTS.md` through the agent's native startup file.
 2. `git status --short --branch`
-3. `python scripts/resolve_task_context.py --list` when the task id is unknown.
-4. `python scripts/resolve_task_context.py <task-id>`
+3. `python -m scripts.workspace.resolve_task_context --list` when the task id is unknown.
+4. `python -m scripts.workspace.resolve_task_context <task-id>`
 5. Only the required files returned by the resolver.
 6. The latest 5 ledger entries only when continuity is needed.
 

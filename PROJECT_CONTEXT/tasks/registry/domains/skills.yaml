@@ -11,21 +11,19 @@ tasks:
     required:
     - workspace_manifest.yaml
     - scripts/reporting/ci_run.py
-    - scripts/_compat.py
     - scripts/tests/reporting/test_ci_run.py
-    - scripts/tests/workspace/test_compat.py
     - scripts/workspace/agent_governance.py
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_workspace_cli.py
     - scripts/validation/validate_manifest.py
     - skills/disk-scan-reporter/tests/test_disk_scan.py
-    - shared/workspace_policy.md
+    - shared/workspace/workspace_policy.md
     - AGENTS.md
     optional:
     - .github/workflows/
-    - scripts/ci_run.py
+    - scripts/reporting/ci_run.py
     - scripts/tests/workspace/test_skill_lifecycle.py
-    - reports/manifest_validation_report.md
+    - reports/current/manifest_validation_report.md
     - PROJECT_CONTEXT/tasks/records/
     ignore:
     - mcp/
@@ -45,24 +43,22 @@ tasks:
     - PROJECT_CONTEXT/tasks/ledger/2026/07/16.md
     - workspace_manifest.yaml
     - scripts/reporting/ci_run.py
-    - scripts/_compat.py
     - scripts/tests/reporting/test_ci_run.py
-    - scripts/tests/workspace/test_compat.py
     - scripts/workspace/agent_governance.py
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_workspace_cli.py
     - scripts/validation/validate_manifest.py
     - skills/disk-scan-reporter/tests/test_disk_scan.py
-    - shared/workspace_policy.md
-    - reports/manifest_validation_report.md
-    - reports/protocol_validation_report.md
+    - shared/workspace/workspace_policy.md
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
     - PROJECT_CONTEXT/tasks/records/
     - AGENTS.md
     validation:
-    - python scripts/resolve_task_context.py github_ci_governance
-    - python scripts/validate_manifest.py
-    - python scripts/validate_protocols.py
-    - python scripts/ci_run.py
+    - python -m scripts.workspace.resolve_task_context github_ci_governance
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
+    - python -m scripts.reporting.ci_run
     - python -m pytest scripts/tests/reporting/test_ci_run.py scripts/tests/workspace/test_agent_governance.py
       -q
     - python -m pytest scripts/tests/workspace/test_workspace_cli.py -q
@@ -84,9 +80,9 @@ tasks:
     - ARCHITECTURE.md
     - USAGE_GUIDES/QUICK_START/codex.md
     - USAGE_GUIDES/QUICK_START/opencode.md
-    - scripts/check_links.ps1
-    - scripts/validate_manifest.py
-    - reports/manifest_validation_report.md
+    - scripts/validation/check_links.ps1
+    - scripts/validation/validate_manifest.py
+    - reports/current/manifest_validation_report.md
     ignore:
     - packages/character-system/engineering/generation/character-generator/scripts/
     - packages/character-system/runtime/characters/zyc/references/
@@ -97,12 +93,17 @@ tasks:
     ledger: true
     write_scope:
     - workspace_manifest.yaml
+    - agents/
+    - .codex/config.toml
+    - .codex/.gitignore
+    - .claude/.gitignore
+    - .opencode/.gitignore
     - PROJECT_CONTEXT/
     - USAGE_GUIDES/QUICK_START/
     - platform loading junctions explicitly named by the user
     validation:
-    - python scripts/validate_manifest.py
-    - powershell -ExecutionPolicy Bypass -File scripts/check_links.ps1
+    - python -m scripts.validation.validate_manifest
+    - powershell -ExecutionPolicy Bypass -File scripts/validation/check_links.ps1
     - 'OpenCode: opencode debug skill'
   raw_material_filter_tooling:
     use_when:
@@ -122,10 +123,10 @@ tasks:
     optional:
     - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/.github/workflows/
     - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/requirements.txt
-    - scripts/publish_qq_raw_filter.py
-    - scripts/publish_check_qq_raw_filter.py
-    - scripts/qq_raw_filter_public_checks.py
-    - scripts/sync_qq_raw_filter_repo.py
+    - scripts/publishing/publish_qq_raw_filter.py
+    - scripts/publishing/publish_check_qq_raw_filter.py
+    - scripts/publishing/qq_raw_filter_public_checks.py
+    - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/test_publish_qq_raw_filter.py
     - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - PROJECT_CONTEXT/tasks/records/2026/07/15/TASK-20260715-007.json
@@ -143,24 +144,24 @@ tasks:
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/
-    - scripts/publish_qq_raw_filter.py
-    - scripts/publish_check_qq_raw_filter.py
-    - scripts/qq_raw_filter_public_checks.py
-    - scripts/sync_qq_raw_filter_repo.py
+    - scripts/publishing/publish_qq_raw_filter.py
+    - scripts/publishing/publish_check_qq_raw_filter.py
+    - scripts/publishing/qq_raw_filter_public_checks.py
+    - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/test_publish_qq_raw_filter.py
     - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - PROJECT_CONTEXT/tasks/records/2026/07/15/TASK-20260715-007.json
     validation:
-    - python scripts/resolve_task_context.py raw_material_filter_tooling
+    - python -m scripts.workspace.resolve_task_context raw_material_filter_tooling
     - python -m pytest tests -q (from packages/character-system/engineering/corpus-preparation/qq-raw-material-filter)
     - python -m pip install -e . (from packages/character-system/engineering/corpus-preparation/qq-raw-material-filter)
     - qce-block-filter --help
     - python -m qq_raw_filter._cli --help
-    - python scripts/workspace_cli.py changes verify raw_material_filter_tooling --strict
-    - python scripts/workspace_cli.py workflow check raw_material_filter_tooling --record-id
+    - python -m scripts.workspace.workspace_cli changes verify raw_material_filter_tooling --strict
+    - python -m scripts.workspace.workspace_cli workflow check raw_material_filter_tooling --record-id
       TASK-YYYYMMDD-###
-    - python scripts/publish_qq_raw_filter.py --out-dir %AI_TOOL_STAGING_DIR%/qq-chat-raw-filter
-    - python scripts/publish_check_qq_raw_filter.py --dir %AI_TOOL_STAGING_DIR%/qq-chat-raw-filter
+    - python -m scripts.publishing.publish_qq_raw_filter --out-dir %AI_TOOL_STAGING_DIR%/qq-chat-raw-filter
+    - python -m scripts.publishing.publish_check_qq_raw_filter --dir %AI_TOOL_STAGING_DIR%/qq-chat-raw-filter
       --skip-tests
     - git diff --check
   runtime_drift_fix:
@@ -196,7 +197,7 @@ tasks:
     - packages/character-system/reports/runtime-loop/
     - <target-character>/
     validation:
-    - python scripts/validate_protocols.py when shared protocols, runtime templates,
+    - python -m scripts.validation.validate_protocols when shared protocols, runtime templates,
       ledgers, or core SHARED_PROTOCOLS.md change
   skill_architecture_update:
     use_when:
@@ -209,18 +210,18 @@ tasks:
     - workspace_manifest.yaml
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/governance/context_budget.md
-    - PROJECT_CONTEXT/tasks/ledger/README.md
-    - ARCHITECTURE.md
-    - shared/workspace_policy.md
-    - shared/workspace_path_policy.md
-    - scripts/validate_manifest.py
+    - shared/workspace/workspace_policy.md
     - <affected-skills>/SKILL.md
     optional:
+    - PROJECT_CONTEXT/tasks/ledger/README.md
+    - ARCHITECTURE.md
+    - shared/workspace/workspace_path_policy.md
+    - scripts/validation/validate_manifest.py
     - USAGE_GUIDES/
     - WORKSPACE_ENGINEERING/
-    - scripts/bootstrap_workspace.py
-    - scripts/migration_dry_run.py
-    - scripts/sync_report.ps1
+    - scripts/workspace/bootstrap_workspace.py
+    - scripts/workspace/migration_dry_run.py
+    - scripts/reporting/sync_report.ps1
     ignore:
     - private corpus material
     - unrelated historical reports
@@ -232,6 +233,7 @@ tasks:
     write_scope:
     - workspace_manifest.yaml
     - AGENTS.md
+    - CLAUDE.md
     - ARCHITECTURE.md
     - PROJECT_CONTEXT/
     - shared/
@@ -240,12 +242,13 @@ tasks:
     - USAGE_GUIDES/
     - WORKSPACE_ENGINEERING/
     - scripts/
-    - explicitly declared platform projections
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
     validation:
-    - python scripts/bootstrap_workspace.py
-    - python scripts/validate_manifest.py
-    - python scripts/validate_protocols.py
-    - powershell -ExecutionPolicy Bypass -File scripts/check_links.ps1
+    - python -m scripts.workspace.bootstrap_workspace
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
+    - powershell -ExecutionPolicy Bypass -File scripts/validation/check_links.ps1
     - platform discovery checks for changed exposures
     - git diff --check
   skill_lifecycle_tooling:
@@ -256,13 +259,13 @@ tasks:
     - 创建或修改 manifest 感知的 skill 初始化、验证、列表或受控平台暴露命令
     required:
     - workspace_manifest.yaml
-    - scripts/skill_lifecycle.py
+    - scripts/workspace/skill_lifecycle.py
     - scripts/tests/workspace/test_skill_lifecycle.py
     optional:
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
-    - scripts/setup_links.ps1
-    - scripts/check_links.ps1
+    - scripts/platform/setup_links.ps1
+    - scripts/validation/check_links.ps1
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - README.md
     ignore:
@@ -283,20 +286,20 @@ tasks:
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - README.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
-    - scripts/skill_lifecycle.py
+    - scripts/workspace/skill_lifecycle.py
     - scripts/tests/workspace/test_skill_lifecycle.py
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
     - a new skill source path explicitly selected by skill init
     - the single manifest-selected projection explicitly approved through skill expose
       --apply
     validation:
     - python -m unittest scripts.tests.workspace.test_skill_lifecycle scripts.tests.workspace.test_workspace_cli
-    - python scripts/workspace_cli.py skill list
-    - python scripts/workspace_cli.py skill validate character-generator
-    - python scripts/workspace_cli.py skill expose character-generator --platform
+    - python -m scripts.workspace.workspace_cli skill list
+    - python -m scripts.workspace.workspace_cli skill validate character-generator
+    - python -m scripts.workspace.workspace_cli skill expose character-generator --platform
       codex
-    - python scripts/resolve_task_context.py skill_lifecycle_tooling --format json
+    - python -m scripts.workspace.resolve_task_context skill_lifecycle_tooling --format json
     - git diff --check
   skill_metadata_update:
     use_when:
@@ -336,7 +339,7 @@ tasks:
     - 将一个或多个工作区 skill 打包为版本化外部产品包或准备 GitHub Release
     required:
     - workspace_manifest.yaml
-    - shared/delivery_output_policy.md
+    - shared/operations/delivery_output_policy.md
     - packages/character-system/runtime/characters/zyc/SKILL.md
     - packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
     - packages/character-system/runtime/characters/zyc/scripts/package_skill.py
@@ -345,13 +348,13 @@ tasks:
     - packages/character-system/engineering/diagnosis/style-doctor/README.md
     - USAGE_GUIDES/PROMPT_TEMPLATES/character-system/runtime/zyc.md
     - USAGE_GUIDES/PROMPT_TEMPLATES/character-system/engineering/diagnosis/style-doctor.md
-    - scripts/skill_lifecycle.py
-    - scripts/publish_public.py
-    - scripts/publish_check.py
-    - scripts/sync_public_repo.py
-    - scripts/publish_chatty_ch_system.py
-    - scripts/publish_check_chatty_ch_system.py
-    - scripts/sync_chatty_ch_system_repo.py
+    - scripts/workspace/skill_lifecycle.py
+    - scripts/publishing/publish_public.py
+    - scripts/publishing/publish_check.py
+    - scripts/publishing/sync_public_repo.py
+    - scripts/publishing/publish_chatty_ch_system.py
+    - scripts/publishing/publish_check_chatty_ch_system.py
+    - scripts/publishing/sync_chatty_ch_system_repo.py
     - scripts/tests/workspace/test_workspace_cli.py
     - WORKSPACE_ENGINEERING/PUBLISH.md
     ignore:
@@ -375,34 +378,34 @@ tasks:
     - packages/character-system/runtime/characters/zyc/README.md
     - packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
     - packages/character-system/engineering/diagnosis/style-doctor/README.md
-    - scripts/publish_public.py
-    - scripts/publish_check.py
-    - scripts/sync_public_repo.py
+    - scripts/publishing/publish_public.py
+    - scripts/publishing/publish_check.py
+    - scripts/publishing/sync_public_repo.py
     - scripts/tests/publishing/test_publish_public.py
-    - scripts/publish_chatty_ch_system.py
-    - scripts/publish_check_chatty_ch_system.py
-    - scripts/sync_chatty_ch_system_repo.py
+    - scripts/publishing/publish_chatty_ch_system.py
+    - scripts/publishing/publish_check_chatty_ch_system.py
+    - scripts/publishing/sync_chatty_ch_system_repo.py
     - scripts/tests/publishing/test_publish_chatty_ch_system.py
     - scripts/tests/workspace/test_workspace_cli.py
     - WORKSPACE_ENGINEERING/PUBLISH.md
     validation:
-    - python scripts/resolve_task_context.py skill_release_packaging
-    - python scripts/skill_lifecycle.py validate zyc
-    - python scripts/skill_lifecycle.py validate style-doctor
+    - python -m scripts.workspace.resolve_task_context skill_release_packaging
+    - python -m scripts.workspace.skill_lifecycle validate zyc
+    - python -m scripts.workspace.skill_lifecycle validate style-doctor
     - release builder deterministic-build and package-content checks
     - isolated OpenCode junction, copy, discovery, and smoke checks
-    - python scripts/validate_manifest.py
-    - python scripts/validate_protocols.py
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
     - python -m pytest -q scripts/tests/publishing/test_publish_public.py
     - publish_public.py explicit staging-dir smoke check under the tool staging directory
     - publish_check.py verification against the generated staging directory
-    - python scripts/sync_public_repo.py --dry-run --skip-tests
+    - python -m scripts.publishing.sync_public_repo --dry-run --skip-tests
     - python -m pytest -q scripts/tests/publishing/test_publish_chatty_ch_system.py
     - publish_chatty_ch_system.py explicit staging-dir smoke check under the tool
       staging directory
     - publish_check_chatty_ch_system.py verification against the generated staging
       directory
-    - python scripts/sync_chatty_ch_system_repo.py --dry-run --skip-tests
-    - python scripts/workspace_cli.py changes verify skill_release_packaging --strict
-    - python scripts/workspace_cli.py workflow check skill_release_packaging
+    - python -m scripts.publishing.sync_chatty_ch_system_repo --dry-run --skip-tests
+    - python -m scripts.workspace.workspace_cli changes verify skill_release_packaging --strict
+    - python -m scripts.workspace.workspace_cli workflow check skill_release_packaging
     - git diff --check

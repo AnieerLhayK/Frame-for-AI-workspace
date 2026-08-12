@@ -11,9 +11,9 @@ topics:
     - 报告过期
     - 报告刷新
     entries:
-    - path: shared/reporting_policy.md
+    - path: shared/operations/reporting_policy.md
       layer: shared
       purpose: Authoritative report snapshot and regeneration policy.
-    - path: scripts/report_status.py
+    - path: scripts/reporting/report_status.py
       layer: tooling
       purpose: Read-only current report freshness checker.

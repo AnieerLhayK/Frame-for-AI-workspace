@@ -5,9 +5,9 @@
 本 workspace 维护一个公开 GitHub 仓库 `Frame-for-AI-workspace`，包含架构骨架、可运行脚本、权限模型和经验文档。公开仓库是私有工作区的**派生快照**，不含任何 skill 代码或业务敏感数据。
 
 - **公开仓库**: https://github.com/AnieerLhayK/Frame-for-AI-workspace
-- **生成脚本**: `scripts/publish_public.py`
-- **验证脚本**: `scripts/publish_check.py`
-- **维护脚本**: `scripts/sync_public_repo.py`
+- **生成脚本**: `scripts/publishing/publish_public.py`
+- **验证脚本**: `scripts/publishing/publish_check.py`
+- **维护脚本**: `scripts/publishing/sync_public_repo.py`
 
 ## 维护边界
 
@@ -36,10 +36,10 @@ staging 当作源代码维护面。
 
 ```powershell
 # 1. 生成 scrubbed 快照
-python scripts/publish_public.py --out-dir ${STAGING_DIR}
+python -m scripts.publishing.publish_public --out-dir ${STAGING_DIR}
 
 # 2. 验证
-python scripts/publish_check.py --dir ${STAGING_DIR}
+python -m scripts.publishing.publish_check --dir ${STAGING_DIR}
 
 # 3. 创建 GitHub 仓库
 gh repo create Frame-for-AI-workspace --public --description "..."
@@ -56,16 +56,16 @@ git push -u origin main
 
 ```powershell
 # 检查模式（默认）—— 生成并验证但不推送
-python scripts/sync_public_repo.py
+python -m scripts.publishing.sync_public_repo
 
 # 推送模式 —— 生成 + 验证 + 提交 + 推送
-python scripts/sync_public_repo.py --push
+python -m scripts.publishing.sync_public_repo --push
 
 # 临时保留 staging 只用于排查失败；排查后必须删除
-python scripts/sync_public_repo.py --push --keep-staging
+python -m scripts.publishing.sync_public_repo --push --keep-staging
 
 # 跳过测试（更快）
-python scripts/sync_public_repo.py --push --skip-tests
+python -m scripts.publishing.sync_public_repo --push --skip-tests
 ```
 
 ### 前置条件
@@ -152,7 +152,7 @@ gh auth refresh --hostname github.com --scopes workflow
 查看具体问题类型：
 
 ```powershell
-python scripts/publish_check.py --dir <staging-dir> --skip-tests
+python -m scripts.publishing.publish_check --dir <staging-dir> --skip-tests
 ```
 
 常见原因：

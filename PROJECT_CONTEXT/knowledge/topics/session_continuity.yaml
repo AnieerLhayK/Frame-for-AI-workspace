@@ -8,13 +8,13 @@ topics:
     - resume old session
     - session path
     entries:
-    - path: shared/session_continuity_policy.md
+    - path: shared/operations/session_continuity_policy.md
       layer: shared
       purpose: Required inventory, backup, mapping, and recovery rules before source
         moves.
     - path: PROJECT_CONTEXT/continuity/session_migrations.json
       layer: project_context
       purpose: Recorded source path mappings and external backup evidence.
-    - path: scripts/session_continuity.py
+    - path: scripts/workspace/session_continuity.py
       layer: tooling
       purpose: Read-only live session and backup audit.

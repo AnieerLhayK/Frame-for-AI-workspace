@@ -11,7 +11,6 @@ from typing import Any
 import yaml
 
 
-from scripts.workspace.runtime import SCRIPTS_ROOT as SCRIPTS_DIR
 from scripts.workspace.runtime import WORKSPACE_ROOT
 
 INTENT_ORDER = {
@@ -149,7 +148,8 @@ def parse_option(value: str) -> tuple[str, list[str]]:
 def resolve_task(task_id: str, bindings: list[str]) -> dict[str, Any]:
     command = [
         sys.executable,
-        str(SCRIPTS_DIR / "resolve_task_context.py"),
+        "-m",
+        "scripts.workspace.resolve_task_context",
         task_id,
         "--format",
         "json",

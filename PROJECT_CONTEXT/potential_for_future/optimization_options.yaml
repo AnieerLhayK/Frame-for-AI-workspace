@@ -33,7 +33,6 @@ options:
       - "workspace_manifest.yaml"
       - "PROJECT_CONTEXT/context_index.yaml"
       - "scripts/workspace/runtime.py"
-      - "scripts/workspace/entrypoints.py"
 
   - id: "OPT-20260718-009"
     title: "Explicit Claude Code user-profile maintenance review"
@@ -105,7 +104,7 @@ options:
       - "Define an optional small YAML frontmatter/block for source README files that declares source role, speaker rules, context-note policy, worklist expansion, and privacy notes."
       - "Keep prose README useful for humans while letting generator ingest exact per-source rules without guessing from text."
     related_files:
-      - "WORKSPACE_ENGINEERING/skill_engineering/personal_corpus_preparation.md"
+      - "WORKSPACE_ENGINEERING/methods/skill_engineering/personal_corpus_preparation.md"
       - "packages/character-system/engineering/generation/character-generator/scripts/ingest_corpus.py"
       - "packages/character-system/engineering/generation/character-generator/docs/workflow.md"
 

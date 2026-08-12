@@ -15,7 +15,7 @@ from typing import Any
 
 WORKSPACE_ROOT = Path.cwd()
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
-REPORT_PATH = WORKSPACE_ROOT / "reports" / "migration_dry_run_report.md"
+REPORT_PATH = WORKSPACE_ROOT / "reports" / "history" / "migration_dry_run_report.md"
 
 
 def load_manifest() -> dict[str, Any]:
@@ -148,19 +148,19 @@ def write_report(scenario: str, changes: list[dict[str, str]], notes: list[str])
     now = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %z")
     affected_projections = [row for row in changes if row["field"].startswith("projections") or "projection" in row["field"] or "platform_roots" in row["field"]]
     affected_reports = [
-        "reports/workspace_setup_report.md",
-        "reports/workspace_health_report.md",
-        "reports/manifest_validation_report.md",
-        "reports/migration_dry_run_report.md",
-        "reports/manifest_portability_report.md",
+        "reports/current/workspace_setup_report.md",
+        "reports/current/workspace_health_report.md",
+        "reports/current/manifest_validation_report.md",
+        "reports/history/migration_dry_run_report.md",
+        "reports/history/manifest_portability_report.md",
     ]
     affected_scripts = [
-        "scripts/bootstrap_workspace.py",
-        "scripts/validate_manifest.py",
-        "scripts/migration_dry_run.py",
-        "scripts/setup_links.ps1",
-        "scripts/check_links.ps1",
-        "scripts/sync_report.ps1",
+        "scripts/workspace/bootstrap_workspace.py",
+        "scripts/validation/validate_manifest.py",
+        "scripts/workspace/migration_dry_run.py",
+        "scripts/platform/setup_links.ps1",
+        "scripts/validation/check_links.ps1",
+        "scripts/reporting/sync_report.ps1",
     ]
     affected_skill_docs = [
         "core skill SHARED_PROTOCOLS.md files only if shared policy paths change",
@@ -174,7 +174,7 @@ def write_report(scenario: str, changes: list[dict[str, str]], notes: list[str])
         "status: retired",
         "historical_reason: Retained as a migration simulation snapshot; newer simulations supersede it.",
         f"generated_at: {now}",
-        "generated_by: scripts/migration_dry_run.py",
+        "generated_by: scripts/workspace/migration_dry_run.py",
         f"source_root: {WORKSPACE_ROOT}",
         f"manifest_path: {MANIFEST_PATH}",
         f"source_commit: {get_source_commit()}",

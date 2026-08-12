@@ -85,6 +85,7 @@ def initial_record(
     started_at: str,
     tokens_estimated: int | None,
     operations: list[str],
+    owner: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not TASK_ID.match(task_id):
         raise ValueError("task_id must start with TASK-YYYYMMDD-")
@@ -93,7 +94,7 @@ def initial_record(
     unknown = sorted(set(operations) - OPERATIONS)
     if unknown:
         raise ValueError(f"invalid registration operation: {', '.join(unknown)}")
-    return {
+    record = {
         "schema_version": "1.3",
         "task_id": task_id,
         "task_type": task_type,
@@ -118,6 +119,25 @@ def initial_record(
         },
         "usability": {"status": "unknown", "evidence": []},
         "notes": [],
+    }
+    if owner is not None:
+        record["owner"] = owner
+    return record
+
+
+def workspace_session_owner(args: argparse.Namespace) -> dict[str, Any] | None:
+    """Return optional durable ownership stamped by an in-workspace adapter."""
+    agent = str(getattr(args, "owner_agent", None) or "").strip()
+    session_id = str(getattr(args, "owner_session", None) or "").strip()
+    if not agent and not session_id:
+        return None
+    if not agent or not session_id:
+        raise ValueError("--owner-agent and --owner-session must be supplied together")
+    return {
+        "kind": "workspace_session",
+        "agent": agent,
+        "session_id": session_id,
+        "bindings": sorted(set(getattr(args, "bind", []))),
     }
 
 
@@ -355,6 +375,20 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             errors.append("external origin requires an agent")
         elif not isinstance(origin.get("client_root"), str) or not origin["client_root"]:
             errors.append("external origin requires a client_root")
+    owner = record.get("owner")
+    if owner is not None:
+        if not isinstance(owner, dict) or owner.get("kind") != "workspace_session":
+            errors.append("owner must describe a workspace session")
+        else:
+            if not isinstance(owner.get("agent"), str) or not owner["agent"]:
+                errors.append("workspace session owner requires an agent")
+            if not isinstance(owner.get("session_id"), str) or not owner["session_id"]:
+                errors.append("workspace session owner requires a session_id")
+            bindings = owner.get("bindings")
+            if not isinstance(bindings, list) or any(
+                not isinstance(binding, str) or not binding for binding in bindings
+            ):
+                errors.append("workspace session owner requires string bindings")
     if (
         record.get("status") == "successful"
         and record.get("validation", {}).get("status") == "not_run"
@@ -439,6 +473,7 @@ def start(args: argparse.Namespace) -> dict[str, Any]:
             started_at=started_at,
             tokens_estimated=estimate,
             operations=args.operation,
+            owner=workspace_session_owner(args),
         )
         try:
             create_record(path, record)
@@ -454,6 +489,7 @@ def external_start(args: argparse.Namespace) -> dict[str, Any]:
     agent = external_agent_id(args.agent)
     client_root = external_client_root(args.client_root)
     record = start(args)
+    record["registration"]["operations"].append("external_write")
     path = record_path(record["task_id"], record["started_at"])
     record["origin"] = {
         "kind": "external_workspace",
@@ -628,6 +664,8 @@ def main() -> int:
 
     p = sub.add_parser("start", help="Allocate and register an active task record.")
     add_registration_arguments(p)
+    p.add_argument("--owner-agent")
+    p.add_argument("--owner-session")
     p = sub.add_parser("external-start", help="Register a workspace task initiated from an external workspace.")
     p.add_argument("--agent", required=True)
     p.add_argument("--client-root", required=True)

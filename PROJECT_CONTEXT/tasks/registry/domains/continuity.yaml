@@ -11,16 +11,16 @@ tasks:
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/governance/context_budget.md
     - workspace_manifest.yaml
-    - shared/manifest_portability_policy.md
-    - shared/workspace_path_policy.md
+    - shared/workspace/manifest_portability_policy.md
+    - shared/workspace/workspace_path_policy.md
     - git status --short --untracked-files=all
     - explicit user approval for every destructive path
     optional:
-    - scripts/migration_dry_run.py
-    - scripts/check_links.ps1
-    - shared/session_continuity_policy.md
+    - scripts/workspace/migration_dry_run.py
+    - scripts/validation/check_links.ps1
+    - shared/operations/session_continuity_policy.md
     - PROJECT_CONTEXT/continuity/session_migrations.json
-    - scripts/session_continuity.py
+    - scripts/workspace/session_continuity.py
     ignore:
     - reports/legacy_git_metadata/
     - private corpus material
@@ -33,17 +33,21 @@ tasks:
       - ARCHITECTURE.md
       - README.md
       - README.zh-CN.md
+      - workspace_manifest.yaml
       - PROJECT_CONTEXT/
       - reports/
       - scripts/
       - shared/
       - USAGE_GUIDES/
       - WORKSPACE_ENGINEERING/
+      - packages/character-system/
+      - skills/far-repo-governor/SKILL.md
+      - packages/character-system/shared/versioning_policy.md
     validation:
-    - python scripts/validate_manifest.py when manifest changes
-    - powershell -ExecutionPolicy Bypass -File scripts/check_links.ps1 when projections
+    - python -m scripts.validation.validate_manifest when manifest changes
+    - powershell -ExecutionPolicy Bypass -File scripts/validation/check_links.ps1 when projections
       change
-    - python scripts/workspace_cli.py sessions audit when source paths used by agents
+    - python -m scripts.workspace.workspace_cli sessions audit when source paths used by agents
       move
   session_continuity:
     use_when:
@@ -53,9 +57,9 @@ tasks:
     - 审计、备份、映射或恢复 Claude Code 或 OpenCode 会话（在源路径移动后）
     required:
     - workspace_manifest.yaml
-    - shared/session_continuity_policy.md
+    - shared/operations/session_continuity_policy.md
     - PROJECT_CONTEXT/continuity/session_migrations.json
-    - scripts/session_continuity.py
+    - scripts/workspace/session_continuity.py
     optional:
     - PROJECT_CONTEXT/continuity/current_status.md
     - PROJECT_CONTEXT/continuity/session_handoff.md
@@ -70,20 +74,20 @@ tasks:
     ledger: true
     write_scope:
     - workspace_manifest.yaml
-    - shared/session_continuity_policy.md
+    - shared/operations/session_continuity_policy.md
     - PROJECT_CONTEXT/continuity/session_migrations.json
     - PROJECT_CONTEXT/continuity/current_status.md
     - PROJECT_CONTEXT/continuity/session_handoff.md
     - PROJECT_CONTEXT/tasks/ledger/README.md
-    - scripts/session_continuity.py
+    - scripts/workspace/session_continuity.py
     - scripts/tests/workspace/test_session_continuity.py
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
     - explicitly approved external session backup paths
     validation:
     - python -m unittest scripts.tests.workspace.test_session_continuity scripts.tests.workspace.test_workspace_cli
-    - python scripts/workspace_cli.py sessions audit
-    - python scripts/validate_manifest.py
+    - python -m scripts.workspace.workspace_cli sessions audit
+    - python -m scripts.validation.validate_manifest
     - git diff --check
   task_outcome_records:
     use_when:
@@ -95,22 +99,22 @@ tasks:
     - PROJECT_CONTEXT/tasks/records/README.md
     - PROJECT_CONTEXT/tasks/records/schema.json
     - PROJECT_CONTEXT/tasks/ledger/README.md
-    - scripts/task_records.py
+    - scripts/workspace/task_records.py
     - scripts/workspace/task_records.py
     - scripts/workspace/resolve_task_context.py
-    - scripts/task_ledger.py
-    - scripts/workflow_check.py
-    - scripts/verify_change_scope.py
-    - scripts/agent_governance.py
+    - scripts/workspace/task_ledger.py
+    - scripts/workspace/workflow_check.py
+    - scripts/workspace/verify_change_scope.py
+    - scripts/workspace/agent_governance.py
     - scripts/tests/workspace/test_task_records.py
     - scripts/tests/workspace/test_resolve_task_context.py
     - scripts/tests/workspace/test_workflow_check.py
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - AGENTS.md
-    - shared/workspace_policy.md
-    - shared/agent_governance_policy.md
+    - shared/workspace/workspace_policy.md
+    - shared/governance/agent_governance_policy.md
     optional:
-    - scripts/workspace_summary.py
+    - scripts/workspace/workspace_summary.py
     - scripts/tests/workspace/test_workspace_summary.py
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     ignore:
@@ -133,26 +137,26 @@ tasks:
     - USAGE_GUIDES/prompt_registry.yaml
     - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.md
     - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.zh-CN.md
-    - scripts/publish_public.py
-    - scripts/resolve_task_context.py
+    - scripts/publishing/publish_public.py
     - scripts/workspace/resolve_task_context.py
-    - scripts/task_records.py
+    - scripts/workspace/resolve_task_context.py
     - scripts/workspace/task_records.py
-    - scripts/task_ledger.py
-    - scripts/workflow_check.py
-    - scripts/verify_change_scope.py
-    - scripts/agent_governance.py
-    - scripts/workspace_cli.py
+    - scripts/workspace/task_records.py
+    - scripts/workspace/task_ledger.py
+    - scripts/workspace/workflow_check.py
+    - scripts/workspace/verify_change_scope.py
+    - scripts/workspace/agent_governance.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workflow_check.py
     - scripts/tests/platform/test_platform_agent_guards.py
     - scripts/tests/workspace/test_workspace_cli.py
     - AGENTS.md
-    - shared/workspace_policy.md
-    - shared/agent_governance_policy.md
+    - shared/workspace/workspace_policy.md
+    - shared/governance/agent_governance_policy.md
     - .claude/hooks/workspace_boundary_guard.ps1
     - .opencode/plugins/workspace-governance.js
     - reasonix.toml
-    - scripts/workspace_summary.py
+    - scripts/workspace/workspace_summary.py
     - scripts/tests/workspace/test_task_records.py
     - scripts/tests/workspace/test_resolve_task_context.py
     - scripts/tests/workspace/test_workspace_summary.py
@@ -161,7 +165,7 @@ tasks:
       scripts.tests.workspace.test_workflow_check scripts.tests.workspace.test_workspace_summary
       scripts.tests.workspace.test_workspace_cli scripts.tests.workspace.test_agent_governance
       scripts.tests.platform.test_platform_agent_guards
-    - python scripts/task_ledger.py validate
-    - python scripts/task_records.py validate
-    - python scripts/workspace_cli.py records summary
+    - python -m scripts.workspace.task_ledger validate
+    - python -m scripts.workspace.task_records validate
+    - python -m scripts.workspace.workspace_cli records summary
     - git diff --check

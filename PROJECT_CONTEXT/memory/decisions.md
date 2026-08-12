@@ -89,7 +89,7 @@
 - decision: Bootstrap discovery is bounded upward from a known start path.
 - reason: Full-drive scans are slow, unsafe, and can bind the project to unrelated folders.
 - date if known: manifest portability/bootstrap discovery phase.
-- consequence: Use `scripts/bootstrap_workspace.py` and manifest discovery policy.
+- consequence: Use `scripts/workspace/bootstrap_workspace.py` and manifest discovery policy.
 
 ## Agent Review Must Stay Independent
 

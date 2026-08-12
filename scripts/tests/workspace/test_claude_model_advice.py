@@ -7,16 +7,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.claude_model_advice import WORKSPACE_ROOT, project_status
+from scripts.workspace.claude_model_advice import WORKSPACE_ROOT, project_status
 
 
-SCRIPT = WORKSPACE_ROOT / "scripts" / "claude_model_advice.py"
+SCRIPT_MODULE = "scripts.workspace.claude_model_advice"
 
 
 class ClaudeModelAdviceTests(unittest.TestCase):
     def run_script(self, *args: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [sys.executable, str(SCRIPT), *args],
+            [sys.executable, "-m", SCRIPT_MODULE, *args],
             cwd=WORKSPACE_ROOT,
             capture_output=True,
             text=True,

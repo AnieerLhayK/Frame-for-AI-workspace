@@ -27,7 +27,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
             "PROJECT_CONTEXT/tasks/registry/index.yaml",
             "PROJECT_CONTEXT/governance/context_budget.md",
             "USAGE_GUIDES/prompt_registry.yaml",
-            "scripts/resolve_task_context.py",
+            "scripts/workspace/resolve_task_context.py",
         ],
         "checks": [
             "python -m unittest scripts.tests.test_resolve_task_context",
@@ -40,7 +40,7 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "entrypoints": ["CLAUDE.md", "workspace health"],
         "sources": [
             "shared/claude/policies/model-routing-policy.md",
-            "scripts/workspace_health.py",
+            "scripts/workspace/workspace_health.py",
             "scripts/tests/workspace/test_workspace_health.py",
         ],
         "checks": ["python -m unittest scripts.tests.test_workspace_health"],
@@ -50,8 +50,8 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "purpose": "Detect stale generated reports and refresh them explicitly from source evidence.",
         "entrypoints": ["workspace reports status", "workspace reports refresh all-current"],
         "sources": [
-            "shared/reporting_policy.md",
-            "scripts/report_status.py",
+            "shared/operations/reporting_policy.md",
+            "scripts/reporting/report_status.py",
             "reports/",
         ],
         "checks": [
@@ -65,8 +65,8 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "entrypoints": ["workspace skill list", "workspace skill expose <skill-id> --platform <platform>"],
         "sources": [
             "workspace_manifest.yaml",
-            "shared/workspace_path_policy.md",
-            "scripts/skill_lifecycle.py",
+            "shared/workspace/workspace_path_policy.md",
+            "scripts/workspace/skill_lifecycle.py",
         ],
         "checks": ["workspace validate links", "workspace skill validate <skill-id>"],
     },
@@ -75,10 +75,10 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "purpose": "Resolve agent roles and guard structural writes across Codex, Claude, Hermes, OpenCode, and related hosts.",
         "entrypoints": ["workspace agent status", "workspace agent check --agent <id> --path <path>"],
         "sources": [
-            "shared/agent_registry.yaml",
-            "shared/agent_governance.yaml",
-            "shared/agent_governance_policy.md",
-            "scripts/agent_governance.py",
+            "shared/governance/agent_registry.yaml",
+            "shared/governance/agent_governance.yaml",
+            "shared/governance/agent_governance_policy.md",
+            "scripts/workspace/agent_governance.py",
         ],
         "checks": ["workspace health --with-tests", "workspace agent doctor hermes"],
     },

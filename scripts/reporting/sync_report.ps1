@@ -209,8 +209,8 @@ function Get-ProtocolValidationStatus {
 
   $paths = @(
     @{ Component = "protocol-manifest"; RelativePath = "packages/character-system/shared/protocol_manifest.json"; PathType = "Leaf" },
-    @{ Component = "protocol-validator"; RelativePath = "scripts/validate_protocols.py"; PathType = "Leaf" },
-    @{ Component = "protocol-validation-report"; RelativePath = "reports/protocol_validation_report.md"; PathType = "Leaf" }
+    @{ Component = "protocol-validator"; RelativePath = "scripts/validation/validate_protocols.py"; PathType = "Leaf" },
+    @{ Component = "protocol-validation-report"; RelativePath = "reports/current/protocol_validation_report.md"; PathType = "Leaf" }
   )
 
   foreach ($entry in $paths) {
@@ -228,13 +228,13 @@ function Get-ManifestPortabilityStatus {
   param([Parameter(Mandatory = $true)][string]$WorkspaceRoot)
 
   $paths = @(
-    @{ Component = "manifest-portability-policy"; RelativePath = "shared/manifest_portability_policy.md"; PathType = "Leaf" },
-    @{ Component = "bootstrap-workspace"; RelativePath = "scripts/bootstrap_workspace.py"; PathType = "Leaf" },
-    @{ Component = "manifest-validator"; RelativePath = "scripts/validate_manifest.py"; PathType = "Leaf" },
-    @{ Component = "migration-dry-run"; RelativePath = "scripts/migration_dry_run.py"; PathType = "Leaf" },
-    @{ Component = "manifest-validation-report"; RelativePath = "reports/manifest_validation_report.md"; PathType = "Leaf" },
-    @{ Component = "migration-dry-run-report"; RelativePath = "reports/migration_dry_run_report.md"; PathType = "Leaf" },
-    @{ Component = "manifest-portability-report"; RelativePath = "reports/manifest_portability_report.md"; PathType = "Leaf" }
+    @{ Component = "manifest-portability-policy"; RelativePath = "shared/workspace/manifest_portability_policy.md"; PathType = "Leaf" },
+    @{ Component = "bootstrap-workspace"; RelativePath = "scripts/workspace/bootstrap_workspace.py"; PathType = "Leaf" },
+    @{ Component = "manifest-validator"; RelativePath = "scripts/validation/validate_manifest.py"; PathType = "Leaf" },
+    @{ Component = "migration-dry-run"; RelativePath = "scripts/workspace/migration_dry_run.py"; PathType = "Leaf" },
+    @{ Component = "manifest-validation-report"; RelativePath = "reports/current/manifest_validation_report.md"; PathType = "Leaf" },
+    @{ Component = "migration-dry-run-report"; RelativePath = "reports/history/migration_dry_run_report.md"; PathType = "Leaf" },
+    @{ Component = "manifest-portability-report"; RelativePath = "reports/history/manifest_portability_report.md"; PathType = "Leaf" }
   )
 
   foreach ($entry in $paths) {
@@ -439,7 +439,7 @@ function Add-ReportHeader {
 $ManifestPath = Resolve-ManifestPath -RequestedPath $ManifestPath
 $manifest = Read-WorkspaceManifest -Path $ManifestPath
 $workspaceRoot = [string]$manifest.workspace.source_of_truth
-$reportRoot = Join-Path $workspaceRoot "reports"
+$reportRoot = Join-Path $workspaceRoot "reports\current"
 New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
 $resolvedManifestPath = [System.IO.Path]::GetFullPath($ManifestPath)
 $manifestLastModified = (Get-Item -LiteralPath $resolvedManifestPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss zzz")
@@ -479,7 +479,7 @@ $unsafeHardcoded = @($hardcodedFindings | Where-Object { $_.Category -notin @("m
 $now = Get-Date -Format "yyyy-MM-dd HH:mm:ss zzz"
 
 $setupLines = [System.Collections.ArrayList]@()
-Add-ReportHeader -Lines $setupLines -ReportName "workspace_setup_report" -GeneratedAt $now -GeneratedBy "scripts/sync_report.ps1" -SourceRoot $workspaceRoot -ManifestPath $resolvedManifestPath -ManifestVersion ([string]$manifest.workspace.workspace_version) -ManifestLastModified $manifestLastModified -SourceCommit $sourceCommit -ReportScope "workspace setup, skill registry, and projection status"
+Add-ReportHeader -Lines $setupLines -ReportName "workspace_setup_report" -GeneratedAt $now -GeneratedBy "scripts/reporting/sync_report.ps1" -SourceRoot $workspaceRoot -ManifestPath $resolvedManifestPath -ManifestVersion ([string]$manifest.workspace.workspace_version) -ManifestLastModified $manifestLastModified -SourceCommit $sourceCommit -ReportScope "workspace setup, skill registry, and projection status"
 [void]$setupLines.Add("# Workspace Setup Report")
 [void]$setupLines.Add("")
 [void]$setupLines.Add("Generated: $now")
@@ -522,12 +522,12 @@ Add-Table -Lines $setupLines -Rows ($projectionStatuses | ForEach-Object {
 [void]$setupLines.Add("")
 [void]$setupLines.Add("## Next Steps")
 [void]$setupLines.Add("")
-[void]$setupLines.Add("- Run ``scripts/check_links.ps1`` after any platform or workspace path change.")
+[void]$setupLines.Add("- Run ``scripts/validation/check_links.ps1`` after any platform or workspace path change.")
 [void]$setupLines.Add("- Keep source edits inside manifest-declared skill source paths.")
 [void]$setupLines.Add("- Update ``workspace_manifest.yaml`` before changing projections or shared protocol locations.")
 
 $healthLines = [System.Collections.ArrayList]@()
-Add-ReportHeader -Lines $healthLines -ReportName "workspace_health_report" -GeneratedAt $now -GeneratedBy "scripts/sync_report.ps1" -SourceRoot $workspaceRoot -ManifestPath $resolvedManifestPath -ManifestVersion ([string]$manifest.workspace.workspace_version) -ManifestLastModified $manifestLastModified -SourceCommit $sourceCommit -ReportScope "manifest status, link status, missing files, hardcoded paths, protocol consistency, drift, shared uniqueness, and Git boundaries"
+Add-ReportHeader -Lines $healthLines -ReportName "workspace_health_report" -GeneratedAt $now -GeneratedBy "scripts/reporting/sync_report.ps1" -SourceRoot $workspaceRoot -ManifestPath $resolvedManifestPath -ManifestVersion ([string]$manifest.workspace.workspace_version) -ManifestLastModified $manifestLastModified -SourceCommit $sourceCommit -ReportScope "manifest status, link status, missing files, hardcoded paths, protocol consistency, drift, shared uniqueness, and Git boundaries"
 [void]$healthLines.Add("# Workspace Health Report")
 [void]$healthLines.Add("")
 [void]$healthLines.Add("Generated: $now")
@@ -626,5 +626,5 @@ $overall = if ($missingRequired.Count -eq 0 -and $missingProtocols.Count -eq 0 -
 Set-Content -LiteralPath (Join-Path $reportRoot "workspace_setup_report.md") -Value $setupLines -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $reportRoot "workspace_health_report.md") -Value $healthLines -Encoding UTF8
 
-Write-Host "Wrote reports/workspace_setup_report.md"
-Write-Host "Wrote reports/workspace_health_report.md"
+Write-Host "Wrote reports/current/workspace_setup_report.md"
+Write-Host "Wrote reports/current/workspace_health_report.md"

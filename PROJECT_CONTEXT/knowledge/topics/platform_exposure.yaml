@@ -11,10 +11,10 @@ topics:
     - 技能加载
     - 软链接
     entries:
-    - path: shared/workspace_path_policy.md
+    - path: shared/workspace/workspace_path_policy.md
       layer: shared
       purpose: Source versus platform projection path rules.
-    - path: shared/workspace_policy.md
+    - path: shared/workspace/workspace_policy.md
       layer: shared
       purpose: Exposure, authority, and link ownership policy.
     - path: workspace_manifest.yaml

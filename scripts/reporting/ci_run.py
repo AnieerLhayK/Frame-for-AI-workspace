@@ -13,7 +13,7 @@ Exit codes:
   2 — only infra-dependent tests failed (non-blocking signal).
 
 Usage:
-    python scripts/ci_run.py [pytest-args ...]
+    python -m scripts.reporting.ci_run [pytest-args ...]
 """
 
 from __future__ import annotations

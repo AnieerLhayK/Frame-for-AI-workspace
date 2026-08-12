@@ -7,11 +7,11 @@ tasks:
     use_when_zh:
     - 修改 Agent 注册、生命周期、角色、工作区表面分类、变更请求路由或临时能力授权规则
     required:
-    - shared/agent_governance_policy.md
-    - shared/agent_governance.yaml
-    - shared/agent_registry.yaml
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/agent_governance.yaml
+    - shared/governance/agent_registry.yaml
     - shared/schemas/agent_registration.schema.json
-    - scripts/agent_governance.py
+    - scripts/workspace/agent_governance.py
     - scripts/workspace/agent_governance.py
     - scripts/workspace/governance/
     - scripts/workspace/merge_safety.py
@@ -21,14 +21,14 @@ tasks:
     - scripts/tests/workspace/test_merge_safety.py
     - scripts/tests/workspace/test_task_records.py
     optional:
-    - shared/workspace_policy.md
-    - shared/reporting_policy.md
+    - shared/workspace/workspace_policy.md
+    - shared/operations/reporting_policy.md
     - USAGE_GUIDES/QUICK_START/agent_governance.md
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
-    - scripts/sync_public_repo.py
-    - scripts/sync_chatty_ch_system_repo.py
-    - scripts/sync_qq_raw_filter_repo.py
+    - scripts/publishing/sync_public_repo.py
+    - scripts/publishing/sync_chatty_ch_system_repo.py
+    - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/test_publish_public.py
     - scripts/tests/publishing/test_publish_chatty_ch_system.py
     - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
@@ -53,22 +53,22 @@ tasks:
     - USAGE_GUIDES/QUICK_START/agent_governance.md
     - README.md
     - ARCHITECTURE.md
-    - scripts/agent_governance.py
+    - scripts/workspace/agent_governance.py
     - scripts/workspace/agent_governance.py
     - scripts/workspace/governance/
     - scripts/workspace/merge_safety.py
     - scripts/workspace/task_records.py
     - scripts/workspace/workspace_cli.py
-    - scripts/merge_safety.py
-    - scripts/task_records.py
+    - scripts/workspace/merge_safety.py
+    - scripts/workspace/task_records.py
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_merge_safety.py
     - scripts/tests/workspace/test_task_records.py
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
-    - scripts/sync_public_repo.py
-    - scripts/sync_chatty_ch_system_repo.py
-    - scripts/sync_qq_raw_filter_repo.py
+    - scripts/publishing/sync_public_repo.py
+    - scripts/publishing/sync_chatty_ch_system_repo.py
+    - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/test_publish_public.py
     - scripts/tests/publishing/test_publish_chatty_ch_system.py
     - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
@@ -78,14 +78,14 @@ tasks:
       scripts.tests.workspace.test_task_records scripts.tests.workspace.test_workspace_cli
     - python -m pytest -q scripts/tests/publishing/test_publish_public.py scripts/tests/publishing/test_publish_chatty_ch_system.py
       scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
-    - python scripts/workspace_cli.py agent status
-    - python scripts/workspace_cli.py agent list
-    - python scripts/workspace_cli.py agent validate codex
-    - python scripts/workspace_cli.py agent doctor cursor
-    - python scripts/workspace_cli.py agent check --agent hermes --path workspace_manifest.yaml
-    - python scripts/workspace_cli.py agent check --agent hermes --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
-    - python scripts/validate_protocols.py
-    - python scripts/validate_manifest.py
+    - python -m scripts.workspace.workspace_cli agent status
+    - python -m scripts.workspace.workspace_cli agent list
+    - python -m scripts.workspace.workspace_cli agent validate codex
+    - python -m scripts.workspace.workspace_cli agent doctor cursor
+    - python -m scripts.workspace.workspace_cli agent check --agent hermes --path workspace_manifest.yaml
+    - python -m scripts.workspace.workspace_cli agent check --agent hermes --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
+    - python -m scripts.validation.validate_protocols
+    - python -m scripts.validation.validate_manifest
     - git diff --check
   change_scope_verification:
     use_when:
@@ -96,14 +96,14 @@ tasks:
     - 修改只读范围验证器（比较实际 Git 变更与已解析任务的 write_scope）
     required:
     - PROJECT_CONTEXT/governance/change_surface_policy.md
-    - scripts/verify_change_scope.py
+    - scripts/workspace/verify_change_scope.py
     - scripts/tests/workspace/test_verify_change_scope.py
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
     optional:
     - AGENTS.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
-    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - WORKSPACE_ENGINEERING/methods/governance_patterns.md
     - PROJECT_CONTEXT/continuity/current_status.md
     ignore:
     - private corpus material
@@ -124,24 +124,24 @@ tasks:
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - PROJECT_CONTEXT/continuity/current_status.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
-    - WORKSPACE_ENGINEERING/governance_patterns.md
-    - scripts/verify_change_scope.py
+    - WORKSPACE_ENGINEERING/methods/governance_patterns.md
+    - scripts/workspace/verify_change_scope.py
     - scripts/tests/workspace/test_verify_change_scope.py
-    - scripts/plan_change_surface.py
+    - scripts/workspace/plan_change_surface.py
     - scripts/tests/workspace/test_plan_change_surface.py
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
-    - reports/manifest_validation_report.md
-    - reports/protocol_validation_report.md
-    - reports/workspace_health_report.md
-    - reports/workspace_setup_report.md
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - reports/current/workspace_health_report.md
+    - reports/current/workspace_setup_report.md
     validation:
     - python -m unittest scripts.tests.workspace.test_verify_change_scope scripts.tests.workspace.test_plan_change_surface
       scripts.tests.workspace.test_workspace_cli
-    - python scripts/workspace_cli.py changes verify change_scope_verification --strict
-    - python scripts/workspace_cli.py changes plan developer_interface_tooling --intent
+    - python -m scripts.workspace.workspace_cli changes verify change_scope_verification --strict
+    - python -m scripts.workspace.workspace_cli changes plan developer_interface_tooling --intent
       tooling
-    - python scripts/resolve_task_context.py change_scope_verification --format json
+    - python -m scripts.workspace.resolve_task_context change_scope_verification --format json
     - git diff --check
   claude_project_boundary:
     use_when:
@@ -157,8 +157,8 @@ tasks:
     - .claude/hooks/workspace_boundary_guard.ps1
     - shared/claude/policies/model-routing-policy.md
     - scripts/claude_long_task_notifications/
-    - scripts/install_claude_long_task_notifications.ps1
-    - scripts/workspace_health.py
+    - scripts/platform/install_claude_long_task_notifications.ps1
+    - scripts/workspace/workspace_health.py
     - scripts/tests/workspace/test_workspace_health.py
     optional:
     - AGENTS.md
@@ -166,7 +166,7 @@ tasks:
     - PROJECT_CONTEXT/continuity/current_status.md
     - PROJECT_CONTEXT/continuity/session_handoff.md
     - USAGE_GUIDES/QUICK_START/claude_code.md
-    - scripts/claude_model_advice.py
+    - scripts/workspace/claude_model_advice.py
     - scripts/tests/workspace/test_claude_model_advice.py
     - machine-local Claude project registry and launcher scripts
     ignore:
@@ -186,10 +186,10 @@ tasks:
     - USAGE_GUIDES/
     - shared/claude/policies/model-routing-policy.md
     - scripts/claude_long_task_notifications/
-    - scripts/install_claude_long_task_notifications.ps1
-    - scripts/claude_model_advice.py
+    - scripts/platform/install_claude_long_task_notifications.ps1
+    - scripts/workspace/claude_model_advice.py
     - scripts/tests/workspace/test_claude_model_advice.py
-    - scripts/workspace_health.py
+    - scripts/workspace/workspace_health.py
     - scripts/tests/workspace/test_workspace_health.py
     - explicitly approved machine-local Claude registry and launchers
     validation:
@@ -206,20 +206,19 @@ tasks:
     - 统一变更风险分类、简化日常维护工作流或定义治理观察和缩减标准
     required:
     - PROJECT_CONTEXT/governance/change_surface_policy.md
-    - shared/agent_governance.yaml
-    - shared/agent_governance_policy.md
-    - scripts/verify_change_scope.py
+    - shared/governance/agent_governance.yaml
+    - shared/governance/agent_governance_policy.md
+    - scripts/workspace/verify_change_scope.py
+    - scripts/workspace/workflow_check.py
+    - scripts/workspace/workspace_cli.py
+    optional:
+    - AGENTS.md
     - scripts/tests/workspace/test_verify_change_scope.py
-    - scripts/workflow_check.py
     - scripts/tests/workspace/test_workflow_check.py
     - scripts/tests/platform/test_platform_agent_guards.py
     - scripts/tests/workspace/test_workspace_cli.py
-    - scripts/workspace_cli.py
-    - scripts/tests/workspace/test_workspace_cli.py
-    optional:
-    - AGENTS.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
-    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - WORKSPACE_ENGINEERING/methods/governance_patterns.md
     - PROJECT_CONTEXT/continuity/current_status.md
     - PROJECT_CONTEXT/todo/README.md
     ignore:
@@ -242,32 +241,32 @@ tasks:
     - PROJECT_CONTEXT/continuity/current_status.md
     - PROJECT_CONTEXT/todo/README.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
-    - WORKSPACE_ENGINEERING/governance_patterns.md
-    - shared/agent_governance.yaml
-    - shared/agent_governance_policy.md
-    - scripts/verify_change_scope.py
+    - WORKSPACE_ENGINEERING/methods/governance_patterns.md
+    - shared/governance/agent_governance.yaml
+    - shared/governance/agent_governance_policy.md
+    - scripts/workspace/verify_change_scope.py
     - scripts/tests/workspace/test_verify_change_scope.py
-    - scripts/workflow_check.py
+    - scripts/workspace/workflow_check.py
     - scripts/tests/workspace/test_workflow_check.py
-    - scripts/workspace_cli.py
+    - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
-    - reports/manifest_validation_report.md
-    - reports/protocol_validation_report.md
-    - reports/workspace_health_report.md
-    - reports/workspace_setup_report.md
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - reports/current/workspace_health_report.md
+    - reports/current/workspace_setup_report.md
     validation:
     - python -m unittest scripts.tests.workspace.test_verify_change_scope scripts.tests.workspace.test_workflow_check
       scripts.tests.workspace.test_workspace_cli
-    - python scripts/workspace_cli.py changes verify governance_workflow_simplification
+    - python -m scripts.workspace.workspace_cli changes verify governance_workflow_simplification
       --strict
-    - python scripts/workspace_cli.py workflow check governance_workflow_simplification
+    - python -m scripts.workspace.workspace_cli workflow check governance_workflow_simplification
       --strict
-    - python scripts/resolve_task_context.py governance_workflow_simplification --format
+    - python -m scripts.workspace.resolve_task_context governance_workflow_simplification --format
       json
-    - python scripts/workspace_cli.py knowledge validate
-    - python scripts/validate_manifest.py
-    - python scripts/validate_protocols.py
-    - python scripts/workspace_cli.py health --with-tests
+    - python -m scripts.workspace.workspace_cli knowledge validate
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
+    - python -m scripts.workspace.workspace_cli health --with-tests
     - git diff --check
   runtime_authorization_enforcement:
     use_when:
@@ -277,20 +276,20 @@ tasks:
     - 连接 Agent 和 Skill 权限到运行时工具分发、参与者感知变更验证或平台守卫健康检查
     required:
     - PROJECT_CONTEXT/tasks/registry/domains/governance.yaml
-    - shared/agent_governance_policy.md
-    - shared/agent_governance.yaml
-    - shared/agent_registry.yaml
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/agent_governance.yaml
+    - shared/governance/agent_registry.yaml
     - workspace_manifest.yaml
-    - scripts/agent_governance.py
     - scripts/workspace/agent_governance.py
-    - scripts/hermes_workspace_guard.py
+    - scripts/workspace/agent_governance.py
+    - scripts/workspace/hermes_workspace_guard.py
     - reasonix.toml
     - opencode.json
     - .opencode/plugins/workspace-governance.js
     - reasonix.toml
-    - scripts/verify_change_scope.py
-    - scripts/workflow_check.py
-    - scripts/workspace_health.py
+    - scripts/workspace/verify_change_scope.py
+    - scripts/workspace/workflow_check.py
+    - scripts/workspace/workspace_health.py
     - scripts/workspace/workspace_health.py
     - scripts/workspace/workspace_cli.py
     - scripts/workspace/task_records.py
@@ -299,7 +298,7 @@ tasks:
     - AGENTS.md
     - USAGE_GUIDES/QUICK_START/agent_governance.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
-    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - WORKSPACE_ENGINEERING/methods/governance_patterns.md
     - packages/character-system/runtime/characters/zyc/SKILL.md
     - packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
     ignore:
@@ -322,23 +321,23 @@ tasks:
     - PROJECT_CONTEXT/tasks/records/**
     - PROJECT_CONTEXT/tasks/ledger/**
     - PROJECT_CONTEXT/todo/README.md
-    - shared/agent_governance_policy.md
-    - shared/agent_governance.yaml
-    - shared/agent_registry.yaml
-    - scripts/agent_governance.py
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/agent_governance.yaml
+    - shared/governance/agent_registry.yaml
     - scripts/workspace/agent_governance.py
-    - scripts/hermes_workspace_guard.py
+    - scripts/workspace/agent_governance.py
+    - scripts/workspace/hermes_workspace_guard.py
     - reasonix.toml
     - opencode.json
     - .opencode/plugins/workspace-governance.js
-    - scripts/verify_change_scope.py
-    - scripts/workflow_check.py
-    - scripts/workspace_cli.py
-    - scripts/workspace_health.py
+    - scripts/workspace/verify_change_scope.py
+    - scripts/workspace/workflow_check.py
+    - scripts/workspace/workspace_cli.py
+    - scripts/workspace/workspace_health.py
     - scripts/workspace/workspace_health.py
     - scripts/workspace/workspace_cli.py
     - scripts/workspace/task_records.py
-    - scripts/task_records.py
+    - scripts/workspace/task_records.py
     - scripts/reporting/ci_run.py
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_hermes_workspace_guard.py
@@ -355,34 +354,34 @@ tasks:
     - scripts/tests/reporting/test_ci_run.py
     - USAGE_GUIDES/QUICK_START/agent_governance.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
-    - WORKSPACE_ENGINEERING/governance_patterns.md
+    - WORKSPACE_ENGINEERING/methods/governance_patterns.md
     - packages/character-system/runtime/characters/zyc/SKILL.md
     - packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
-    - reports/manifest_validation_report.md
-    - reports/protocol_validation_report.md
-    - reports/workspace_health_report.md
-    - reports/workspace_setup_report.md
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - reports/current/workspace_health_report.md
+    - reports/current/workspace_setup_report.md
     validation:
     - python -m unittest scripts.tests.reporting.test_ci_run scripts.tests.workspace.test_agent_governance
       scripts.tests.workspace.test_hermes_workspace_guard scripts.tests.platform.test_platform_agent_guards
       scripts.tests.workspace.test_verify_change_scope scripts.tests.workspace.test_workflow_check
       scripts.tests.workspace.test_workspace_cli scripts.tests.workspace.test_workspace_health
       scripts.tests.workspace.test_task_records
-    - python scripts/workspace_cli.py agent check --agent hermes --skill zyc --path
+    - python -m scripts.workspace.workspace_cli agent check --agent hermes --skill zyc --path
       packages/character-system/runtime/characters/zyc/references/voice_card.md
-    - python scripts/workspace_cli.py agent check --agent hermes --skill style-doctor
+    - python -m scripts.workspace.workspace_cli agent check --agent hermes --skill style-doctor
       --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
-    - python scripts/workspace_cli.py agent check --agent reasonix --skill zyc --path
+    - python -m scripts.workspace.workspace_cli agent check --agent reasonix --skill zyc --path
       packages/character-system/runtime/characters/zyc/references/voice_card.md
-    - python scripts/workspace_cli.py agent check --agent opencode --skill style-doctor
+    - python -m scripts.workspace.workspace_cli agent check --agent opencode --skill style-doctor
       --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
-    - python scripts/workspace_cli.py changes verify runtime_authorization_enforcement
+    - python -m scripts.workspace.workspace_cli changes verify runtime_authorization_enforcement
       --agent codex --strict
-    - python scripts/workspace_cli.py workflow check runtime_authorization_enforcement
+    - python -m scripts.workspace.workspace_cli workflow check runtime_authorization_enforcement
       --agent codex --strict
-    - python scripts/workspace_cli.py health --with-tests
-    - python scripts/validate_manifest.py
-    - python scripts/validate_protocols.py
+    - python -m scripts.workspace.workspace_cli health --with-tests
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
     - git diff --check
   shared_policy_update:
     use_when:
@@ -394,8 +393,8 @@ tasks:
     - AGENTS.md
     - ARCHITECTURE.md
     - shared/INDEX.md
-    - shared/workspace_policy.md
-    - shared/workspace_path_policy.md
+    - shared/workspace/workspace_policy.md
+    - shared/workspace/workspace_path_policy.md
     optional:
     - CLAUDE.md
     - .claude/rules/
@@ -414,6 +413,6 @@ tasks:
     - shared/
     - PROJECT_CONTEXT/tasks/ledger/README.md
     validation:
-    - python scripts/validate_protocols.py
-    - python scripts/resolve_task_context.py shared_policy_update
+    - python -m scripts.validation.validate_protocols
+    - python -m scripts.workspace.resolve_task_context shared_policy_update
     - git diff --check

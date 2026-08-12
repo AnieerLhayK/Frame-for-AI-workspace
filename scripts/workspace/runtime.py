@@ -21,10 +21,12 @@ def scripts_root() -> Path:
     return SCRIPTS_ROOT
 
 
-def legacy_script_path(name: str) -> Path:
-    candidate = (SCRIPTS_ROOT / name).resolve()
+def module_path(module: str) -> Path:
+    if not module.startswith("scripts."):
+        raise ValueError(f"Module escapes scripts package: {module}")
+    candidate = WORKSPACE_ROOT.joinpath(*module.split(".")).with_suffix(".py").resolve()
     if not candidate.is_relative_to(SCRIPTS_ROOT.resolve()):
-        raise ValueError(f"Script path escapes scripts root: {name}")
+        raise ValueError(f"Module escapes scripts root: {module}")
     return candidate
 
 
@@ -32,16 +34,16 @@ def powershell_executable() -> str:
     return shutil.which("powershell.exe") or shutil.which("pwsh") or "powershell.exe"
 
 
-def run_python_script(name: str, arguments: Sequence[str]) -> int:
+def run_python_module(module: str, arguments: Sequence[str]) -> int:
     return subprocess.run(
-        [sys.executable, str(legacy_script_path(name)), *arguments],
+        [sys.executable, "-m", module, *arguments],
         cwd=WORKSPACE_ROOT,
         check=False,
     ).returncode
 
 def run_powershell_script(name: str, arguments: Sequence[str]) -> int:
     return subprocess.run(
-        [powershell_executable(), "-ExecutionPolicy", "Bypass", "-File", str(legacy_script_path(name)), *arguments],
+        [powershell_executable(), "-ExecutionPolicy", "Bypass", "-File", str((SCRIPTS_ROOT / name).resolve()), *arguments],
         cwd=WORKSPACE_ROOT,
         check=False,
     ).returncode

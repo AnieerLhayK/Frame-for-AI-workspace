@@ -34,7 +34,7 @@ workspace --help
 如果你不在 workspace 目录，也可以使用完整路径：
 
 ```powershell
-python "$workspaceRoot\scripts\workspace_cli.py" --help
+python "$workspaceRoot\scripts/workspace/workspace_cli.py" --help
 ```
 
 ## 安装短命令
@@ -42,7 +42,7 @@ python "$workspaceRoot\scripts\workspace_cli.py" --help
 只需运行一次：
 
 ```powershell
-python scripts\workspace_cli.py launcher install
+python -m scripts.workspace.workspace_cli launcher install
 ```
 
 之后可以直接输入：
@@ -50,7 +50,7 @@ python scripts\workspace_cli.py launcher install
 ```powershell
 workspace health
 workspace task list
-workspace explain path scripts/workspace_cli.py
+workspace explain path scripts/workspace/workspace_cli.py
 workspace knowledge find "工程现状"
 ```
 
@@ -77,18 +77,18 @@ Python 形式即可。
 
 | 推荐命令 | 等价 Python 命令 |
 | --- | --- |
-| `workspace --help` | `python scripts\workspace_cli.py --help` |
-| `workspace task list` | `python scripts\workspace_cli.py task list` |
-| `workspace task resolve <task-id>` | `python scripts\workspace_cli.py task resolve <task-id>` |
-| `workspace preflight <task-id>` | `python scripts\workspace_cli.py preflight <task-id>` |
-| `workspace failure check <task-id>` | `python scripts\workspace_cli.py failure check <task-id>` |
-| `workspace health` | `python scripts\workspace_cli.py health` |
-| `workspace explain path <path>` | `python scripts\workspace_cli.py explain path <path>` |
-| `workspace reports status` | `python scripts\workspace_cli.py reports status` |
-| `workspace reports refresh all-current` | `python scripts\workspace_cli.py reports refresh all-current` |
+| `workspace --help` | `python -m scripts.workspace.workspace_cli --help` |
+| `workspace task list` | `python -m scripts.workspace.workspace_cli task list` |
+| `workspace task resolve <task-id>` | `python -m scripts.workspace.workspace_cli task resolve <task-id>` |
+| `workspace preflight <task-id>` | `python -m scripts.workspace.workspace_cli preflight <task-id>` |
+| `workspace failure check <task-id>` | `python -m scripts.workspace.workspace_cli failure check <task-id>` |
+| `workspace health` | `python -m scripts.workspace.workspace_cli health` |
+| `workspace explain path <path>` | `python -m scripts.workspace.workspace_cli explain path <path>` |
+| `workspace reports status` | `python -m scripts.workspace.workspace_cli reports status` |
+| `workspace reports refresh all-current` | `python -m scripts.workspace.workspace_cli reports refresh all-current` |
 
 后续示例默认使用 `workspace ...`。没有安装短命令时，把命令前缀替换成
-`python scripts\workspace_cli.py`。
+`python -m scripts.workspace.workspace_cli`。
 
 ## 第一次使用
 
@@ -220,7 +220,7 @@ workspace knowledge find "报告刷新"
 ### 5. 已知路径、主题或机制时先解释
 
 ```powershell
-workspace explain path scripts/workspace_cli.py
+workspace explain path scripts/workspace/workspace_cli.py
 workspace explain topic "developer interface"
 workspace explain mechanism task-routing
 ```
@@ -243,7 +243,7 @@ workspace changes plan developer_interface_tooling `
 ```powershell
 workspace changes plan developer_interface_tooling `
   --intent tooling `
-  --option "implementation=scripts/workspace_cli.py,scripts/tests/test_workspace_cli.py" `
+  --option "implementation=scripts/workspace/workspace_cli.py,scripts/tests/test_workspace_cli.py" `
   --option "docs-only=README.md"
 ```
 

@@ -34,7 +34,11 @@ def _utc_mtime(path: Path) -> str:
 
 
 def _command_references_guard(command: str, guard_script: Path) -> bool:
-    return str(guard_script).replace("\\", "/").casefold() in command.replace("\\", "/").casefold()
+    normalized = command.replace("\\", "/").casefold()
+    return (
+        str(guard_script).replace("\\", "/").casefold() in normalized
+        or "-m scripts.workspace.hermes_workspace_guard" in normalized
+    )
 
 
 def inspect_hermes_guard_approval(

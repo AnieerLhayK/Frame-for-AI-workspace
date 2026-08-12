@@ -11,7 +11,7 @@ Checks:
 6. Test suite passes
 
 Usage:
-    python scripts/publish_check.py --dir <staging-dir>
+    python -m scripts.publishing.publish_check --dir <staging-dir>
 """
 
 from __future__ import annotations
@@ -63,20 +63,20 @@ REQUIRED_PATHS: set[str] = {
     "AGENTS.md",
     "CLAUDE.md",
     "ARCHITECTURE.md",
-    "shared/agent_governance.yaml",
-    "shared/agent_registry.yaml",
-    "shared/workspace_policy.md",
-    "shared/workspace_path_policy.md",
-    "shared/failure_policy.md",
-    "shared/discovery_rules.md",
-    "shared/manifest_portability_policy.md",
-    "shared/reporting_policy.md",
-    "shared/session_continuity_policy.md",
-    "shared/delivery_output_policy.md",
-    "scripts/resolve_task_context.py",
-    "scripts/workspace_cli.py",
-    "scripts/agent_governance.py",
-    "scripts/workspace_health.py",
+    "shared/governance/agent_governance.yaml",
+    "shared/governance/agent_registry.yaml",
+    "shared/workspace/workspace_policy.md",
+    "shared/workspace/workspace_path_policy.md",
+    "shared/workspace/failure_policy.md",
+    "shared/workspace/discovery_rules.md",
+    "shared/workspace/manifest_portability_policy.md",
+    "shared/operations/reporting_policy.md",
+    "shared/operations/session_continuity_policy.md",
+    "shared/operations/delivery_output_policy.md",
+    "scripts/workspace/resolve_task_context.py",
+    "scripts/workspace/workspace_cli.py",
+    "scripts/workspace/agent_governance.py",
+    "scripts/workspace/workspace_health.py",
     "scripts/setup_public_workspace.py",
     "PROJECT_CONTEXT/tasks/registry/index.yaml",
     "USAGE_GUIDES/prompt_registry.yaml",
@@ -89,8 +89,8 @@ REQUIRED_PATHS: set[str] = {
 # Allowlisted rel paths — these files legitimately reference the patterns
 # as substitution targets in the publish tooling itself.
 ALLOWLISTED_PATHS: set[str] = {
-    "scripts/publish_public.py",
-    "scripts/publish_check.py",
+    "scripts/publishing/publish_public.py",
+    "scripts/publishing/publish_check.py",
 }
 
 
@@ -228,9 +228,9 @@ def run_functional_checks(root: Path) -> list[str]:
     try:
         os.chdir(root)
 
-        # 1. resolve_task_context.py --list
+        # 1. Task resolver
         result = subprocess.run(
-            [sys.executable, "scripts/resolve_task_context.py", "--list"],
+            [sys.executable, "-m", "scripts.workspace.resolve_task_context", "--list"],
             capture_output=True, text=True, timeout=30,
         )
         if result.returncode != 0:
@@ -239,9 +239,9 @@ def run_functional_checks(root: Path) -> list[str]:
                 + result.stderr.strip()[:200]
             )
 
-        # 2. workspace_cli.py agent list
+        # 2. workspace CLI agent list
         result = subprocess.run(
-            [sys.executable, "scripts/workspace_cli.py", "agent", "list"],
+            [sys.executable, "-m", "scripts.workspace.workspace_cli", "agent", "list"],
             capture_output=True, text=True, timeout=30,
         )
         if result.returncode != 0:
@@ -250,11 +250,12 @@ def run_functional_checks(root: Path) -> list[str]:
                 + result.stderr.strip()[:200]
             )
 
-        # 3. workspace_cli.py explain mechanism task-routing
+        # 3. Workspace CLI explanation
         result = subprocess.run(
             [
                 sys.executable,
-                "scripts/workspace_cli.py",
+                "-m",
+                "scripts.workspace.workspace_cli",
                 "explain",
                 "mechanism",
                 "task-routing",
@@ -267,10 +268,10 @@ def run_functional_checks(root: Path) -> list[str]:
                 + result.stderr.strip()[:200]
             )
 
-        # 4. workspace_cli.py health
+        # 4. Workspace CLI health
         # rc=0 clean, rc=1 issues found, rc=2 infrastructure not fully set up
         result = subprocess.run(
-            [sys.executable, "scripts/workspace_cli.py", "health"],
+            [sys.executable, "-m", "scripts.workspace.workspace_cli", "health"],
             capture_output=True, text=True, timeout=30,
         )
         if result.returncode not in (0, 1, 2):

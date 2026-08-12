@@ -5,13 +5,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.workspace_launcher import (
+from scripts.workspace.workspace_launcher import (
     MARKER,
     inspect_launcher,
     install_launcher,
     launcher_content,
     uninstall_launcher,
 )
+from scripts.workspace.runtime import WORKSPACE_ROOT
 
 
 class WorkspaceLauncherTests(unittest.TestCase):
@@ -22,14 +23,17 @@ class WorkspaceLauncherTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
 
-    def test_launcher_quotes_cli_path_and_forwards_arguments(self) -> None:
-        text = launcher_content(Path(r"D:\A Folder\workspace_cli.py"))
-        self.assertIn('"D:\\A Folder\\workspace_cli.py" %*', text)
+    def test_launcher_runs_canonical_module_from_workspace_root(self) -> None:
+        text = launcher_content()
+        self.assertIn(
+            f'cd /d "{WORKSPACE_ROOT}" & python -m scripts.workspace.workspace_cli %*',
+            text,
+        )
         self.assertIn(MARKER, text)
         self.assertIn("exit /b !errorlevel!", text)
 
     def test_install_and_uninstall_managed_launcher(self) -> None:
-        with patch("scripts.workspace_launcher.path_entries", return_value=set()):
+        with patch("scripts.workspace.workspace_launcher.path_entries", return_value=set()):
             installed = install_launcher(self.install_dir)
             self.assertEqual(installed["status"], "INSTALLED")
             self.assertTrue(inspect_launcher(self.install_dir)["current"])
@@ -54,9 +58,9 @@ class WorkspaceLauncherTests(unittest.TestCase):
     def test_active_windows_launcher_schedules_self_removal(self) -> None:
         install_launcher(self.install_dir)
         with (
-            patch("scripts.workspace_launcher.os.name", "nt"),
+            patch("scripts.workspace.workspace_launcher.os.name", "nt"),
             patch.dict(
-                "scripts.workspace_launcher.os.environ",
+                "scripts.workspace.workspace_launcher.os.environ",
                 {
                     "WORKSPACE_LAUNCHER_PATH": str(
                         self.install_dir / "workspace.cmd"
@@ -64,7 +68,7 @@ class WorkspaceLauncherTests(unittest.TestCase):
                 },
                 clear=False,
             ),
-            patch("scripts.workspace_launcher.schedule_delete") as schedule,
+            patch("scripts.workspace.workspace_launcher.schedule_delete") as schedule,
         ):
             result = uninstall_launcher(self.install_dir)
         self.assertEqual(result["status"], "UNINSTALL_SCHEDULED")

@@ -12,20 +12,20 @@ from typing import Any
 import yaml
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
-from scripts.workspace.task_records import active_external_registration, active_registration
+from scripts.workspace.task_records import active_external_registration, active_registration, read_record
 from scripts.workspace.governance.hermes_approval import (
     HERMES_GUARD_EVENTS,
     approve_hermes_guard as _approve_hermes_guard,
     inspect_hermes_guard_approval as _inspect_hermes_guard_approval,
 )
-POLICY_PATH = WORKSPACE_ROOT / "shared" / "agent_governance.yaml"
-REGISTRY_PATH = WORKSPACE_ROOT / "shared" / "agent_registry.yaml"
+POLICY_PATH = WORKSPACE_ROOT / "shared" / "governance" / "agent_governance.yaml"
+REGISTRY_PATH = WORKSPACE_ROOT / "shared" / "governance" / "agent_registry.yaml"
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
 REQUEST_ROOT = WORKSPACE_ROOT / "reports" / "agent-requests"
 HERMES_HOME = Path(os.environ.get("HERMES_HOME", r"${DATA_ROOT}/hermes"))
 HERMES_CONFIG_PATH = HERMES_HOME / "config.yaml"
 HERMES_ALLOWLIST_PATH = HERMES_HOME / "shell-hooks-allowlist.json"
-HERMES_GUARD_SCRIPT = WORKSPACE_ROOT / "scripts" / "hermes_workspace_guard.py"
+HERMES_GUARD_SCRIPT = WORKSPACE_ROOT / "scripts" / "workspace" / "hermes_workspace_guard.py"
 
 
 def current_git_branch() -> str:
@@ -1457,13 +1457,27 @@ def approve_hermes_guard(
     guard_script: Path = HERMES_GUARD_SCRIPT,
 ) -> dict[str, Any]:
     """Compatibility facade for the Hermes approval deep module."""
+    def registration_lookup(task_id: str, operation: str) -> dict[str, Any]:
+        try:
+            return active_registration(task_id, operation)
+        except ValueError:
+            _, record = read_record(task_id)
+            origin = record.get("origin")
+            if not isinstance(origin, dict) or origin.get("kind") != "external_workspace":
+                raise
+            return active_external_registration(
+                task_id,
+                agent=str(origin["agent"]),
+                client_root=str(origin["client_root"]),
+            )
+
     return _approve_hermes_guard(
         record_id=record_id,
         approve=approve,
         config_path=config_path,
         allowlist_path=allowlist_path,
         guard_script=guard_script,
-        registration_lookup=active_registration,
+        registration_lookup=registration_lookup,
         guard_events=HERMES_GUARD_EVENTS,
     )
 

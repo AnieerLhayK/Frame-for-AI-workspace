@@ -1,0 +1,10 @@
+{
+  "protocol_manifest_version": "1.0.0",
+  "shared_protocols": [],
+  "core_skills": [
+    {
+      "id": "recoveror",
+      "path": "packages/teaching-system/skills/recoveror"
+    }
+  ]
+}

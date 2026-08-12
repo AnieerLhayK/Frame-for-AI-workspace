@@ -38,7 +38,7 @@ CLAUDE_MODEL_ROUTING_POLICY = "shared/claude/policies/model-routing-policy.md"
 CLAUDE_MODEL_ROUTING_TOGGLE = ".claude/model-routing-advice.json"
 CLAUDE_MODEL_ROUTING_LOCAL_TOGGLE = ".claude/model-routing-advice.local.json"
 HERMES_HOME = Path(os.environ.get("HERMES_HOME", r"${DATA_ROOT}/hermes"))
-HERMES_GUARD_SCRIPT = SCRIPTS_DIR / "hermes_workspace_guard.py"
+HERMES_GUARD_SCRIPT = SCRIPTS_DIR / "workspace" / "hermes_workspace_guard.py"
 
 
 def _workspace_source_path(*parts: str) -> str:
@@ -55,7 +55,7 @@ HERMES_REQUIRED_READ_ROOTS = {
 REASONIX_CONFIG = WORKSPACE_ROOT / "reasonix.toml"
 OPENCODE_CONFIG = WORKSPACE_ROOT / "opencode.json"
 OPENCODE_GUARD = WORKSPACE_ROOT / ".opencode" / "plugins" / "workspace-governance.js"
-AGENT_REGISTRY = WORKSPACE_ROOT / "shared" / "agent_registry.yaml"
+AGENT_REGISTRY = WORKSPACE_ROOT / "shared" / "governance" / "agent_registry.yaml"
 PLATFORM_REQUIRED_READ_ROOTS = {
     _workspace_source_path("packages", "character-system", "shared").casefold(),
     _workspace_source_path(
@@ -102,7 +102,8 @@ def check_bootstrap(
     result = runner(
         [
             sys.executable,
-            str(SCRIPTS_DIR / "bootstrap_workspace.py"),
+            "-m",
+            "scripts.workspace.bootstrap_workspace",
             "--start",
             str(WORKSPACE_ROOT),
             "--print-json",
@@ -128,7 +129,7 @@ def check_knowledge(
     result = runner(
         [
             sys.executable,
-            str(SCRIPTS_DIR / "find_knowledge.py"),
+            "-m", "scripts.workspace.find_knowledge",
             "--validate",
             "--format",
             "json",
@@ -153,7 +154,7 @@ def check_reports(
     result = runner(
         [
             sys.executable,
-            str(SCRIPTS_DIR / "report_status.py"),
+            "-m", "scripts.reporting.report_status",
             "--strict",
             "--format",
             "json",
@@ -180,7 +181,7 @@ def check_links(
             "-ExecutionPolicy",
             "Bypass",
             "-File",
-            str(SCRIPTS_DIR / "check_links.ps1"),
+            str(WORKSPACE_ROOT / "scripts" / "validation" / "check_links.ps1"),
         ]
     )
     if result.returncode != 0:
@@ -356,21 +357,17 @@ def check_hermes_guard(
         )
 
     hooks = config.get("hooks", {})
-    required_events = {
-        "pre_tool_call": "hermes_workspace_guard.py",
-        "post_tool_call": "hermes_workspace_guard.py",
-        "pre_llm_call": "hermes_workspace_guard.py",
-    }
+    required_events = ("pre_tool_call", "post_tool_call", "pre_llm_call")
     configured_commands: dict[str, str] = {}
     configured_entries: dict[str, dict[str, Any]] = {}
-    for event, suffix in required_events.items():
+    for event in required_events:
         entries = hooks.get(event, [])
         entry = next(
             (
                 entry
                 for entry in entries
                 if isinstance(entry, dict)
-                and str(entry.get("command", "")).replace("\\", "/").endswith(suffix)
+                and "-m scripts.workspace.hermes_workspace_guard" in str(entry.get("command", ""))
             ),
             None,
         )
@@ -597,7 +594,7 @@ def check_tests(
     result = runner(
         [
             sys.executable,
-            str(SCRIPTS_DIR / "ci_run.py"),
+            "-m", "scripts.reporting.ci_run",
             "--format",
             "json",
         ]

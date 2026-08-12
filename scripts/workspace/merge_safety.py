@@ -13,7 +13,7 @@ from scripts.workspace.runtime import WORKSPACE_ROOT as ROOT
 from scripts.workspace.agent_governance import load_registry, load_yaml
 from scripts.workspace.task_records import read_record
 STRUCTURED = (".json", ".yaml", ".yml")
-POLICY_PATH = ROOT / "shared" / "agent_governance.yaml"
+POLICY_PATH = ROOT / "shared" / "governance" / "agent_governance.yaml"
 
 def git(*args: str) -> str:
     result = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=False)

@@ -54,10 +54,10 @@
 
 ## Completed Governance Work
 
-- Git baseline established. Baseline commit in `reports/git_governance_report.md`: `64f31ecf4c414182d07802829fcca847bc93c302`.
+- Git baseline established. Baseline commit in `reports/history/git_governance_report.md`: `64f31ecf4c414182d07802829fcca847bc93c302`.
 - Report drift governance established.
 - Runtime loop durable record structure established under `packages/character-system/reports/runtime-loop/`.
-- Shared protocol validation layer established with `packages/character-system/shared/protocol_manifest.json`, schemas, and `scripts/validate_protocols.py`.
+- Shared protocol validation layer established with `packages/character-system/shared/protocol_manifest.json`, schemas, and `scripts/validation/validate_protocols.py`.
 - Platform-named source directories were retired in favor of runtime and
   engineering package layers; Codex/OpenCode remain projection surfaces only.
 - Character-package migration conversation continuity is protected by external
@@ -69,7 +69,7 @@
 - Task ledger is partitioned under `PROJECT_CONTEXT/tasks/ledger/YYYY/MM.md` to preserve maintenance decisions without rereading broad context.
 - Task outcomes have a separate tracked fact layer under `PROJECT_CONTEXT/tasks/records/`; `workspace records` validates and summarizes success, validation, edits, duration, token fields, and usability.
 - Prompt registry established with `USAGE_GUIDES/prompt_registry.yaml` to resolve reusable prompt ids before regenerating meta-prompts.
-- Task/prompt resolver established with `scripts/resolve_task_context.py`; it emits a bounded task view and avoids rereading full routing registries by default.
+- Task/prompt resolver established with `scripts/workspace/resolve_task_context.py`; it emits a bounded task view and avoids rereading full routing registries by default.
 - Scripts governance migration established responsibility packages under
   `scripts/workspace/`, `scripts/validation/`, `scripts/publishing/`,
   `scripts/platform/`, and `scripts/reporting/`, with shared runtime helpers,
@@ -84,8 +84,8 @@
   bounded record producers; unregistered agents are read/invoke/proposal-only.
 - `workspace agent` can classify a path, explain a denied write, create a
   reviewable request, and validate an external temporary lease.
-- Agent identity and lifecycle now use `shared/agent_registry.yaml`; role,
-  capability, surface, and lease rules remain in `shared/agent_governance.yaml`.
+- Agent identity and lifecycle now use `shared/governance/agent_registry.yaml`; role,
+  capability, surface, and lease rules remain in `shared/governance/agent_governance.yaml`.
 - Codex and Claude Code are active structural maintainers. Hermes, OpenCode,
   and Reasonix are active validated record producers. Cursor remains a proposed
   Agent host and resolves to Consumer pending a tested runtime adapter.
@@ -102,10 +102,10 @@
   are declared for Codex, Claude Code, OpenCode, and Hermes.
 - OpenCode `style-doctor` and `zyc` loading entries are source-linked junctions to their workspace directories; the replaced identical directory copies are preserved under `${DATA_ROOT}/opencode\projection-backups\20260611-232730`.
 - Manifest portability and bootstrap discovery checks are present in the current workspace:
-  - `scripts/bootstrap_workspace.py`
-  - `scripts/validate_manifest.py`
-  - `scripts/migration_dry_run.py`
-  - `shared/manifest_portability_policy.md`
+  - `scripts/workspace/bootstrap_workspace.py`
+  - `scripts/validation/validate_manifest.py`
+  - `scripts/workspace/migration_dry_run.py`
+  - `shared/workspace/manifest_portability_policy.md`
 - The single-agent developer CLI roadmap is complete:
   - bounded task and prompt routing;
   - context-budget preflight;
@@ -129,7 +129,7 @@
 - PROJECT_CONTEXT disassembly completed:
   - `architecture.md` + `workspace_purpose.md` merged into root `ARCHITECTURE.md`.
   - `coding_style.md` merged into
-    `WORKSPACE_ENGINEERING/skill_engineering/style_alignment.md`.
+    `WORKSPACE_ENGINEERING/methods/skill_engineering/style_alignment.md`.
   - `protocols.md` moved to `shared/INDEX.md`.
   - `bugs.md` and `experiment_log.md` deleted (superseded by runtime loop).
   - `PROJECT_CONTEXT/` narrowed to active task memory only (task ledger, registry, status, todo, session handoff).
@@ -229,14 +229,14 @@
 - README governance uses the manifest, shared policy, publisher configuration,
   and live checks as facts. Root and section README files provide navigation
   and local contracts rather than parallel path registries.
-- `scripts/check_links.ps1`: validate all manifest projections and shared
+- `scripts/validation/check_links.ps1`: validate all manifest projections and shared
   uniqueness after each exposure change.
 
 ## External Knowledge / RAG Planning
 
 A bounded planning evaluation of whether future external RAG / knowledge base
 would improve workspace maintenance is recorded under
-`WORKSPACE_ENGINEERING/external_knowledge/external_rag_planning.md`.
+`WORKSPACE_ENGINEERING/proposals/external_rag_planning.md`.
 
 - **Current phase:** P0 in progress. `use_when_zh` summaries are present for
   all current task ids; Chinese alias audit and natural-language task fallback

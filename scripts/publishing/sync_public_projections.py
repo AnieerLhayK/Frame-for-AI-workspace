@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Synchronize every registered public projection through its own publisher.
 
-The publisher registry in ``shared/agent_governance.yaml`` is the sole list of
+The publisher registry in ``shared/governance/agent_governance.yaml`` is the sole list of
 public repositories.  Adding a managed publisher there makes it part of this
 command without adding another hand-maintained dispatch table.
 """
@@ -83,7 +83,8 @@ def build_parser(publisher_ids: Sequence[str]) -> argparse.ArgumentParser:
 def publisher_command(
     script: str, *, record_id: str, agent: str, push: bool, skip_tests: bool
 ) -> list[str]:
-    command = [sys.executable, str(WORKSPACE_ROOT / script), "--record-id", record_id, "--agent", agent]
+    module = script.removesuffix(".py").replace("/", ".")
+    command = [sys.executable, "-m", module, "--record-id", record_id, "--agent", agent]
     if skip_tests:
         command.append("--skip-tests")
     if push:

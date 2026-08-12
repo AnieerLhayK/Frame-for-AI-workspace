@@ -11,7 +11,7 @@ Start:
 1. Run `workspace health`.
 2. If reports are stale, run `workspace reports status --strict` before changing source.
 3. Select the smallest matching task id with `workspace task list` or
-   `python scripts/resolve_task_context.py --list`.
+   `python -m scripts.workspace.resolve_task_context --list`.
 4. Resolve that task before editing.
 
 Guardrails:

@@ -64,7 +64,12 @@ function Require-ActiveTaskRecord([string]$ProjectRoot) {
     if ([string]::IsNullOrWhiteSpace($recordId)) {
         Deny "Blocked: set WORKSPACE_TASK_RECORD to an active workspace record before mutating this workspace."
     }
-    & python (Join-Path $ProjectRoot "scripts\task_records.py") require $recordId --operation workspace_write | Out-Null
+    Push-Location $ProjectRoot
+    try {
+        & python -m scripts.workspace.task_records require $recordId --operation workspace_write | Out-Null
+    } finally {
+        Pop-Location
+    }
     if ($LASTEXITCODE -ne 0) {
         Deny "Blocked: WORKSPACE_TASK_RECORD is not active or is not registered for workspace writes."
     }

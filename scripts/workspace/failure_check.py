@@ -10,7 +10,6 @@ from typing import Any, Sequence
 
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
-RESOLVER = WORKSPACE_ROOT / "scripts" / "resolve_task_context.py"
 
 
 def run_resolver(
@@ -20,7 +19,8 @@ def run_resolver(
 ) -> subprocess.CompletedProcess[str]:
     command = [
         sys.executable,
-        str(RESOLVER),
+        "-m",
+        "scripts.workspace.resolve_task_context",
         task_id,
         "--format",
         "json",

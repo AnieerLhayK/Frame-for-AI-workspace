@@ -1,0 +1,207 @@
+schema_version: "0.1"
+purpose: "Separate skill consumption, durable record production, source maintenance, and workspace structural governance by agent identity."
+
+roles:
+  structural_maintainer:
+    capabilities:
+      - read
+      - invoke
+      - proposal_write
+      - record_write
+      - report_write
+      - source_write
+      - structural_write
+      - platform_write
+  record_producer:
+    capabilities:
+      - read
+      - invoke
+      - proposal_write
+      - record_write
+  consumer:
+    capabilities:
+      - read
+      - invoke
+      - proposal_write
+
+unregistered_agent:
+  role: consumer
+  registration_changes: proposal_only
+  path_scopes:
+    - reports/agent-requests/**
+
+registration_policy:
+  testing_max_duration_hours: 168
+  experimental_max_duration_hours: 720
+  high_risk_capabilities:
+    - report_write
+    - source_write
+    - structural_write
+    - platform_write
+  inactive_statuses:
+    - proposed
+    - suspended
+    - retired
+
+surface_classes:
+  - id: platform_projection
+    required_capability: platform_write
+    path_patterns:
+      - .claude/skills/**
+  - id: proposal_record
+    required_capability: proposal_write
+    path_patterns:
+      - reports/agent-requests/**
+  - id: runtime_record
+    required_capability: record_write
+    path_patterns:
+      - packages/character-system/reports/runtime-loop/diagnoses/**
+      - packages/character-system/reports/runtime-loop/handoffs/**
+      - packages/character-system/reports/runtime-loop/ledgers/diagnosis_ledger.md
+      - packages/character-system/reports/runtime-loop/patches/**
+      - packages/character-system/reports/runtime-loop/validations/**
+      - packages/character-system/reports/runtime-loop/generalization_backlog/**
+      - reports/opencode/**
+      - reports/reasonix/**
+  - id: agent_experiment_record
+    required_capability: record_write
+    path_patterns:
+      - reports/agent-experiments/**
+  - id: generated_snapshot
+    required_capability: report_write
+    path_patterns:
+      - reports/**
+  - id: skill_source
+    required_capability: source_write
+    path_patterns:
+      - skills/**
+      - packages/**
+  - id: governance_structure
+    required_capability: structural_write
+    path_patterns:
+      - workspace_manifest.yaml
+      - AGENTS.md
+      - CLAUDE.md
+      - ARCHITECTURE.md
+      - README.md
+      - .gitignore
+      - .gitattributes
+      - .github/**
+      - .claude/**
+      - PROJECT_CONTEXT/**
+      - shared/**
+      - scripts/**
+      - USAGE_GUIDES/**
+  - id: workspace_other
+    required_capability: structural_write
+    path_patterns:
+      - "**"
+
+# Public repositories generated from this workspace are external artifacts, but
+# their publishers are narrower than general environment access. Any publisher
+# invocation must target one declared staging checkout and one declared remote.
+managed_platform_publishers:
+  frame_for_ai_workspace:
+    publisher_script: scripts/publishing/sync_public_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/Frame-for-AI-workspace
+    remote_urls:
+      - git@github.com:AnieerLhayK/Frame-for-AI-workspace.git
+  chatty_ch_system:
+    publisher_script: scripts/publishing/sync_chatty_ch_system_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/Chatty-Ch-System
+    remote_urls:
+      - git@github.com:AnieerLhayK/Chatty-Ch-System.git
+  qq_chat_raw_filter:
+    publisher_script: scripts/publishing/sync_qq_raw_filter_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/qq-chat-raw-filter
+    remote_urls:
+      - git@github.com:AnieerLhayK/qq-chat-raw-filter.git
+  anieer_skills:
+    publisher_script: scripts/publishing/sync_skill_collection_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/Anieer_skills
+    remote_urls:
+      - git@github.com:AnieerLhayK/Anieer_skills.git
+    contract_file: skills/far-repo-governor/references/skill-collection.contract.json
+    license_file: skills/far-repo-governor/assets/licenses/MIT.txt
+
+change_risk_policy:
+  elevated_path_patterns:
+    - AGENTS.md
+    - CLAUDE.md
+  high_surfaces:
+    - platform_projection
+  high_path_patterns:
+    - workspace_manifest.yaml
+    - shared/**
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - PROJECT_CONTEXT/governance/change_surface_policy.md
+    - .claude/**
+    - scripts/workspace/agent_governance.py
+    - scripts/workspace/resolve_task_context.py
+    - scripts/workspace/plan_change_surface.py
+    - scripts/workspace/verify_change_scope.py
+    - scripts/workspace/workflow_check.py
+    - scripts/workspace/hermes_workspace_guard.py
+    - scripts/validation/check_links.ps1
+    - scripts/platform/setup_links.ps1
+    - scripts/workspace/session_continuity.py
+    - scripts/workspace/migration_dry_run.py
+  confirmation_required_operations:
+    - platform_projection_change
+    - skill_delete_or_move
+    - large_move_or_rename
+    - session_cache_or_external_data_migration
+    - git_history_rewrite
+    - bulk_cleanup
+  worktree_recommended_operations:
+    - temporary_structural_lease
+    - platform_projection_change
+    - skill_delete_or_move
+    - large_move_or_rename
+    - concurrent_development
+    - high_risk_experiment
+
+lease_policy:
+  trusted_issuers:
+    - user
+    - codex
+    - claude
+  external_store: "${DATA_ROOT}/workspace-governance/leases"
+  allowed_capabilities:
+    - environment_write
+    - record_write
+    - source_write
+    - structural_write
+    - platform_write
+  structural_isolation_modes:
+    - worktree
+  require_expiry: true
+  maximum_duration_hours: 24
+
+request_policy:
+  workspace_path: reports/agent-requests
+  allowed_modes:
+    - review_only
+    - temporary_lease
+    - worktree
+  structural_reviewers:
+    - codex
+    - claude
+
+git_branch_governance:
+  integration_branch: main
+  default_strategy: ff-only
+  allowed_one_shot_strategies:
+    - ff-only
+    - merge-commit
+  managed_branches:
+    - codex
+    - claude
+  integration_paths:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+  review_note_kind: merge_review
+  review_statuses:
+    - completed
+    - skipped_user_approved

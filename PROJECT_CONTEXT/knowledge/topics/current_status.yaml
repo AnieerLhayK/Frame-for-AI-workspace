@@ -10,6 +10,8 @@ topics:
     - 当前状态
     - 工程现状
     - 下一步
+    - package 开发
+    - skill 开发
     entries:
     - path: PROJECT_CONTEXT/continuity/current_status.md
       layer: project_context
@@ -23,3 +25,6 @@ topics:
     - path: PROJECT_CONTEXT/todo/external-skills.md
       layer: project_context
       purpose: Raw external skill intake and compatibility queue.
+    - path: PROJECT_CONTEXT/todo/package-development.md
+      layer: project_context
+      purpose: Committed package capability-development roadmap.

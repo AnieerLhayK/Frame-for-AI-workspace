@@ -50,7 +50,7 @@ def test_sync_forwards_registered_publisher_arguments() -> None:
         return type("Result", (), {"returncode": 0})()
 
     assert sync.sync_publishers(
-        {"frame": "scripts/sync_public_repo.py"},
+        {"frame": "scripts/publishing/sync_public_repo.py"},
         [],
         record_id="TASK-20260723-004",
         agent="codex",
@@ -58,7 +58,17 @@ def test_sync_forwards_registered_publisher_arguments() -> None:
         skip_tests=True,
         runner=runner,
     ) == 0
-    assert commands[0][-6:] == ["--record-id", "TASK-20260723-004", "--agent", "codex", "--skip-tests", "--push"]
+    assert commands[0] == [
+        sync.sys.executable,
+        "-m",
+        "scripts.publishing.sync_public_repo",
+        "--record-id",
+        "TASK-20260723-004",
+        "--agent",
+        "codex",
+        "--skip-tests",
+        "--push",
+    ]
 
 
 def test_parser_rejects_unknown_publisher() -> None:

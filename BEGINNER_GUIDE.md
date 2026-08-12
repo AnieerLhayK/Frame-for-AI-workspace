@@ -30,13 +30,13 @@ you want to regenerate local config files from templates.
 ## Core Commands To Learn First
 
 ```bash
-python scripts/workspace_cli.py --help
-python scripts/workspace_cli.py task list
-python scripts/workspace_cli.py task resolve workspace_developer_experience
-python scripts/workspace_cli.py explain mechanism task-routing
-python scripts/workspace_cli.py explain path scripts/workspace_cli.py
-python scripts/workspace_cli.py agent list
-python scripts/workspace_cli.py health
+python -m scripts.workspace.workspace_cli --help
+python -m scripts.workspace.workspace_cli task list
+python -m scripts.workspace.workspace_cli task resolve workspace_developer_experience
+python -m scripts.workspace.workspace_cli explain mechanism task-routing
+python -m scripts.workspace.workspace_cli explain path scripts/workspace/workspace_cli.py
+python -m scripts.workspace.workspace_cli agent list
+python -m scripts.workspace.workspace_cli health
 ```
 
 These commands show the framework's own basic functions before you add your
@@ -48,7 +48,7 @@ own skills under `skills/` or separately reviewed external skills under
 After the helper runs, review:
 
 - `workspace_manifest.yaml` for your local source root and platform roots;
-- `shared/agent_registry.yaml` for per-agent data/cache roots;
+- `shared/governance/agent_registry.yaml` for per-agent data/cache roots;
 - `mcp/configs/*.json` only if you use those MCP servers;
 - platform-specific loading surfaces only after you understand the projection
   model in `ARCHITECTURE.md`.

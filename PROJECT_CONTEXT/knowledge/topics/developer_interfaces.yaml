@@ -14,7 +14,7 @@ topics:
     - path: README.md
       layer: documentation
       purpose: Supported workspace CLI examples.
-    - path: scripts/workspace_cli.py
+    - path: scripts/workspace/workspace_cli.py
       layer: tooling
       purpose: Unified task, prompt, report, change, and knowledge command entry.
     - path: USAGE_GUIDES/QUICK_START/workspace_cli.md

@@ -208,6 +208,7 @@ task_files:
   prompt_usage_update: domains/knowledge.yaml
   public_projection_synchronization: domains/publishing.yaml
   raw_material_filter_tooling: domains/skills.yaml
+  root_script_adapter_removal: domains/workspace.yaml
   report_freshness_tooling: domains/publishing.yaml
   report_regeneration: domains/publishing.yaml
   runtime_authorization_enforcement: domains/governance.yaml
