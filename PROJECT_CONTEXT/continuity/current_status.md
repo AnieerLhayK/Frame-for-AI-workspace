@@ -34,6 +34,10 @@
 - Registered external project: `math-modeling` at
   `${WORKSPACE_ROOT}/projects/数学建模`, private remote
   `git@github.com:AnieerLhayK/math-modeling.git`.
+- Registered external projects: `act-vla` at
+  `${WORKSPACE_ROOT}/projects/Embodied-Agent/act-VLA` and `pi0.5-startup` at
+  `${WORKSPACE_ROOT}/projects/Embodied-Agent/pi0.5-startup`; both have private GitHub
+  remotes under `AnieerLhayK`.
 - Claude Code local launcher alias `math-modeling` maps to
   `${WORKSPACE_ROOT}/projects/数学建模` in the machine-local Claude project registry.
 - Skill contracts now separate `role`, `authority`, `execution_modes`, and `exposures[]`.
@@ -80,15 +84,16 @@
 - Source-of-truth de-duplication pass established: current local path facts should live in `workspace_manifest.yaml`; docs should reference manifest fields or use placeholders.
 - Platform exposure is no longer treated as skill ownership. One source skill may have multiple projections while retaining one role and authority contract.
 - Agent governance now separates consumption from modification: Codex and
-  Claude Code are default structural maintainers; Hermes and OpenCode are
-  bounded record producers; unregistered agents are read/invoke/proposal-only.
+  Claude Code are default structural maintainers; DeepSeek Harness, Hermes,
+  OpenCode, and Reasonix are bounded record producers; unregistered agents are
+  read/invoke/proposal-only.
 - `workspace agent` can classify a path, explain a denied write, create a
   reviewable request, and validate an external temporary lease.
 - Agent identity and lifecycle now use `shared/governance/agent_registry.yaml`; role,
   capability, surface, and lease rules remain in `shared/governance/agent_governance.yaml`.
-- Codex and Claude Code are active structural maintainers. Hermes, OpenCode,
-  and Reasonix are active validated record producers. Cursor remains a proposed
-  Agent host and resolves to Consumer pending a tested runtime adapter.
+- Codex and Claude Code are active structural maintainers. DeepSeek Harness,
+  Hermes, OpenCode, and Reasonix are active registered record producers.
+  DeepSeek Harness has no runtime enforcement adapter or Skill exposure yet.
 - `workspace agent list/show/validate/doctor` provides the developer interface
   without automating activation, platform registration, or lifecycle mutation.
 - `workspace changes verify <task-id>` compares unstaged, staged, and untracked
@@ -178,9 +183,8 @@
   source/Git/MCP denials, bounded filesystem roots, and the shared
   style-doctor-to-handoff route. Its project configuration is active only when
   Reasonix runs from this workspace.
-- Workspace health now checks Hermes, OpenCode, and Reasonix runtime adapters
-  together and fails if Cursor is accidentally promoted beyond proposed
-  Consumer authority.
+- Workspace health checks the DeepSeek Harness registration alongside Hermes,
+  OpenCode, and Reasonix runtime governance surfaces.
 - `workspace agent approve-hermes-guard` now previews the exact configured
   Hermes workspace hooks by default and requires `--approve --record-id` with
   an active external-write record to refresh their current script-mtime

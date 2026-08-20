@@ -15,7 +15,7 @@ workspace agent status
 workspace agent list
 workspace agent show codex
 workspace agent validate codex
-workspace agent doctor cursor
+workspace agent doctor deepseek-harness
 ```
 
 - `list` gives status, identity type, effective Role, owner, and expiry.
@@ -83,7 +83,7 @@ The command accepts only the configured `pre_tool_call`, `post_tool_call`, and
 preserves unrelated Hermes allowlist entries. It never changes the hook
 commands, MCP permissions, or guard policy.
 
-OpenCode and Reasonix use the same record-producer authority:
+DeepSeek Harness, OpenCode, and Reasonix use the same record-producer authority:
 
 ```powershell
 workspace agent check --agent opencode --skill zyc `
@@ -97,6 +97,10 @@ through `opencode.json` plus its project plugin; Reasonix uses `reasonix.toml`
 permissions and bounded filesystem roots. These are repository-local adapters,
 so using either executable from another project does not automatically apply
 this workspace's authority contract.
+
+DeepSeek Harness is currently registered without a runtime adapter or Skill
+exposure. Its declared authority becomes enforceable only after a supported
+Harness plugin integration is added.
 
 ## Submit A Request
 

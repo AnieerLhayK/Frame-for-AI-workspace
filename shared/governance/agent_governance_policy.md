@@ -67,7 +67,7 @@ Agent Registration Contract
 | Agent class | Default agents | Allowed durable effects |
 | --- | --- | --- |
 | Structural maintainer | Codex, Claude Code | Records, skill source, workspace structure, reviewed platform deployment |
-| Record producer | Hermes, OpenCode | Scoped diagnosis, handoff, agent report, and change request records |
+| Record producer | DeepSeek Harness, Hermes, OpenCode, Reasonix | Scoped diagnosis, handoff, agent report, and change request records |
 | Consumer | Unregistered agents | Read, temporary invocation, and change requests only |
 
 Agent identity does not replace a skill's own role and authority. For example,
@@ -99,15 +99,15 @@ is invoking it.
 
 ## Platform Adapters And Candidates
 
-Hermes, OpenCode, and Reasonix are active `record_producer` agents. They share
+DeepSeek Harness, Hermes, OpenCode, and Reasonix are active `record_producer` agents. They share
 the same workspace authority but enforce it through platform-specific project
 adapters: Hermes hooks, an OpenCode plugin plus project permissions, and
 Reasonix project permissions plus a bounded sandbox and filesystem MCP.
 
-Cursor remains a proposed `agent_host`. Until a tested workspace adapter can
-bind its tool calls to this policy, it resolves to Consumer and must not receive
-workspace write capabilities. Candidate testing output belongs only under an
-exact `reports/agent-experiments/<agent-id>/` scope.
+DeepSeek Harness currently has a declarative registration only: its Web UI has
+no workspace runtime-enforcement adapter. Its declared role and scopes do not
+by themselves authorize Harness tool calls until a supported plugin or adapter
+is registered.
 
 ## External Workspace Task Bridge
 

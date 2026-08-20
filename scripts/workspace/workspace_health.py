@@ -549,7 +549,7 @@ def check_platform_agent_guards(
         findings.append("OpenCode project governance plugin is missing")
 
     agents = registry.get("agents", {})
-    for agent_id in ("opencode", "reasonix"):
+    for agent_id in ("deepseek-harness", "opencode", "reasonix"):
         entry = agents.get(agent_id, {})
         if entry.get("status") != "active" or entry.get("role") != "record_producer":
             findings.append(f"{agent_id} is not an active record_producer")
@@ -557,26 +557,17 @@ def check_platform_agent_guards(
         entry = agents.get(agent_id, {})
         if entry.get("status") != "active" or entry.get("role") != "structural_maintainer":
             findings.append(f"{agent_id} is not an active structural_maintainer")
-    cursor = agents.get("cursor", {})
-    cursor_capabilities = cursor.get("capabilities", {})
-    if (
-        cursor.get("status") != "proposed"
-        or cursor.get("role") != "consumer"
-        or cursor_capabilities.get("allow")
-    ):
-        findings.append("Cursor is not restricted to proposed Consumer authority")
-
     if findings:
         return CheckResult(
             "platform-agent-guards",
             "FAIL",
-            "Reasonix/OpenCode/Cursor workspace governance has drifted.",
+            "DeepSeek Harness/Reasonix/OpenCode workspace governance has drifted.",
             {"findings": findings},
         )
     return CheckResult(
         "platform-agent-guards",
         "PASS",
-        "Codex and Claude are structural maintainers; Reasonix/OpenCode are bounded; Cursor remains Consumer.",
+        "Codex and Claude are structural maintainers; DeepSeek Harness, Reasonix, and OpenCode are registered record producers.",
     )
 
 

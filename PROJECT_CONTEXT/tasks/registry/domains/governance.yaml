@@ -81,7 +81,7 @@ tasks:
     - python -m scripts.workspace.workspace_cli agent status
     - python -m scripts.workspace.workspace_cli agent list
     - python -m scripts.workspace.workspace_cli agent validate codex
-    - python -m scripts.workspace.workspace_cli agent doctor cursor
+    - python -m scripts.workspace.workspace_cli agent doctor deepseek-harness
     - python -m scripts.workspace.workspace_cli agent check --agent hermes --path workspace_manifest.yaml
     - python -m scripts.workspace.workspace_cli agent check --agent hermes --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
     - python -m scripts.validation.validate_protocols
