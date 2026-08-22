@@ -239,6 +239,7 @@ tasks:
     - shared/
     - packages/
     - skills/
+    - external-skills/
     - USAGE_GUIDES/
     - WORKSPACE_ENGINEERING/
     - scripts/
@@ -307,11 +308,11 @@ tasks:
     use_when_zh:
     - 添加或修正 SKILL.md 的发现元数据或 frontmatter
     required:
-    - workspace_manifest.yaml
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/governance/context_budget.md
     - <target-skill>/SKILL.md
     optional:
+    - workspace_manifest.yaml
     - <target-skill>/README.md
     - <target-skill>/SHARED_PROTOCOLS.md
     ignore:
