@@ -36,9 +36,7 @@ be absent until its first real experiment. Neither should be populated merely
 to make a directory appear non-empty.
 
 Historical context reports belong under `PROJECT_CONTEXT/reports/history/` and
-are not included in current report freshness checks. The historical Hermes
-diagnostics were moved there; `reports/hermes/` is retired and is no longer an
-authorized write surface.
+are not included in current report freshness checks.
 
 `PROJECT_CONTEXT/` is a human and agent memory layer, not a generated report layer. Its summaries may point to reports, but they do not replace snapshot headers or report regeneration rules.
 

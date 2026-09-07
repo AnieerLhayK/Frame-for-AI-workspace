@@ -21,13 +21,12 @@ The ordered machine-readable form is `shared/governance/agent_governance.yaml`.
 there are no pending requests. `reports/agent-experiments/<agent-id>/` is an
 opt-in, bounded testing surface created only when a real experiment begins.
 Neither surface is a current snapshot collection. Historical Hermes diagnostics belong under
-`PROJECT_CONTEXT/reports/history/hermes/`; `reports/hermes/` is retired and is
-not an Agent write target.
+`PROJECT_CONTEXT/reports/history/hermes/`.
 
 ### Managed Public Publishers
 
-The public projections for Frame for AI Workspace, Chatty Ch System, and
-qq-chat-raw-filter are not generic external-environment writes. Each is a
+The public projections in `managed_platform_publishers` are not generic
+external-environment writes. Each is a
 registered platform projection with exactly one publisher script, disposable
 staging path, and approved Git remote URL. Every publisher invocation must satisfy
 all of the following before it creates a checkout, commits, or sends data:

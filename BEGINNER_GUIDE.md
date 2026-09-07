@@ -3,7 +3,7 @@
 This repository is a public framework template for building a governed AI
 workspace. It keeps the workspace's own structure visible: task routing,
 knowledge lookup, agent boundaries, report checks, and explainable CLI
-entrypoints. It contains no bundled character-system or existing skills.
+entrypoints.
 
 ## Quick Start
 

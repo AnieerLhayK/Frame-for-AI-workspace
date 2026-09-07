@@ -1,6 +1,6 @@
 # Conservative Git Integration Policy
 
-Run `workspace merge check main --head <agent-branch> --agent <agent> --record-id <TASK-ID>` before an intentional managed merge. The check is read-only and compares both tips with their merge-base.
+Run `workspace merge main --head <agent-branch> --agent <agent> --record-id <TASK-ID>` before an intentional managed merge. The check is read-only and compares both tips with their merge-base.
 
 ## Shared worktree branch safety
 

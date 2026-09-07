@@ -69,7 +69,7 @@ python -m scripts.workspace.workspace_cli agent list
 ## Step 5: Register Your Own Skills
 
 See `workspace_manifest.yaml` → `skills[]` for the skill declaration format.
-The public template has no bundled skills. Add your own under `skills/`, then
+Add your own skills under `skills/`, then
 register them in `workspace_manifest.yaml` under `skills[]`.
 Each skill needs:
 1. A unique `id`

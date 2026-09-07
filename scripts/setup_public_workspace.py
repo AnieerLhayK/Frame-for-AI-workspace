@@ -67,7 +67,7 @@ def main() -> int:
     args = parser.parse_args()
 
     root = Path(args.workspace_root).resolve()
-    if not (root / "scripts" / "workspace_cli.py").is_file():
+    if not (root / "scripts" / "workspace" / "workspace_cli.py").is_file():
         print(f"[FAIL] Not a workspace skeleton root: {root}")
         return 1
 
