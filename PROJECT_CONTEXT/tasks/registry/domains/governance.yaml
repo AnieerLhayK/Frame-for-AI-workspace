@@ -21,17 +21,9 @@ tasks:
     - scripts/tests/workspace/test_merge_safety.py
     - scripts/tests/workspace/test_task_records.py
     optional:
-    - shared/workspace/workspace_policy.md
     - shared/operations/reporting_policy.md
-    - USAGE_GUIDES/QUICK_START/agent_governance.md
-    - scripts/workspace/workspace_cli.py
-    - scripts/tests/workspace/test_workspace_cli.py
-    - scripts/publishing/sync_public_repo.py
-    - scripts/publishing/sync_chatty_ch_system_repo.py
-    - scripts/publishing/sync_qq_raw_filter_repo.py
-    - scripts/tests/publishing/test_publish_public.py
-    - scripts/tests/publishing/test_publish_chatty_ch_system.py
-    - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
+    - shared/schemas/package_protocol_manifest.schema.json
+    - selected registry, guard, or publisher route evidence
     ignore:
     - private corpus material
     - platform session stores
@@ -42,8 +34,9 @@ tasks:
     tool_profile: workspace_maintenance
     ledger: true
     budget:
-      required_warn_tokens: 20000
-      expanded_warn_tokens: 26000
+      required_warn_tokens: 60000
+      expanded_warn_tokens: 65000
+      hard_max_tokens: 65000
     write_scope:
     - workspace_manifest.yaml
     - shared/
@@ -86,6 +79,41 @@ tasks:
     - python -m scripts.workspace.workspace_cli agent check --agent hermes --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
     - python -m scripts.validation.validate_protocols
     - python -m scripts.validation.validate_manifest
+    - git diff --check
+  agent_registry_update:
+    use_when:
+    - Changing agent registrations, registration schema, lifecycle fields, or the focused registry validator.
+    use_when_zh:
+    - 修改 Agent 登记、登记 schema、生命周期字段或聚焦的登记验证器
+    required:
+    - shared/governance/agent_registry.yaml
+    - shared/schemas/agent_registration.schema.json
+    - scripts/workspace/agent_governance.py
+    - scripts/tests/workspace/test_agent_governance.py
+    optional:
+    - shared/governance/agent_governance_policy.md
+    ignore:
+    - runtime platform guards
+    - publisher registration
+    - unrelated task records
+    prompt:
+    - task_routing
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 28000
+      expanded_warn_tokens: 30000
+      hard_max_tokens: 30000
+    write_scope:
+    - shared/governance/agent_registry.yaml
+    - shared/schemas/agent_registration.schema.json
+    - scripts/workspace/agent_governance.py
+    - scripts/tests/workspace/test_agent_governance.py
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m unittest scripts.tests.workspace.test_agent_governance
+    - python -m scripts.workspace.workspace_cli agent list
     - git diff --check
   change_scope_verification:
     use_when:
@@ -198,6 +226,64 @@ tasks:
     - test allowed and blocked Claude hook inputs
     - test every registered Claude project launcher with --version
     - git diff --check
+  claude_notification_hooks:
+    use_when:
+    - Changing Claude long-task notification hooks or their installer without changing model selection.
+    use_when_zh:
+    - 修改 Claude 长任务通知钩子或安装器，但不修改模型选择
+    required:
+    - .claude/settings.json
+    - scripts/claude_long_task_notifications/
+    - scripts/platform/install_claude_long_task_notifications.ps1
+    optional: []
+    ignore:
+    - Claude model-routing policy
+    - private session history
+    - unrelated project launchers
+    prompt: [task_routing]
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget: {required_warn_tokens: 10000, expanded_warn_tokens: 14000, hard_max_tokens: 14000}
+    write_scope:
+    - .claude/settings.json
+    - scripts/claude_long_task_notifications/
+    - scripts/platform/install_claude_long_task_notifications.ps1
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - parse every PowerShell notification script
+    - git diff --check
+  claude_model_routing:
+    use_when:
+    - Changing Claude two-stage model advice or its policy and focused tests without changing notification hooks.
+    use_when_zh:
+    - 修改 Claude 两阶段模型建议、对应策略或聚焦测试，但不修改通知钩子
+    required:
+    - shared/claude/policies/model-routing-policy.md
+    - scripts/workspace/claude_model_advice.py
+    - scripts/tests/workspace/test_claude_model_advice.py
+    optional:
+    - CLAUDE.md
+    - USAGE_GUIDES/QUICK_START/claude_code.md
+    ignore:
+    - notification hooks
+    - provider credentials and authentication
+    - private session history
+    prompt: [task_routing]
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget: {required_warn_tokens: 10000, expanded_warn_tokens: 14000, hard_max_tokens: 14000}
+    write_scope:
+    - shared/claude/policies/model-routing-policy.md
+    - scripts/workspace/claude_model_advice.py
+    - scripts/tests/workspace/test_claude_model_advice.py
+    - CLAUDE.md
+    - USAGE_GUIDES/QUICK_START/claude_code.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m unittest scripts.tests.workspace.test_claude_model_advice
+    - git diff --check
   governance_workflow_simplification:
     use_when:
     - Unifying change-risk classification, simplifying the daily maintenance workflow,
@@ -248,8 +334,42 @@ tasks:
     - scripts/tests/workspace/test_verify_change_scope.py
     - scripts/workspace/workflow_check.py
     - scripts/tests/workspace/test_workflow_check.py
+    - scripts/workspace/task_records.py
+    - scripts/tests/workspace/test_task_records.py
     - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/workspace/resolve_task_context.py
+    - scripts/publishing/publish_public.py
+    - scripts/tests/publishing/test_publish_public.py
+    - scripts/reporting/sync_report.ps1
+    - scripts/tests/workspace/test_startup_context_policy.py
+    - PROJECT_CONTEXT/tasks/records/schema.json
+    - PROJECT_CONTEXT/tasks/registry/domains/governance.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/skills.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/knowledge.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/continuity.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/publishing.yaml
+    - PROJECT_CONTEXT/tasks/records/
+    - PROJECT_CONTEXT/tasks/ledger/
+    - PROJECT_CONTEXT/knowledge/topics/
+    - PROJECT_CONTEXT/todo/workspace-optimization.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - shared/operations/reporting_policy.md
+    - shared/schemas/package_protocol_manifest.schema.json
+    - USAGE_GUIDES/prompt_registry.yaml
+    - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/
+    - workspace_manifest.yaml
+    - packages/character-system/shared/protocol_manifest.json
+    - packages/character-system/shared/schemas/protocol_manifest.schema.json
+    - packages/teaching-system/shared/protocol_manifest.json
+    - scripts/validation/validate_manifest.py
+    - scripts/validation/validate_protocols.py
+    - scripts/validation/validate_runtime_loop.py
+    - scripts/tests/validation/
+    - scripts/requirements-context-tools.txt
+    - scripts/workspace/find_knowledge.py
+    - scripts/tests/workspace/test_find_knowledge.py
+    - scripts/tests/workspace/test_resolve_task_context.py
     - reports/current/manifest_validation_report.md
     - reports/current/protocol_validation_report.md
     - reports/current/workspace_health_report.md
@@ -382,6 +502,35 @@ tasks:
     - python -m scripts.workspace.workspace_cli health --with-tests
     - python -m scripts.validation.validate_manifest
     - python -m scripts.validation.validate_protocols
+    - git diff --check
+  runtime_guard_update:
+    use_when:
+    - Changing one runtime authorization guard, its platform adapter, approval state, or focused tests without changing agent registrations.
+    use_when_zh:
+    - 修改单个运行时授权守卫、平台适配器、审批状态或聚焦测试，但不修改 Agent 登记
+    required:
+    - shared/governance/agent_governance.yaml
+    - scripts/workspace/agent_governance.py
+    - <target-runtime-guard>
+    - <target-runtime-guard-test>
+    optional: []
+    ignore:
+    - agent registration schema
+    - public publishers
+    - unrelated skill implementation
+    prompt: [task_routing]
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget: {required_warn_tokens: 30000, expanded_warn_tokens: 32000, hard_max_tokens: 32000}
+    write_scope:
+    - shared/governance/agent_governance.yaml
+    - <target-runtime-guard>
+    - <target-runtime-guard-test>
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - run the focused validator for <target-runtime-guard-test>
+    - python -m scripts.workspace.workspace_cli agent status
     - git diff --check
   shared_policy_update:
     use_when:

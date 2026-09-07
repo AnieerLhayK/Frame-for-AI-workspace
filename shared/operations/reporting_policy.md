@@ -125,7 +125,7 @@ Regenerate Git governance reports only after Git boundary work.
 
 Regenerate drift governance reports after report policy, drift policy, or cooperation boundary changes.
 
-Run `scripts/validation/validate_protocols.py` after shared protocol, protocol manifest, runtime-loop template, ledger, or core skill `SHARED_PROTOCOLS.md` changes. It writes `reports/current/protocol_validation_report.md`, which is a snapshot report and not a truth source.
+Run `scripts/validation/validate_protocols.py` after shared protocol, package profile, skill inventory, runtime-loop template, ledger, or active character skill `SHARED_PROTOCOLS.md` changes. It writes `reports/current/protocol_validation_report.md`, which is a snapshot report and not a truth source.
 
 Run `scripts/validation/validate_manifest.py` and `scripts/workspace/migration_dry_run.py` before path migrations. Their reports are snapshots and may contain old absolute paths until regenerated.
 

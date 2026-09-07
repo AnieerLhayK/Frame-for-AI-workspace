@@ -16,11 +16,7 @@ tasks:
     - git status --short --untracked-files=all
     - explicit user approval for every destructive path
     optional:
-    - scripts/workspace/migration_dry_run.py
-    - scripts/validation/check_links.ps1
-    - shared/operations/session_continuity_policy.md
-    - PROJECT_CONTEXT/continuity/session_migrations.json
-    - scripts/workspace/session_continuity.py
+    - selected migration planner, validator, or continuity route
     ignore:
     - reports/legacy_git_metadata/
     - private corpus material
@@ -28,6 +24,10 @@ tasks:
     - cleanup_migration
     tool_profile: cleanup_migration
     ledger: true
+    budget:
+      required_warn_tokens: 16000
+      expanded_warn_tokens: 17000
+      hard_max_tokens: 17000
     write_scope:
       - AGENTS.md
       - ARCHITECTURE.md
@@ -49,6 +49,31 @@ tasks:
       change
     - python -m scripts.workspace.workspace_cli sessions audit when source paths used by agents
       move
+  cleanup_migration_audit:
+    use_when:
+    - Auditing explicitly named cleanup or migration targets and producing a reversible plan without moving or deleting anything.
+    use_when_zh:
+    - 只读审计明确命名的清理或迁移目标并生成可逆计划，不移动或删除任何内容
+    required:
+    - AGENTS.md
+    - shared/workspace/workspace_path_policy.md
+    - git status --short --untracked-files=all
+    - explicitly named target paths
+    optional: []
+    ignore:
+    - whole-drive search
+    - unnamed legacy paths
+    - file contents not needed for path classification
+    prompt:
+    - cleanup_migration
+    tool_profile: workspace_readonly
+    ledger: false
+    budget:
+      required_warn_tokens: 8000
+      expanded_warn_tokens: 10000
+      hard_max_tokens: 10000
+    validation:
+    - confirm resolved targets and rollback conditions in the audit receipt
   session_continuity:
     use_when:
     - Auditing, backing up, mapping, or recovering Claude Code or OpenCode sessions

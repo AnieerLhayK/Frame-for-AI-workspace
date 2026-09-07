@@ -9,6 +9,7 @@ topics:
     - file not found
     - 文件不存在
     - 错误处理
+    - 任务失败
     - 寻找文件
     entries:
     - path: shared/workspace/failure_policy.md

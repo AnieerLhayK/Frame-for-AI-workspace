@@ -104,6 +104,7 @@ SUBSTITUTIONS: list[tuple[re.Pattern[str], str]] = [
 # ── Excluded paths (glob-like, relative to workspace root) ──────────────────
 EXCLUDED_PATHS = {
     # Entire directories
+    ".git",
     "skills",
     "agents",
     ".agents",
@@ -165,6 +166,7 @@ EXCLUDED_PATHS = {
     "scripts/reporting/report_status.py",
     "scripts/reporting/report_routing_quality.py",
     "scripts/validation/validate_protocols.py",
+    "scripts/tests/validation/test_validate_protocols.py",
     "scripts/sync_report.ps1",
     "scripts/tests/reporting/test_report_status.py",
     "mcp/servers",
@@ -1042,6 +1044,10 @@ def main() -> int:
     out_dir = Path(args.out_dir).resolve()
     repo_name = args.repo_name
 
+    if out_dir == workspace_root or workspace_root in out_dir.parents:
+        print("ERROR: output directory must be outside the source workspace.", file=sys.stderr)
+        return 1
+
     print(f"Publishing from: {workspace_root}")
     print(f"Output to:      {out_dir}")
     print(f"Repo name:      {repo_name}")
@@ -1207,7 +1213,7 @@ def main() -> int:
         metadata_src = workspace_root / metadata_name
         if metadata_src.is_file():
             shutil.copy2(metadata_src, out_dir / metadata_name)
-    if not git_dir.is_dir():
+    if not git_dir.exists():
         try:
             subprocess.run(
                 ["git", "init", "-b", "main"],

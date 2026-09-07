@@ -7,6 +7,7 @@ topics:
     - conversation backup
     - resume old session
     - session path
+    - 会话迁移
     entries:
     - path: shared/operations/session_continuity_policy.md
       layer: shared

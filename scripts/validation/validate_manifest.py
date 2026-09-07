@@ -85,6 +85,37 @@ def get_source_commit() -> str:
         return "unknown"
 
 
+def git_common_root() -> Path | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            cwd=WORKSPACE_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        common = Path(result.stdout.strip())
+        if not common.is_absolute():
+            common = (WORKSPACE_ROOT / common).resolve()
+        return common.parent if common.name == ".git" else None
+    except Exception:
+        return None
+
+
+def manifest_last_modified() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "log", "-1", "--format=%cI", "--", "workspace_manifest.yaml"],
+            cwd=WORKSPACE_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
 def check_required_fields(manifest: dict[str, Any], state: State) -> None:
     top = [
         "workspace",
@@ -161,6 +192,7 @@ def check_required_fields(manifest: dict[str, Any], state: State) -> None:
         if isinstance(item, dict)
     }
     package_ids: set[str] = set()
+    valid_protocol_profiles = {"generic", "character-runtime-loop"}
     for package in manifest.get("packages", []):
         if not isinstance(package, dict):
             state.add("ERROR", "packages entries must be objects")
@@ -171,6 +203,12 @@ def check_required_fields(manifest: dict[str, Any], state: State) -> None:
         elif package_id in package_ids:
             state.add("ERROR", f"duplicate package id: {package_id}")
         package_ids.add(package_id)
+        profile = package.get("protocol_profile")
+        if profile not in valid_protocol_profiles:
+            state.add("ERROR", f"packages[{package_id}].protocol_profile is missing or invalid: {profile}")
+        for field in ("source_path", "shared_path", "protocol_manifest"):
+            if not str(package.get(field, "")).strip():
+                state.add("ERROR", f"packages[{package_id}].{field} is required")
 
     for skill in manifest.get("skills", []):
         skill_id = str(skill.get("id", ""))
@@ -276,10 +314,14 @@ def check_mode_contract(
 
 
 def check_paths(manifest: dict[str, Any], state: State) -> None:
-    workspace_root = Path(str(manifest.get("workspace", {}).get("source_of_truth", WORKSPACE_ROOT))).resolve()
+    workspace_root = WORKSPACE_ROOT
 
     source_of_truth = Path(str(manifest.get("workspace", {}).get("source_of_truth", "")))
-    if source_of_truth.resolve() != WORKSPACE_ROOT.resolve():
+    common_root = git_common_root()
+    accepted_roots = {WORKSPACE_ROOT.resolve()}
+    if common_root is not None:
+        accepted_roots.add(common_root.resolve())
+    if source_of_truth.resolve() not in accepted_roots:
         state.add(
             "WARNING",
             f"workspace.source_of_truth does not match current working directory: {source_of_truth} vs {WORKSPACE_ROOT}",
@@ -296,13 +338,7 @@ def check_paths(manifest: dict[str, Any], state: State) -> None:
         if not isinstance(package, dict):
             continue
         package_id = str(package.get("id", ""))
-        for field in (
-            "source_path",
-            "runtime_path",
-            "engineering_path",
-            "shared_path",
-            "reports_path",
-        ):
+        for field in ("source_path", "shared_path"):
             declared = str(package.get(field, ""))
             resolved = resolve_path(workspace_root, declared)
             record_path_check(
@@ -313,6 +349,17 @@ def check_paths(manifest: dict[str, Any], state: State) -> None:
                 True,
                 True,
             )
+            if resolved.is_dir() and not any(resolved.iterdir()):
+                state.add("ERROR", f"declared package directory is empty: packages[{package_id}].{field}")
+        for field in ("runtime_path", "engineering_path", "reports_path"):
+            if field not in package:
+                state.add("INFO", f"optional package path not declared: packages[{package_id}].{field}")
+                continue
+            declared = str(package.get(field, ""))
+            resolved = resolve_path(workspace_root, declared)
+            record_path_check(state, f"packages[{package_id}].{field}", declared, resolved, True, True)
+            if resolved.is_dir() and not any(resolved.iterdir()):
+                state.add("ERROR", f"declared optional package directory is empty: packages[{package_id}].{field}")
         protocol_manifest_value = str(package.get("protocol_manifest", ""))
         protocol_manifest_path = resolve_path(workspace_root, protocol_manifest_value)
         record_path_check(
@@ -551,7 +598,7 @@ def finding_lines(findings: list[Finding]) -> list[str]:
     return [f"- {finding.severity}: {finding.message}" for finding in findings]
 
 
-def write_report(state: State) -> None:
+def write_report(state: State, manifest: dict[str, Any] | None) -> None:
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     now = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %z")
     lines = [
@@ -559,8 +606,10 @@ def write_report(state: State) -> None:
         "report_name: manifest_validation_report",
         f"generated_at: {now}",
         "generated_by: scripts/validation/validate_manifest.py",
-        f"source_root: {WORKSPACE_ROOT}",
-        f"manifest_path: {MANIFEST_PATH}",
+        f"source_root: {manifest.get('workspace', {}).get('source_of_truth', WORKSPACE_ROOT) if manifest else WORKSPACE_ROOT}",
+        "manifest_path: workspace_manifest.yaml",
+        f"manifest_version: {manifest.get('workspace', {}).get('workspace_version', 'unknown') if manifest else 'unknown'}",
+        f"manifest_last_modified: {manifest_last_modified()}",
         f"source_commit: {get_source_commit()}",
         "report_scope: manifest portability and consistency validation",
         "report_is_snapshot: true",
@@ -568,6 +617,7 @@ def write_report(state: State) -> None:
         "  - workspace_manifest.yaml",
         "  - shared/",
         "  - current git commit",
+        "staleness_policy: regenerate after manifest, package, protocol, or validator changes",
         "---",
         "",
         "Report is a snapshot. Manifest is the source of truth. If this report conflicts with the manifest, trust the manifest and rerun validation.",
@@ -614,7 +664,7 @@ def main() -> int:
         check_required_fields(manifest, state)
         check_paths(manifest, state)
         check_absolute_paths(manifest, state)
-    write_report(state)
+    write_report(state, manifest)
     print(f"Manifest validation report: {REPORT_PATH.relative_to(WORKSPACE_ROOT).as_posix()}")
     print(f"ERROR: {len(state.errors)}")
     print(f"WARNING: {len(state.warnings)}")

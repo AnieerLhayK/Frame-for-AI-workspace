@@ -190,11 +190,15 @@ default_rules:
     - workspace paths
     - protocol contracts
 task_files:
+  agent_registry_update: domains/governance.yaml
   agent_governance_update: domains/governance.yaml
   change_scope_verification: domains/governance.yaml
   change_surface_planning: domains/workspace.yaml
+  claude_model_routing: domains/governance.yaml
+  claude_notification_hooks: domains/governance.yaml
   claude_project_boundary: domains/governance.yaml
   cleanup_migration: domains/continuity.yaml
+  cleanup_migration_audit: domains/continuity.yaml
   context_resolution_tooling: domains/knowledge.yaml
   developer_interface_tooling: domains/workspace.yaml
   failure_diagnostics_tooling: domains/workspace.yaml
@@ -204,18 +208,23 @@ task_files:
   ignore_policy_update: domains/workspace.yaml
   knowledge_interface_tooling: domains/knowledge.yaml
   platform_exposure: domains/skills.yaml
+  platform_exposure_audit: domains/skills.yaml
   project_memory_maintenance: domains/knowledge.yaml
   prompt_usage_update: domains/knowledge.yaml
   public_projection_synchronization: domains/publishing.yaml
+  public_projection_publisher_update: domains/publishing.yaml
   raw_material_filter_tooling: domains/skills.yaml
   root_script_adapter_removal: domains/workspace.yaml
   report_freshness_tooling: domains/publishing.yaml
+  report_freshness_status_update: domains/publishing.yaml
   report_regeneration: domains/publishing.yaml
   runtime_authorization_enforcement: domains/governance.yaml
+  runtime_guard_update: domains/governance.yaml
   runtime_drift_fix: domains/skills.yaml
   session_continuity: domains/continuity.yaml
   shared_policy_update: domains/governance.yaml
   skill_architecture_update: domains/skills.yaml
+  skill_bundle_release: domains/skills.yaml
   skill_lifecycle_tooling: domains/skills.yaml
   skill_metadata_update: domains/skills.yaml
   skill_release_packaging: domains/skills.yaml

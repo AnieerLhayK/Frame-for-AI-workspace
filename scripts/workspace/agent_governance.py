@@ -1433,13 +1433,26 @@ def create_request(
     }
 
 
+def canonical_hermes_guard_script() -> Path:
+    source_root = load_manifest().get("workspace", {}).get("source_of_truth")
+    if not source_root:
+        raise ValueError("workspace.source_of_truth is required for Hermes approval")
+    return (
+        Path(str(source_root)).expanduser().resolve()
+        / "scripts"
+        / "workspace"
+        / "hermes_workspace_guard.py"
+    )
+
+
 def inspect_hermes_guard_approval(
     *,
     config_path: Path = HERMES_CONFIG_PATH,
     allowlist_path: Path = HERMES_ALLOWLIST_PATH,
-    guard_script: Path = HERMES_GUARD_SCRIPT,
+    guard_script: Path | None = None,
 ) -> dict[str, Any]:
     """Compatibility facade for the Hermes approval deep module."""
+    guard_script = guard_script or canonical_hermes_guard_script()
     return _inspect_hermes_guard_approval(
         config_path=config_path,
         allowlist_path=allowlist_path,
@@ -1454,9 +1467,11 @@ def approve_hermes_guard(
     approve: bool,
     config_path: Path = HERMES_CONFIG_PATH,
     allowlist_path: Path = HERMES_ALLOWLIST_PATH,
-    guard_script: Path = HERMES_GUARD_SCRIPT,
+    guard_script: Path | None = None,
 ) -> dict[str, Any]:
     """Compatibility facade for the Hermes approval deep module."""
+    guard_script = guard_script or canonical_hermes_guard_script()
+
     def registration_lookup(task_id: str, operation: str) -> dict[str, Any]:
         try:
             return active_registration(task_id, operation)

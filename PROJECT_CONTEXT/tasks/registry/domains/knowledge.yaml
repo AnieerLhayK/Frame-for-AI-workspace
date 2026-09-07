@@ -40,7 +40,7 @@ tasks:
     - python -m unittest scripts.tests.workspace.test_resolve_task_context
     - python -m scripts.workspace.resolve_task_context --list
     - python -m scripts.workspace.resolve_task_context --list-prompts
-    - python -m scripts.workspace.resolve_task_context platform_exposure --format json
+    - python -m scripts.workspace.resolve_task_context platform_exposure_audit --bind platform=codex --format json
     - git diff --check
   knowledge_interface_tooling:
     use_when:
@@ -248,7 +248,7 @@ tasks:
     - scripts/tests/workspace/test_startup_context_policy.py
     validation:
     - python -m unittest scripts.tests.workspace.test_resolve_task_context scripts.tests.workspace.test_startup_context_policy
-    - python -m scripts.workspace.resolve_task_context platform_exposure --format json
+    - python -m scripts.workspace.resolve_task_context platform_exposure_audit --bind platform=codex --format json
     - python -m scripts.workspace.resolve_task_context skill_metadata_update --bind target-skill=packages/character-system/engineering/generation/character-generator
       --format json
     - git diff --check
@@ -306,12 +306,14 @@ tasks:
     - scripts/workspace/workspace_cli.py
     - scripts/tests/validation/test_validate_future_register.py
     - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/tests/workspace/test_startup_context_policy.py
     validation:
     - python -m unittest scripts.tests.validation.test_check_doc_pairs
     - python -m scripts.validation.check_doc_pairs --validate-coverage
     - python -m unittest scripts.tests.validation.test_validate_future_register scripts.tests.workspace.test_workspace_cli
     - python -m scripts.validation.validate_future_register
     - python -m scripts.workspace.workspace_cli knowledge validate
+    - python -m unittest scripts.tests.workspace.test_startup_context_policy
     - git diff --check
   workspace_engineering_knowledge:
     use_when:

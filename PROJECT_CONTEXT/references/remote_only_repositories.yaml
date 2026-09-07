@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Remote-only external repositories retained on GitHub after local checkout retirement.",
+  "repositories": {
+    "cnn": {
+      "display_name": "CNN",
+      "github_url": "https://github.com/AnieerLhayK/cppCNN_vibecoding",
+      "default_branch": "main",
+      "original_local_path": "${OTHER_PROJECT_ROOT}/source/repos/CNN",
+      "status": "remote_only",
+      "source": "remote-only-repositories handoff; local checkout had already been deleted",
+      "retired_at": null,
+      "restore": {
+        "clone_url": "https://github.com/AnieerLhayK/cppCNN_vibecoding",
+        "branch": "main",
+        "suggested_path": "${OTHER_PROJECT_ROOT}/source/repos/CNN"
+      },
+      "verification": {
+        "status": "verified",
+        "commit": null,
+        "verified_at": null,
+        "failure_code": null
+      }
+    },
+    "yellowriver-inkstone": {
+      "display_name": "YellowRiver_InkStone",
+      "github_url": "https://github.com/egg-pikaq/YellowRiver_Inkstone_LLM",
+      "default_branch": "main",
+      "original_local_path": "${WORKSPACE_ROOT}/projects/YellowRiver_InkStone",
+      "status": "local_directory_retired",
+      "source": "remote-only-repositories handoff; no deletion has been authorized",
+      "retired_at": "2026-09-03T14:45:06.231175+00:00",
+      "restore": {
+        "clone_url": "https://github.com/egg-pikaq/YellowRiver_Inkstone_LLM",
+        "branch": "main",
+        "suggested_path": "${WORKSPACE_ROOT}/projects/YellowRiver_InkStone"
+      },
+      "verification": {
+        "status": "verified",
+        "commit": "a4f5a38c1cad11bacd3d245d58e810347f327738",
+        "verified_at": "2026-09-03T14:45:06.231175+00:00",
+        "failure_code": null
+      },
+      "local_directory_receipt": {
+        "retained_paths": [],
+        "file_count": 0,
+        "file_manifest_sha256": "602e35a92eec4bc0a2ec6ae113f07bfc6933322fb69fe8dee416e5a67217e2a2",
+        "recreated_at": "2026-09-03T14:45:06.231175+00:00"
+      }
+    }
+  }
+}

@@ -133,3 +133,30 @@ These are high-risk patterns observed or anticipated from the current workspace 
 - Observed consequence: handoff between maintenance agents required explicit
   project context files and handoff packets to maintain continuity.
 - Recommended alternative: keep durable decisions in tracked workspace sources (PROJECT_CONTEXT, task ledger, reports). Use auto memory for local convenience only.
+
+### Concept Residue After Deletion Or Simplification
+
+- Anti-pattern: removing a mechanism while leaving instructions that explain its absence, exemptions, or old terminology in the current operating path.
+- Why dangerous: readers and agents continue to load an obsolete concept; a request to simplify can therefore add context and create a new source of confusion.
+- Observed consequence (2026-09): an adapted skill described why external task and write gates did not apply, although the target project had no such mechanism. The handoff is an observed case; the method below has not yet been behaviorally validated.
+- Recommended alternative: rewrite from the post-change target state and inspect the changed feature's entry points, references, examples, configuration, and tests. Keep compatibility text only when a current consumer requires it; keep the reason for the change in the delivery summary or history.
+
+#### Operating Guide
+
+Before editing, state the target behavior directly:
+
+> 请按修改后的目标状态完成这次调整，并沿本次改动的依赖检查入口、引用、示例和测试。现行说明应直接描述当前用法；保留的兼容内容请依据实际调用需求判断，修改缘由写在交付摘要中。
+
+After editing, check:
+
+1. Can someone who never saw the old version understand the current use directly?
+2. Does every retained old concept have a current purpose or consumer?
+3. Is the target mechanism gone while required behavior still works?
+
+If residue remains, identify its exact location and ask for a target-state rewrite:
+
+> 这里仍在解释已经移除的机制。请依据当前实际行为重写，并检查本次改动影响范围内的同源残留。逐项判断保留理由；验收时确认读者无需了解旧机制即可使用当前功能，同时验证需要保留的行为。
+
+Keyword search is a way to find candidates, not a semantic verdict. Judge prohibitions, compatibility branches, and historical notes by their current purpose. A deletion or simplification is complete only after this dependency-boundary review, with unrelated findings reported separately.
+
+This method adapts the relevance, sediment, pruning, and positive-steering ideas from `skill-creator` and `writing-great-skills`. Those references guide authoring; they do not prove runtime behavior, so code changes still require behavior tests and document changes still require an independent-read check.

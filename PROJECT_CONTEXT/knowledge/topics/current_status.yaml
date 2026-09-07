@@ -8,10 +8,10 @@ topics:
     - todo
     - risk
     - 当前状态
+    - 工作区现状
     - 工程现状
     - 下一步
     - package 开发
-    - skill 开发
     entries:
     - path: PROJECT_CONTEXT/continuity/current_status.md
       layer: project_context

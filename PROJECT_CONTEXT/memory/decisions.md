@@ -82,7 +82,39 @@
 - decision: Git baseline belongs to the manifest-declared workspace root; platform `.git` metadata is not primary.
 - reason: Avoid competing histories and source confusion.
 - date if known: 2026-05-27 Git governance.
-- consequence: Projection `.git.disabled-*` metadata remains for future archive/review.
+- consequence: No live `.git.disabled-*` projection metadata remains. Historical
+  reports may retain the old name, but registered publishers and manifest
+  projections define current Git boundaries.
+
+## Package Protocols Use Profiles And Skill Inventories
+
+- decision: Validate every package against the generic protocol schema, then
+  apply a declared profile for domain-specific contracts.
+- reason: Character-only runtime-loop fields should not be mandatory for a
+  teaching package, while all packages need auditable skill lifecycle state.
+- date if known: 2026-08-30 workspace optimization batch 2.
+- consequence: `skill_inventory` records active/development/retired and actual
+  Workspace registration; legacy `core_skills` remains readable with warnings.
+
+## Runtime-Loop History Is Audited Read-Only
+
+- decision: Validate runtime-loop IDs, links, ledgers, states, and evidence but
+  never auto-repair historical packets or ledgers.
+- reason: Historical audit records must remain reviewable and must not be
+  silently rewritten by a health check.
+- date if known: 2026-08-30 workspace optimization batch 2.
+- consequence: malformed, duplicate, broken, or inconsistent records are
+  errors; unledgered history is a warning and strict mode exits 2.
+
+## Prompt And Natural-Language Routing Fail Closed
+
+- decision: Reject duplicate Prompt Registry YAML keys and route uncertain task
+  language through bounded knowledge lookup before selecting an exact task id.
+- reason: Silent key shadowing and guessed task ids make instruction authority
+  difficult to audit.
+- date if known: 2026-08-30 workspace optimization batch 2.
+- consequence: Prompt templates retain explicit authority boundaries, and no
+  external RAG or broad `task suggest` service is introduced before observation.
 
 ## Full-Drive Discovery Is Forbidden
 
@@ -135,3 +167,23 @@
 - consequence: Generated public README templates and package-facing README
   content stay aligned with their publisher; root workspace documentation is
   not copied wholesale into every remote.
+
+## Planning Records Do Not Authorize Execution
+
+- decision: Store local planning and decision-map records beside task outcome records, but keep PLAN/MAP records non-authorizing and link them one-way to a TASK only when execution starts.
+- reason: Open work can outlive a Git baseline and must not silently gain workspace or external write authority.
+- date if known: 2026-09-01 local tracker migration.
+- consequence: Every PLAN/MAP change and every execution still requires its own active TASK record; claims only coordinate ownership and expire after 24 hours.
+
+## Remote-Only Repositories Use A Separate Registry And Explicit Retirement Gate
+
+- decision: Record remote-only repositories separately from local project and
+  launcher registries; expose their retirement workflow only to Codex through
+  explicit `$kill-for-remote` invocation.
+- reason: A nonexistent checkout cannot be a launch root, and deleting an
+  external source tree needs stronger identity, confirmation, and audit gates
+  than ordinary workspace maintenance.
+- date if known: 2026-09-03 remote-only repository workflow.
+- consequence: `pending_retirement` remains non-authorizing; an approved
+  `cleanup_migration` run must pass a fresh GitHub audit and exact ID/path
+  confirmation before the checkout is sent to the Windows Recycle Bin.

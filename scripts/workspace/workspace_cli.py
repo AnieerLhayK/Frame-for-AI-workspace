@@ -166,6 +166,9 @@ def build_parser() -> argparse.ArgumentParser:
     records = commands.add_parser("records", help="Create, finalize, inspect, and summarize task outcomes.")
     records.add_argument("args", nargs=argparse.REMAINDER)
 
+    plans = commands.add_parser("plans", help="Create and coordinate local PLAN/MAP records.")
+    plans.add_argument("args", nargs=argparse.REMAINDER)
+
     sessions = commands.add_parser("sessions", help="Audit conversation continuity after path migrations.")
     session_commands = sessions.add_subparsers(dest="action", required=True)
     session_audit = session_commands.add_parser(
@@ -293,6 +296,11 @@ def build_parser() -> argparse.ArgumentParser:
         "protocols",
         help="Validate shared protocols and refresh their snapshot report.",
     )
+    validate_runtime_loop = validate_commands.add_parser(
+        "runtime-loop",
+        help="Audit runtime-loop packets, links, ledgers, and state evidence without writing.",
+    )
+    validate_runtime_loop.add_argument("--strict", action="store_true")
     validate_commands.add_parser(
         "future-register",
         help="Validate active and historical potential-for-future registries.",
@@ -399,6 +407,7 @@ def build_parser() -> argparse.ArgumentParser:
     workflow_check.add_argument("--strict", action="store_true")
     workflow_check.add_argument("--agent")
     workflow_check.add_argument("--skill")
+    workflow_check.add_argument("--external-client-root")
     workflow_check.add_argument(
         "--include-staged",
         action=argparse.BooleanOptionalAction,
@@ -624,6 +633,11 @@ def dispatch(args: argparse.Namespace) -> int:
             return run_command([sys.executable, "-m", "scripts.validation.validate_manifest"])
         if args.target == "protocols":
             return run_command([sys.executable, "-m", "scripts.validation.validate_protocols"])
+        if args.target == "runtime-loop":
+            command = [sys.executable, "-m", "scripts.validation.validate_runtime_loop"]
+            if args.strict:
+                command.append("--strict")
+            return run_command(command)
         if args.target == "future-register":
             return run_command([sys.executable, "-m", "scripts.validation.validate_future_register"])
         if args.target == "project-context":
@@ -653,6 +667,8 @@ def dispatch(args: argparse.Namespace) -> int:
         return run_command(command)
     if args.command == "records":
         return run_command([sys.executable, "-m", "scripts.workspace.task_records", *args.args])
+    if args.command == "plans":
+        return run_command([sys.executable, "-m", "scripts.workspace.task_plans", *args.args])
     if args.command == "merge":
         command = [sys.executable, "-m", "scripts.workspace.merge_safety", args.target, "--head", args.head, "--strategy", args.strategy, "--format", args.format]
         if args.agent:
@@ -716,6 +732,8 @@ def dispatch(args: argparse.Namespace) -> int:
             command.extend(["--agent", args.agent])
         if args.skill:
             command.extend(["--skill", args.skill])
+        if args.external_client_root:
+            command.extend(["--external-client-root", args.external_client_root])
         if not args.include_staged:
             command.append("--no-include-staged")
         if not args.include_untracked:

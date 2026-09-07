@@ -2,6 +2,7 @@
 
 import tempfile
 import unittest
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -11,6 +12,87 @@ from scripts.workspace import task_ledger, task_records
 
 
 class TaskRecordsTests(unittest.TestCase):
+    def test_git_baseline_records_status_and_fingerprints_without_content(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+
+            def git(*args: str) -> None:
+                subprocess.run(
+                    ["git", *args], cwd=root, check=True, capture_output=True, text=True
+                )
+
+            git("init")
+            git("config", "user.email", "test@example.com")
+            git("config", "user.name", "Test")
+            (root / "tracked.txt").write_text("original\n", encoding="utf-8")
+            git("add", "tracked.txt")
+            git("commit", "-m", "baseline")
+            (root / "tracked.txt").write_text("worktree secret\n", encoding="utf-8")
+            (root / "staged.txt").write_text("staged secret\n", encoding="utf-8")
+            git("add", "staged.txt")
+            (root / "untracked.txt").write_text("untracked secret\n", encoding="utf-8")
+
+            with patch.object(task_records, "ROOT", root):
+                baseline = task_records.capture_git_baseline(
+                    captured_at="2026-08-28T00:00:00Z"
+                )
+
+        by_path = {entry["path"]: entry for entry in baseline["paths"]}
+        self.assertEqual(set(by_path), {"staged.txt", "tracked.txt", "untracked.txt"})
+        self.assertEqual(by_path["tracked.txt"]["worktree_status"], "M")
+        self.assertEqual(by_path["staged.txt"]["index_status"], "A")
+        self.assertIsNotNone(by_path["staged.txt"]["index_blob"])
+        self.assertEqual(by_path["untracked.txt"]["index_status"], "?")
+        self.assertIsNone(by_path["untracked.txt"]["index_blob"])
+        self.assertNotIn("secret", str(baseline))
+
+    def test_new_records_use_schema_14_and_finalize_preserves_it(self) -> None:
+        baseline = {
+            "branch": "codex/demo",
+            "head_commit": "a" * 40,
+            "captured_at": "2026-08-28T00:00:00Z",
+            "paths": [],
+        }
+        args = type(
+            "Args",
+            (),
+            {
+                "task_type": "demo",
+                "tokens_estimated": 1,
+                "bind": [],
+                "operation": ["workspace_write"],
+                "started_at": "2026-08-28T00:00:00Z",
+                "owner_agent": None,
+                "owner_session": None,
+            },
+        )()
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            task_records, "RECORD_ROOT", Path(directory) / "records"
+        ), patch.object(
+            task_ledger, "DESTINATION", Path(directory) / "ledger"
+        ), patch.object(task_records, "capture_git_baseline", return_value=baseline):
+            record = task_records.start(args)
+            final = task_records.finalize(
+                type(
+                    "FinalizeArgs",
+                    (),
+                    {
+                        "task_id": record["task_id"],
+                        "ended_at": "2026-08-28T00:01:00Z",
+                        "status": "successful",
+                        "validation": "passed",
+                        "usability": "usable",
+                        "human_edit_rounds": 0,
+                        "command": [],
+                        "tokens_actual": None,
+                        "tokens_saved": None,
+                        "currency_cost": None,
+                    },
+                )()
+            )
+        self.assertEqual(final["schema_version"], "1.4")
+        self.assertEqual(final["git_baseline"], baseline)
+
     def test_ledger_receipt_requires_all_migrated_task_ids(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             ledger = Path(directory)
@@ -119,6 +201,12 @@ class TaskRecordsTests(unittest.TestCase):
         resolve.assert_called_once_with("demo", [])
 
     def test_start_persists_workspace_session_owner_and_bindings(self) -> None:
+        baseline = {
+            "branch": "codex/test",
+            "head_commit": "a" * 40,
+            "captured_at": "2026-07-15T00:00:00Z",
+            "paths": [],
+        }
         args = type(
             "Args",
             (),
@@ -134,6 +222,8 @@ class TaskRecordsTests(unittest.TestCase):
         )()
         with tempfile.TemporaryDirectory() as directory, patch.object(
             task_records, "RECORD_ROOT", Path(directory)
+        ), patch.object(
+            task_records, "capture_git_baseline", return_value=baseline
         ):
             record = task_records.start(args)
         self.assertEqual(
@@ -169,6 +259,12 @@ class TaskRecordsTests(unittest.TestCase):
         resolve.assert_not_called()
 
     def test_external_start_records_registered_actor_and_client_root(self) -> None:
+        baseline = {
+            "branch": "codex/test",
+            "head_commit": "a" * 40,
+            "captured_at": "2026-07-16T00:00:00Z",
+            "paths": [],
+        }
         args = type(
             "Args",
             (),
@@ -186,6 +282,8 @@ class TaskRecordsTests(unittest.TestCase):
             task_records, "RECORD_ROOT", Path(directory)
         ), patch.object(task_records, "external_agent_id", return_value="opencode"), patch.object(
             task_records, "external_client_root", return_value="/external-host"
+        ), patch.object(
+            task_records, "capture_git_baseline", return_value=baseline
         ):
             record = task_records.external_start(args)
         self.assertEqual(record["origin"], {

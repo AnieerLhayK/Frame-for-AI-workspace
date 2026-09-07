@@ -18,10 +18,12 @@ from scripts.workspace.plan_change_surface import (
     normalize_path,
     resolve_task,
 )
+from scripts.workspace.task_records import capture_git_baseline
 
 
 GitRunner = Callable[[Sequence[str]], subprocess.CompletedProcess[str]]
 TaskResolver = Callable[[str, list[str]], dict[str, Any]]
+BaselineSnapshotter = Callable[[], dict[str, Any]]
 POLICY_PATH = WORKSPACE_ROOT / "shared" / "governance" / "agent_governance.yaml"
 
 
@@ -236,6 +238,9 @@ def verify_changes(
     task_resolver: TaskResolver = resolve_task,
     governance_policy: dict[str, Any] | None = None,
     additional_write_scope: Sequence[str] = (),
+    git_baseline: dict[str, Any] | None = None,
+    warn_on_missing_baseline: bool = False,
+    baseline_snapshotter: BaselineSnapshotter = capture_git_baseline,
 ) -> dict[str, Any]:
     task = task_resolver(task_id, bindings)
     governance_policy = governance_policy or load_governance_policy()
@@ -244,6 +249,42 @@ def verify_changes(
         include_untracked=include_untracked,
         runner=runner,
     )
+    baseline_unchanged_files: list[str] = []
+    baseline_overlap_conflicts: list[str] = []
+    baseline_state_errors: list[str] = []
+    if git_baseline is not None:
+        current_baseline = baseline_snapshotter()
+        if current_baseline.get("branch") != git_baseline.get("branch"):
+            baseline_state_errors.append(
+                "Git branch changed after the task baseline was captured."
+            )
+        if current_baseline.get("head_commit") != git_baseline.get("head_commit"):
+            baseline_state_errors.append(
+                "Git HEAD changed after the task baseline was captured."
+            )
+        original_by_path = {
+            normalize_git_path(str(item["path"])): item
+            for item in git_baseline.get("paths", [])
+            if isinstance(item, dict) and item.get("path")
+        }
+        current_by_path = {
+            normalize_git_path(str(item["path"])): item
+            for item in current_baseline.get("paths", [])
+            if isinstance(item, dict) and item.get("path")
+        }
+        for key, original in original_by_path.items():
+            current = current_by_path.get(key)
+            path = str(original["path"])
+            if current == original:
+                baseline_unchanged_files.append(path)
+            else:
+                baseline_overlap_conflicts.append(path)
+        task_change_keys = set(current_by_path) - set(original_by_path)
+        changes = [
+            change
+            for change in changes
+            if normalize_git_path(change.path) in task_change_keys
+        ]
     write_scope = [
         *[str(value) for value in task["context"]["write_scope"]],
         *[str(value) for value in additional_write_scope],
@@ -334,6 +375,10 @@ def verify_changes(
                 high_risk_undeclared.append(change.path)
 
     warnings: list[str] = []
+    if warn_on_missing_baseline and git_baseline is None:
+        warnings.append(
+            "Active record predates Git baselines; the full current worktree was evaluated."
+        )
     if task.get("status") not in {None, "PASS"}:
         warnings.append(
             f"Task resolver status is {task.get('status')}; review task readiness."
@@ -345,6 +390,11 @@ def verify_changes(
         )
 
     errors: list[str] = []
+    errors.extend(baseline_state_errors)
+    if baseline_overlap_conflicts:
+        errors.append(
+            "The task changed paths that were already dirty at baseline capture."
+        )
     if out_of_scope:
         errors.append(
             "Actual changes exist outside the resolved write scope."
@@ -385,6 +435,13 @@ def verify_changes(
         "concrete_write_scope": concrete_scopes,
         "declarative_write_scope": declarative_scopes,
         "actual_changes": actual,
+        "baseline_unchanged_files": sorted(
+            baseline_unchanged_files, key=str.casefold
+        ),
+        "baseline_overlap_conflicts": sorted(
+            baseline_overlap_conflicts, key=str.casefold
+        ),
+        "baseline_state_errors": baseline_state_errors,
         "allowed_files": allowed,
         "out_of_scope_files": out_of_scope,
         "high_risk_files": high_risk,
@@ -437,6 +494,14 @@ def render_text(payload: dict[str, Any]) -> None:
         if authorization and authorization["status"] != "ALLOW":
             marker += "; AUTHORITY-DENIED"
         print(f"  - {change['path']} [{sources}; {statuses}] {marker}")
+    if payload.get("baseline_unchanged_files"):
+        print("Pre-existing unchanged paths (background only):")
+        for path in payload["baseline_unchanged_files"]:
+            print(f"  - {path}")
+    if payload.get("baseline_overlap_conflicts"):
+        print("Pre-existing paths changed by this task:")
+        for path in payload["baseline_overlap_conflicts"]:
+            print(f"  - {path}")
     if payload["high_risk_files"]:
         print("High-risk changes:")
         for item in payload["high_risk_files"]:

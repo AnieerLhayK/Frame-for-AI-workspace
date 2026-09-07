@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from scripts.workspace.plan_change_surface import resolve_task
-from scripts.workspace.task_records import active_registration
+from scripts.workspace.task_records import (
+    active_external_registration,
+    active_registration,
+)
 from scripts.workspace.verify_change_scope import WORKSPACE_ROOT, verify_changes
 
 
@@ -33,6 +36,7 @@ def check_workflow(
     include_untracked: bool = True,
     agent_id: str | None = None,
     acting_skill: str | None = None,
+    external_client_root: str | None = None,
     command_runner: CommandRunner = run_command,
 ) -> dict[str, Any]:
     task = resolve_task(task_id, bindings)
@@ -40,7 +44,21 @@ def check_workflow(
     registration_error: str | None = None
     if record_id:
         try:
-            registration = active_registration(record_id, "workspace_write")
+            registration = active_registration(
+                record_id, "workspace_write", allow_external_origin=True
+            )
+            origin = registration.get("origin")
+            if isinstance(origin, dict) and origin.get("kind") == "external_workspace":
+                if not agent_id or not external_client_root:
+                    raise ValueError(
+                        "external task records require both --agent and "
+                        "--external-client-root"
+                    )
+                registration = active_external_registration(
+                    record_id,
+                    agent=agent_id,
+                    client_root=external_client_root,
+                )
         except ValueError as error:
             registration_error = str(error)
     else:
@@ -54,12 +72,28 @@ def check_workflow(
         acting_skill=acting_skill,
         task_resolver=lambda *_: task,
         additional_write_scope=[registration["path"]] if registration else [],
+        git_baseline=registration.get("git_baseline") if registration else None,
+        warn_on_missing_baseline=bool(registration) and not registration.get("git_baseline"),
     )
-    diff_checks = [command_runner(["git", "diff", "--check"])]
-    if include_staged:
-        diff_checks.append(
-            command_runner(["git", "diff", "--cached", "--check"])
-        )
+    actual_paths = [item["path"] for item in verification.get("actual_changes", [])]
+    if registration and registration.get("git_baseline") is not None:
+        diff_checks = []
+        if actual_paths:
+            diff_checks.append(
+                command_runner(["git", "diff", "--check", "--", *actual_paths])
+            )
+            if include_staged:
+                diff_checks.append(
+                    command_runner(
+                        ["git", "diff", "--cached", "--check", "--", *actual_paths]
+                    )
+                )
+    else:
+        diff_checks = [command_runner(["git", "diff", "--check"])]
+        if include_staged:
+            diff_checks.append(
+                command_runner(["git", "diff", "--cached", "--check"])
+            )
     diff_check_passed = all(check.returncode == 0 for check in diff_checks)
     diff_check_output = "\n".join(
         output
@@ -86,6 +120,7 @@ def check_workflow(
         "branch": verification.get("branch"),
         "agent_id": agent_id,
         "acting_skill": acting_skill,
+        "external_client_root": external_client_root,
         "risk_level": verification.get("risk_level", "normal"),
         "risk_reasons": verification.get("risk_reasons", []),
         "affected_surfaces": verification.get("affected_surfaces", []),
@@ -169,6 +204,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--agent")
     parser.add_argument("--skill")
+    parser.add_argument("--external-client-root")
     parser.add_argument(
         "--include-staged",
         action=argparse.BooleanOptionalAction,
@@ -193,6 +229,7 @@ def main() -> int:
             include_untracked=args.include_untracked,
             agent_id=args.agent,
             acting_skill=args.skill,
+            external_client_root=args.external_client_root,
         )
     except (RuntimeError, KeyError, OSError, ValueError) as exc:
         payload = {

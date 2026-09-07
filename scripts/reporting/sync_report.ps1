@@ -439,15 +439,20 @@ function Add-ReportHeader {
 $ManifestPath = Resolve-ManifestPath -RequestedPath $ManifestPath
 $manifest = Read-WorkspaceManifest -Path $ManifestPath
 $workspaceRoot = [string]$manifest.workspace.source_of_truth
-$reportRoot = Join-Path $workspaceRoot "reports\current"
-New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
 $resolvedManifestPath = [System.IO.Path]::GetFullPath($ManifestPath)
-$manifestLastModified = (Get-Item -LiteralPath $resolvedManifestPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss zzz")
-$sourceCommit = Get-SourceCommit -WorkspaceRoot $workspaceRoot
+$executionWorkspaceRoot = Split-Path -Parent $resolvedManifestPath
+$reportRoot = Join-Path $executionWorkspaceRoot "reports\current"
+New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
+$sourceCommit = Get-SourceCommit -WorkspaceRoot $executionWorkspaceRoot
+$reportManifestPath = Join-Path $workspaceRoot "workspace_manifest.yaml"
+if (-not (Test-Path -LiteralPath $reportManifestPath -PathType Leaf)) {
+  $reportManifestPath = $resolvedManifestPath
+}
+$manifestLastModified = (Get-Item -LiteralPath $reportManifestPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss zzz")
 
 $manifestStatus = [pscustomobject]@{
-  Exists = Test-Path -LiteralPath $ManifestPath -PathType Leaf
-  Path = $resolvedManifestPath
+  Exists = Test-Path -LiteralPath $reportManifestPath -PathType Leaf
+  Path = $reportManifestPath
   WorkspaceName = $manifest.workspace.workspace_name
   Version = $manifest.workspace.workspace_version
   SourceOfTruth = $workspaceRoot
@@ -479,7 +484,7 @@ $unsafeHardcoded = @($hardcodedFindings | Where-Object { $_.Category -notin @("m
 $now = Get-Date -Format "yyyy-MM-dd HH:mm:ss zzz"
 
 $setupLines = [System.Collections.ArrayList]@()
-Add-ReportHeader -Lines $setupLines -ReportName "workspace_setup_report" -GeneratedAt $now -GeneratedBy "scripts/reporting/sync_report.ps1" -SourceRoot $workspaceRoot -ManifestPath $resolvedManifestPath -ManifestVersion ([string]$manifest.workspace.workspace_version) -ManifestLastModified $manifestLastModified -SourceCommit $sourceCommit -ReportScope "workspace setup, skill registry, and projection status"
+Add-ReportHeader -Lines $setupLines -ReportName "workspace_setup_report" -GeneratedAt $now -GeneratedBy "scripts/reporting/sync_report.ps1" -SourceRoot $workspaceRoot -ManifestPath $reportManifestPath -ManifestVersion ([string]$manifest.workspace.workspace_version) -ManifestLastModified $manifestLastModified -SourceCommit $sourceCommit -ReportScope "workspace setup, skill registry, and projection status"
 [void]$setupLines.Add("# Workspace Setup Report")
 [void]$setupLines.Add("")
 [void]$setupLines.Add("Generated: $now")
@@ -527,7 +532,7 @@ Add-Table -Lines $setupLines -Rows ($projectionStatuses | ForEach-Object {
 [void]$setupLines.Add("- Update ``workspace_manifest.yaml`` before changing projections or shared protocol locations.")
 
 $healthLines = [System.Collections.ArrayList]@()
-Add-ReportHeader -Lines $healthLines -ReportName "workspace_health_report" -GeneratedAt $now -GeneratedBy "scripts/reporting/sync_report.ps1" -SourceRoot $workspaceRoot -ManifestPath $resolvedManifestPath -ManifestVersion ([string]$manifest.workspace.workspace_version) -ManifestLastModified $manifestLastModified -SourceCommit $sourceCommit -ReportScope "manifest status, link status, missing files, hardcoded paths, protocol consistency, drift, shared uniqueness, and Git boundaries"
+Add-ReportHeader -Lines $healthLines -ReportName "workspace_health_report" -GeneratedAt $now -GeneratedBy "scripts/reporting/sync_report.ps1" -SourceRoot $workspaceRoot -ManifestPath $reportManifestPath -ManifestVersion ([string]$manifest.workspace.workspace_version) -ManifestLastModified $manifestLastModified -SourceCommit $sourceCommit -ReportScope "manifest status, link status, missing files, hardcoded paths, protocol consistency, drift, shared uniqueness, and Git boundaries"
 [void]$healthLines.Add("# Workspace Health Report")
 [void]$healthLines.Add("")
 [void]$healthLines.Add("Generated: $now")

@@ -72,3 +72,36 @@ Manual and runtime-driven evolution of the ZYC-inspired character skill. It is c
 ## generator generalization
 
 The process of promoting a validated lesson from character maintenance into generator or shared protocol design. It requires explicit review and should not happen from one patch alone.
+
+## planning record
+
+A `PLAN-…` record that describes prospective work, its dependencies, acceptance criteria, claim, and execution links. It coordinates work but grants no write authority.
+
+## decision map
+
+A `MAP-…` record for a multi-session destination, its associated planning records, settled decisions, unresolved matters, and explicit scope boundaries.
+
+## execution record
+
+A `TASK-…` outcome record created when work actually begins. It is the only planning-domain record that can carry active write authorization.
+
+## claim
+
+A time-bounded coordination reservation on a ready planning record. Claims expire after 24 hours and prevent duplicate work; they do not grant authority.
+
+## remote-only repository
+
+An external GitHub repository intentionally retained without a local checkout.
+It is recorded in `PROJECT_CONTEXT/references/remote_only_repositories.yaml`,
+not in workspace skill registration or a local launcher map.
+
+## pending retirement
+
+A remote-only registry state for a local checkout proposed for retirement but
+not yet proven removed. It grants no deletion authority.
+
+## local launcher registry
+
+A machine-local map such as `${DATA_ROOT}/claude\project_roots.json` that may
+refer only to existing local roots. A retirement removes only entries that
+exactly match the retired checkout path.

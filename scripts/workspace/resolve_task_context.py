@@ -62,9 +62,14 @@ TASK_GROUPS = (
         "Governance and Runtime Authority",
         (
             "agent_governance_update",
+            "agent_registry_update",
+            "runtime_guard_update",
             "runtime_authorization_enforcement",
             "governance_workflow_simplification",
+            "claude_notification_hooks",
+            "claude_model_routing",
             "claude_project_boundary",
+            "platform_exposure_audit",
             "platform_exposure",
         ),
     ),
@@ -101,6 +106,7 @@ TASK_GROUPS = (
         (
             "skill_lifecycle_tooling",
             "skill_release_packaging",
+            "skill_bundle_release",
             "skill_architecture_update",
             "skill_metadata_update",
             "runtime_drift_fix",
@@ -111,7 +117,11 @@ TASK_GROUPS = (
         (
             "report_regeneration",
             "report_freshness_tooling",
+            "report_freshness_status_update",
             "cleanup_migration",
+            "cleanup_migration_audit",
+            "public_projection_publisher_update",
+            "public_projection_synchronization",
             "session_continuity",
         ),
     ),
@@ -176,18 +186,48 @@ def find_manifest(start: Path, filename: str, max_depth: int) -> Path | None:
     return None
 
 
-def load_yaml(path: Path) -> dict[str, Any]:
+def load_yaml(path: Path, *, reject_duplicate_keys: bool = False) -> dict[str, Any]:
     if yaml is None:
         raise RuntimeError(
             "PyYAML is required. Install scripts/requirements-context-tools.txt."
         )
     try:
-        data = yaml.safe_load(path.read_text(encoding="utf-8-sig"))
+        text = path.read_text(encoding="utf-8-sig")
+        if reject_duplicate_keys:
+            class UniqueKeyLoader(yaml.SafeLoader):
+                pass
+
+            def construct_mapping(loader: Any, node: Any, deep: bool = False) -> dict[Any, Any]:
+                mapping: dict[Any, Any] = {}
+                for key_node, value_node in node.value:
+                    key = loader.construct_object(key_node, deep=deep)
+                    if key in mapping:
+                        raise yaml.constructor.ConstructorError(
+                            "while constructing a mapping",
+                            node.start_mark,
+                            f"found duplicate key {key!r}",
+                            key_node.start_mark,
+                        )
+                    mapping[key] = loader.construct_object(value_node, deep=deep)
+                return mapping
+
+            UniqueKeyLoader.add_constructor(
+                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+                construct_mapping,
+            )
+            data = yaml.load(text, Loader=UniqueKeyLoader)
+        else:
+            data = yaml.safe_load(text)
     except (OSError, yaml.YAMLError) as exc:
         raise ValueError(f"failed to load YAML {path}: {exc}") from exc
     if not isinstance(data, dict):
         raise ValueError(f"expected a mapping at document root: {path}")
     return data
+
+
+def load_prompt_registry(path: Path) -> dict[str, Any]:
+    """Load the prompt registry without silently accepting shadowed prompt IDs."""
+    return load_yaml(path, reject_duplicate_keys=True)
 
 
 def parse_bindings(values: list[str]) -> dict[str, list[str]]:
@@ -621,7 +661,7 @@ def resolve_task(
         .get("prompt_registry", {})
         .get("path", PROMPT_REGISTRY_PATH)
     )
-    prompt_registry = load_yaml(workspace_root / prompt_registry_path)
+    prompt_registry = load_prompt_registry(workspace_root / prompt_registry_path)
     tasks = task_registry.get("tasks", {})
     if task_id not in tasks:
         raise KeyError(f"unknown task id: {task_id}")
@@ -893,7 +933,7 @@ def resolve_prompt(
         .get("prompt_registry", {})
         .get("path", PROMPT_REGISTRY_PATH)
     )
-    prompt_registry = load_yaml(workspace_root / prompt_registry_path)
+    prompt_registry = load_prompt_registry(workspace_root / prompt_registry_path)
     prompt = prompt_registry.get("prompts", {}).get(prompt_id)
     if not isinstance(prompt, dict):
         raise KeyError(f"unknown prompt id: {prompt_id}")
@@ -1228,7 +1268,7 @@ def main() -> int:
                 .get("prompt_registry", {})
                 .get("path", PROMPT_REGISTRY_PATH)
             )
-            print_prompt_list(load_yaml(workspace_root / prompt_registry_path), args.format)
+            print_prompt_list(load_prompt_registry(workspace_root / prompt_registry_path), args.format)
             return 0
         if args.prompt_id:
             if args.task:

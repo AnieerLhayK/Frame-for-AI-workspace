@@ -19,15 +19,19 @@
 - Raw external skill research root: `workspace_manifest.yaml -> external_roots.raw_skills`
 - Curated adapted external skill root: `workspace_manifest.yaml -> external_roots.adapted_skills`
 - Core skills:
+  - `skills/collaboration-builder`
   - `skills/disk-scan-reporter`
+  - `skills/far-repo-governor`
   - `skills/windows-ai-storage-governor`
   - `packages/character-system/engineering/generation/character-generator`
   - `packages/character-system/engineering/maintenance/character-maintainer`
   - `packages/character-system/engineering/diagnosis/style-doctor`
   - `packages/character-system/runtime/characters/zyc`
+  - `packages/teaching-system/skills/putogether`
 - Curated external skills currently exposed to Codex and Claude Code:
   `grill-me`, `grilling`, `handoff`, `diagnosing-bugs`, `tdd`, `code-review`,
-  `codebase-design`, and `writing-great-skills`.
+  `codebase-design`, `writing-great-skills`, `teach`, `research`, and
+  `writing-for-agents`.
 - Known external project roots are tracked separately in
   `PROJECT_CONTEXT/references/external_projects.yaml`; they are not workspace packages or
   skill projections.
@@ -74,6 +78,20 @@
 - Task outcomes have a separate tracked fact layer under `PROJECT_CONTEXT/tasks/records/`; `workspace records` validates and summarizes success, validation, edits, duration, token fields, and usability.
 - Prompt registry established with `USAGE_GUIDES/prompt_registry.yaml` to resolve reusable prompt ids before regenerating meta-prompts.
 - Task/prompt resolver established with `scripts/workspace/resolve_task_context.py`; it emits a bounded task view and avoids rereading full routing registries by default.
+- Eight focused second-batch task routes now isolate skill bundle release,
+  projection publisher edits, agent registry edits, runtime guards, report
+  freshness status, Claude notification hooks, Claude model routing, and
+  cleanup audits. Their aggregate compatibility routes retain fixed hard
+  limits rather than raising budgets to hide context growth.
+- Prompt Registry loading rejects duplicate YAML keys. The bilingual
+  `skill_release` template preserves source → staging → validation/checksum →
+  registered-target traceability and does not treat local success as push
+  authority.
+- Package registration now declares `protocol_profile`; the shared generic
+  schema applies to every package, while the character profile adds
+  runtime-loop registries. `skill_inventory` marks `putogether` active and
+  registered, while `recoveror` and `document-auditor` remain development and
+  unregistered with no platform exposure.
 - Scripts governance migration established responsibility packages under
   `scripts/workspace/`, `scripts/validation/`, `scripts/publishing/`,
   `scripts/platform/`, and `scripts/reporting/`, with shared runtime helpers,
@@ -127,8 +145,8 @@
 - The Claude boundary guard detects PowerShell-wrapped external writes and
   tells users to restart Claude from the target Git root instead of bypassing
   blocked native editing tools.
-- The CNN implementation is maintained in a separate Git repository and is
-  selected through the machine-local `claude-project cnn` launcher alias.
+- The archived CNN course project remains a separate external Git repository;
+  its launcher entry is not a Workspace package or projection.
 - `workspace_manifest.yaml` does not register external Claude projects; it
   remains the registry for workspace skills, protocols, and platform exposure.
 - PROJECT_CONTEXT disassembly completed:
@@ -159,9 +177,9 @@
   results create no extra report; only meaningful anomalies enter durable
   project memory.
 - A confirmed Hermes incident showed that registration and Skill prose were
-  not connected to runtime file tools. The unauthorized ZYC patch is preserved
-  on `codex/safety-hermes-zyc-age-anchor-20260621` for later diagnosis and
-  handoff.
+  not connected to runtime file tools. The remediation is retained in governed
+  runtime authorization and historical task evidence; no live age-anchor
+  safety branch is used as current state.
 - Runtime authorization now intersects Agent and acting-Skill authority.
   Hermes uses a tracked pre-tool guard, compact per-turn governance context,
   read-only terminal allowlisting, action-aware MCP checks, and filesystem MCP
@@ -209,8 +227,8 @@
 - Hermes runtime-loop exposure validation: the filesystem MCP listed both
   canonical read roots and successfully read the diagnosis template while
   keeping four mutation tools excluded.
-- The isolated workspace script suite passes 311 tests; the package-local
-  qq-filter suite passes 23 and the disk-scan-reporter suite passes 35.
+- The governed workspace, qq-filter, and disk-scan CI groups pass in isolated
+  validation; use the latest health output for current test counts.
 - A root-level pytest collection still has the four known baseline import
   errors: two qq-filter tests need the package import environment and two
   disk-scan tests use legacy `scripts.*` imports. No new collection failure was
@@ -242,9 +260,9 @@ A bounded planning evaluation of whether future external RAG / knowledge base
 would improve workspace maintenance is recorded under
 `WORKSPACE_ENGINEERING/proposals/external_rag_planning.md`.
 
-- **Current phase:** P0 in progress. `use_when_zh` summaries are present for
-  all current task ids; Chinese alias audit and natural-language task fallback
-  remain open. No retrieval implementation exists.
+- **Current phase:** P0 complete. `use_when_zh` summaries and ten unique Chinese
+  operational aliases are present, and uncertain natural language falls back
+  through `workspace knowledge find`. No retrieval implementation exists.
 - **Decision rule:** complete P0, observe 5–10 tasks, then decide whether
   P2–P5 (directory, BM25, CLI) are justified.
 - **Boundary:** No external directories, indexes, databases, vector stores,
@@ -255,13 +273,19 @@ would improve workspace maintenance is recorded under
 
 - The developer CLI is in an observation period. New commands should be added
   only after repeated real tasks demonstrate a missing interface.
-- Runtime loop records exist structurally, but real diagnosis/handoff/patch/validation instances still need to be created during future drift events.
+- Runtime-loop history contains real diagnosis, handoff, patch, validation, and
+  generalization records. `workspace validate runtime-loop` audits them without
+  changing history; known malformed and unledgered historical records remain
+  visible as errors or warnings.
 - Prompt registry entries are lightweight; future prompt-heavy work can split long prompt bodies into dedicated template files if needed.
 - Runtime loop ledger updates are still manual.
-- Protocol schemas are lightweight and not yet used for deep packet instance validation.
+- Package protocol manifests use a generic schema plus declared profiles and
+  auditable skill inventories; packet semantics are checked by the read-only
+  runtime-loop validator.
 - Manifest still centralizes local absolute platform deployment paths.
 - Legacy single-platform skill fields remain during the compatibility period and should not be removed until all consumers read `exposures[]`.
-- CRLF warnings are still not governed by `.gitattributes`.
+- `.gitattributes` governs LF/CRLF policy; remaining mixed-EOL normalization is
+  intentionally a separate Git-hygiene task.
 - Migration session backups are intentionally retained under `${DATA_ROOT}`;
   cleanup requires explicit user approval after the new layout has been used.
 - Retired legacy projection roots may still appear in old reports or prompts. Treat `workspace_manifest.yaml` as current truth before acting on any historical path.

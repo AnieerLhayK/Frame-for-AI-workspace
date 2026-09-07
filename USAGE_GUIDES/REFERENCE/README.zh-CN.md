@@ -4,6 +4,9 @@
 
 本层说明职责、边界和选择标准。它不是可直接复制使用的提示词层。当你需要可直接粘贴到AI会话中的文本时，请使用 `../PROMPT_TEMPLATES/` 或通过 `../prompt_registry.yaml` 解析提示词 ID。
 
+需要选择或调用已经适配的外来 skill 时，请打开[external-skills.md](external-skills.md)。
+它是面向人工查阅的目录；`workspace_manifest.yaml` 仍是技能清单和平台暴露情况的权威来源。
+
 ## 运行时
 
 当使用面向用户的技能或决定观察到的输出是否应交由诊断或维护时，打开 `runtime/`。

@@ -23,9 +23,8 @@ tasks:
     - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/
     optional:
-    - .github/workflows/
-    - PROJECT_CONTEXT/continuity/current_status.md
-    - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/
+    - selected publisher contract evidence
+    - selected public source surface resolved by its narrow route
     ignore:
     - private corpus material
     - platform loading surfaces
@@ -35,6 +34,10 @@ tasks:
     - task_routing
     tool_profile: platform_maintenance
     ledger: true
+    budget:
+      required_warn_tokens: 24000
+      expanded_warn_tokens: 28000
+      hard_max_tokens: 28000
     write_scope:
     - AGENTS.md
     - README.md
@@ -69,6 +72,40 @@ tasks:
     - python -m scripts.validation.validate_protocols
     - python -m scripts.workspace.resolve_task_context public_projection_synchronization --format json
     - git diff --check
+  public_projection_publisher_update:
+    use_when:
+    - Changing the registered aggregate public projection publisher, one registered publisher adapter, or its contract tests without publishing.
+    use_when_zh:
+    - 修改登记聚合发布器、单个已登记发布适配器或其合约测试，但不执行发布
+    required:
+    - shared/governance/agent_governance.yaml
+    - scripts/publishing/sync_public_projections.py
+    - scripts/tests/publishing/test_sync_public_projections.py
+    optional:
+    - the explicitly selected registered publisher adapter
+    - the matching publisher contract tests
+    ignore:
+    - generated public checkouts
+    - unrelated package implementation
+    - private corpus material
+    prompt:
+    - skill_release
+    tool_profile: platform_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 14000
+      expanded_warn_tokens: 20000
+      hard_max_tokens: 20000
+    write_scope:
+    - shared/governance/agent_governance.yaml
+    - scripts/publishing/
+    - scripts/tests/publishing/
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m pytest -q scripts/tests/publishing/test_sync_public_projections.py
+    - python -m scripts.publishing.sync_public_projections --help
+    - git diff --check
   report_freshness_tooling:
     use_when:
     - Changing read-only report freshness detection or the explicit report refresh
@@ -83,9 +120,7 @@ tasks:
     - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
     optional:
-    - README.md
-    - relevant report generator
-    - previous report snapshot
+    - explicitly selected report generator or snapshot
     ignore:
     - packages/character-system/engineering/generation/character-generator/characters/
     - packages/character-system/runtime/characters/zyc/references/
@@ -95,6 +130,10 @@ tasks:
     - report_refresh
     tool_profile: workspace_maintenance
     ledger: true
+    budget:
+      required_warn_tokens: 24000
+      expanded_warn_tokens: 32000
+      hard_max_tokens: 32000
     write_scope:
     - README.md
     - PROJECT_CONTEXT/tasks/registry/index.yaml
@@ -111,6 +150,38 @@ tasks:
     - python -m scripts.workspace.workspace_cli reports status --format json
     - python -m scripts.validation.validate_protocols
     - powershell -ExecutionPolicy Bypass -File scripts/reporting/sync_report.ps1
+    - git diff --check
+  report_freshness_status_update:
+    use_when:
+    - Changing only read-only report staleness detection, status rendering, or its focused tests.
+    use_when_zh:
+    - 仅修改只读报告陈旧检测、状态呈现或其聚焦测试
+    required:
+    - shared/operations/reporting_policy.md
+    - scripts/reporting/report_status.py
+    - scripts/tests/reporting/test_report_status.py
+    optional: []
+    ignore:
+    - report generators
+    - historical reports
+    - unrelated CLI behavior
+    prompt:
+    - report_refresh
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 10000
+      expanded_warn_tokens: 14000
+      hard_max_tokens: 14000
+    write_scope:
+    - shared/operations/reporting_policy.md
+    - scripts/reporting/report_status.py
+    - scripts/tests/reporting/test_report_status.py
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m unittest scripts.tests.reporting.test_report_status
+    - python -m scripts.workspace.workspace_cli reports status --format json
     - git diff --check
   report_regeneration:
     use_when:

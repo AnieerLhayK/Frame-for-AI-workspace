@@ -17,6 +17,7 @@ from scripts.workspace.resolve_task_context import (
     budget_status,
     extract_markdown_section,
     expand_placeholders,
+    load_prompt_registry,
     parse_bindings,
     print_task_list,
     routing_events_path,
@@ -26,6 +27,15 @@ from scripts.workspace.resolve_task_context import (
 
 
 class ResolverTests(unittest.TestCase):
+    def test_prompt_registry_rejects_duplicate_yaml_keys(self) -> None:
+        registry = self.root / "USAGE_GUIDES" / "duplicate-prompts.yaml"
+        registry.write_text(
+            "prompts:\n  duplicate: {purpose: first}\n  duplicate: {purpose: second}\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValueError, "duplicate key"):
+            load_prompt_registry(registry)
+
     def test_routing_events_fallback_uses_workspace_claude_directory(self) -> None:
         with patch.dict("os.environ", {}, clear=True):
             self.assertEqual(

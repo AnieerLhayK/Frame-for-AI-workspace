@@ -16,6 +16,8 @@ tasks:
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_workspace_cli.py
     - scripts/validation/validate_manifest.py
+    - scripts/validation/validate_protocols.py
+    - scripts/tests/validation/test_validate_protocols.py
     - skills/disk-scan-reporter/tests/test_disk_scan.py
     - shared/workspace/workspace_policy.md
     - AGENTS.md
@@ -48,6 +50,8 @@ tasks:
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_workspace_cli.py
     - scripts/validation/validate_manifest.py
+    - scripts/validation/validate_protocols.py
+    - scripts/tests/validation/test_validate_protocols.py
     - skills/disk-scan-reporter/tests/test_disk_scan.py
     - shared/workspace/workspace_policy.md
     - reports/current/manifest_validation_report.md
@@ -64,10 +68,28 @@ tasks:
     - python -m pytest scripts/tests/workspace/test_workspace_cli.py -q
     - python -m compileall -q scripts
     - git diff --check
+  platform_exposure_audit:
+    use_when:
+    - Auditing whether one platform can discover the registered Workspace skills without changing exposure state.
+    use_when_zh:
+    - 只读审计指定平台能否发现已登记的 Workspace skill，且不修改投影状态
+    required:
+    - shared/workspace/workspace_policy.md
+    - actual workspace skill list --platform <platform> --format json output
+    - actual <platform> platform discovery evidence
+    ignore:
+    - workspace_manifest.yaml as a full context payload
+    - platform loading surfaces as editable source
+    - unrelated skill implementation
+    prompt:
+    - platform_exposure
+    tool_profile: workspace_readonly
+    ledger: false
+    validation:
+    - workspace skill list --platform <platform> --format json
   platform_exposure:
     use_when:
-    - Fixing Codex, Claude Code, OpenCode, or Hermes skill loading surfaces, junctions,
-      projection roots, or CLI paths.
+    - Changing an explicitly named Codex, Claude Code, OpenCode, or Hermes loading surface, projection root, junction, or CLI path.
     use_when_zh:
     - 修复 Codex、Claude Code、OpenCode 或 Hermes 的 skill 加载表面、软链接、投影根或 CLI 路径
     required:
@@ -91,19 +113,16 @@ tasks:
     - platform_exposure
     tool_profile: platform_maintenance
     ledger: true
+    budget:
+      required_warn_tokens: 15000
+      expanded_warn_tokens: 16000
     write_scope:
     - workspace_manifest.yaml
-    - agents/
-    - .codex/config.toml
-    - .codex/.gitignore
-    - .claude/.gitignore
-    - .opencode/.gitignore
-    - PROJECT_CONTEXT/
-    - USAGE_GUIDES/QUICK_START/
-    - platform loading junctions explicitly named by the user
+    - <target-workspace-path>
     validation:
     - python -m scripts.validation.validate_manifest
     - powershell -ExecutionPolicy Bypass -File scripts/validation/check_links.ps1
+    - python -m unittest scripts.tests.workspace.test_startup_context_policy
     - 'OpenCode: opencode debug skill'
   raw_material_filter_tooling:
     use_when:
@@ -250,6 +269,7 @@ tasks:
     - python -m scripts.validation.validate_manifest
     - python -m scripts.validation.validate_protocols
     - powershell -ExecutionPolicy Bypass -File scripts/validation/check_links.ps1
+    - python -m unittest scripts.tests.workspace.test_startup_context_policy
     - platform discovery checks for changed exposures
     - git diff --check
   skill_lifecycle_tooling:
@@ -345,19 +365,8 @@ tasks:
     - packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
     - packages/character-system/runtime/characters/zyc/scripts/package_skill.py
     optional:
-    - packages/character-system/runtime/characters/zyc/README.md
-    - packages/character-system/engineering/diagnosis/style-doctor/README.md
-    - USAGE_GUIDES/PROMPT_TEMPLATES/character-system/runtime/zyc.md
-    - USAGE_GUIDES/PROMPT_TEMPLATES/character-system/engineering/diagnosis/style-doctor.md
-    - scripts/workspace/skill_lifecycle.py
-    - scripts/publishing/publish_public.py
-    - scripts/publishing/publish_check.py
-    - scripts/publishing/sync_public_repo.py
-    - scripts/publishing/publish_chatty_ch_system.py
-    - scripts/publishing/publish_check_chatty_ch_system.py
-    - scripts/publishing/sync_chatty_ch_system_repo.py
-    - scripts/tests/workspace/test_workspace_cli.py
-    - WORKSPACE_ENGINEERING/PUBLISH.md
+    - explicitly selected release companion files
+    - matching narrow bundle or publisher route
     ignore:
     - private corpus material
     - packages/character-system/reports/runtime-loop/
@@ -370,7 +379,8 @@ tasks:
     ledger: true
     budget:
       required_warn_tokens: 18000
-      expanded_warn_tokens: 28000
+      expanded_warn_tokens: 25000
+      hard_max_tokens: 25000
     write_scope:
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/tasks/ledger/README.md
@@ -409,4 +419,37 @@ tasks:
     - python -m scripts.publishing.sync_chatty_ch_system_repo --dry-run --skip-tests
     - python -m scripts.workspace.workspace_cli changes verify skill_release_packaging --strict
     - python -m scripts.workspace.workspace_cli workflow check skill_release_packaging
+    - git diff --check
+  skill_bundle_release:
+    use_when:
+    - Building or verifying a versioned skill bundle without changing a registered public projection publisher.
+    use_when_zh:
+    - 构建或验证版本化 skill 产品包，但不修改已登记的公开投影发布器
+    required:
+    - shared/operations/delivery_output_policy.md
+    - <target-skill>/SKILL.md
+    - <target-bundle-tool>
+    optional:
+    - workspace_manifest.yaml
+    ignore:
+    - private corpus material
+    - public repository checkouts
+    - platform loading surfaces
+    prompt:
+    - skill_release
+    tool_profile: platform_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 16000
+      expanded_warn_tokens: 20000
+      hard_max_tokens: 21000
+    write_scope:
+    - packages/character-system/distribution/
+    - <target-skill>
+    - <target-bundle-tool>
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - deterministic bundle build and checksum verification in staging
+    - python -m scripts.validation.validate_manifest
     - git diff --check

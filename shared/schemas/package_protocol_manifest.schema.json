@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "package_protocol_manifest.schema.json",
+  "title": "Workspace package protocol manifest",
+  "type": "object",
+  "required": ["protocol_manifest_version", "shared_protocols", "skill_inventory"],
+  "properties": {
+    "protocol_manifest_version": {"type": "string", "minLength": 1},
+    "shared_protocols": {"type": "array", "items": {"$ref": "#/$defs/pathRegistryEntryWithUsers"}},
+    "runtime_loop_templates": {"type": "array", "items": {"$ref": "#/$defs/pathRegistryEntry"}},
+    "runtime_loop_ledgers": {"type": "array", "items": {"$ref": "#/$defs/pathRegistryEntry"}},
+    "skill_inventory": {"type": "array", "items": {"$ref": "#/$defs/skillInventoryEntry"}},
+    "core_skills": {"type": "array", "items": {"$ref": "#/$defs/legacySkillEntry"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "pathRegistryEntry": {
+      "type": "object",
+      "required": ["id", "path", "required"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "required": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "pathRegistryEntryWithUsers": {
+      "type": "object",
+      "required": ["id", "path", "required", "used_by"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "required": {"type": "boolean"},
+        "used_by": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "skillInventoryEntry": {
+      "type": "object",
+      "required": ["id", "path", "status", "workspace_registered"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "status": {"enum": ["active", "development", "retired"]},
+        "workspace_registered": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "legacySkillEntry": {
+      "type": "object",
+      "required": ["id", "path"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  }
+}

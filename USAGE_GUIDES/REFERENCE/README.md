@@ -8,6 +8,10 @@ not the copy-ready prompt layer. When you need text to paste into an AI session,
 use `../PROMPT_TEMPLATES/` or resolve a prompt id through
 `../prompt_registry.yaml`.
 
+Open [external-skills.md](external-skills.md) to choose or invoke an adapted
+external skill. It is the human-oriented catalog; the manifest remains the
+authoritative inventory and exposure source.
+
 ## Runtime
 
 Open `runtime/` when using a user-facing skill or deciding whether observed

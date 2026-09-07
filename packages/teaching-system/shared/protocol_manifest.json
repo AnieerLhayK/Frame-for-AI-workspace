@@ -1,10 +1,30 @@
 {
-  "protocol_manifest_version": "1.0.0",
+  "protocol_manifest_version": "1.1.0",
   "shared_protocols": [],
   "core_skills": [
     {
       "id": "recoveror",
       "path": "packages/teaching-system/skills/recoveror"
+    }
+  ],
+  "skill_inventory": [
+    {
+      "id": "putogether",
+      "path": "packages/teaching-system/skills/putogether",
+      "status": "active",
+      "workspace_registered": true
+    },
+    {
+      "id": "recoveror",
+      "path": "packages/teaching-system/skills/recoveror",
+      "status": "development",
+      "workspace_registered": false
+    },
+    {
+      "id": "document-auditor",
+      "path": "packages/teaching-system/skills/document-auditor",
+      "status": "development",
+      "workspace_registered": false
     }
   ]
 }

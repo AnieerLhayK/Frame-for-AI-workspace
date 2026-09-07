@@ -29,6 +29,17 @@ default_rules:
     treat_platform_as_exposure_not_ownership: true
 
 prompts:
+  skill_release:
+    type: workflow_template
+    platform: codex
+    exposures:
+      - codex
+      - claude
+    template_path: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/skill-release.md"
+    localized_templates:
+      zh-CN: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/skill-release.zh-CN.md"
+    purpose: "Release an authoritative skill source through bounded staging, validation, checksums, and registered targets."
+
   skill_architecture:
     type: maintenance_meta
     purpose: "Change role, authority, execution-mode, or multi-platform exposure contracts without copying skill source."

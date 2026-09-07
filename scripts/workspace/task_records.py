@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from scripts.workspace.project_context import TASK_RECORDS_ROOT
@@ -28,6 +30,79 @@ USABILITY = {"unknown", "usable", "limited", "unusable"}
 OPERATIONS = {"workspace_write", "external_write"}
 MERGE_REVIEW_STATUSES = {"completed", "skipped_user_approved"}
 USAGE_STATUSES = {"recorded", "unavailable", "manual"}
+
+
+def git_text(arguments: list[str]) -> str:
+    result = subprocess.run(
+        ["git", *arguments],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="surrogateescape",
+        check=False,
+    )
+    if result.returncode != 0:
+        raise ValueError(
+            result.stderr.strip() or f"git {' '.join(arguments)} failed"
+        )
+    return result.stdout
+
+
+def worktree_sha256(path: str) -> str | None:
+    """Hash one current worktree entry without retaining its contents."""
+    relative = PurePosixPath(path)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError(f"Git reported a path outside the workspace: {path}")
+    candidate = ROOT.joinpath(*relative.parts)
+    if candidate.is_symlink():
+        payload = os.readlink(candidate).encode("utf-8", errors="surrogatepass")
+        return hashlib.sha256(payload).hexdigest()
+    if not candidate.is_file():
+        return None
+    digest = hashlib.sha256()
+    with candidate.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def capture_git_baseline(*, captured_at: str | None = None) -> dict[str, Any]:
+    """Capture bounded Git state for later task-attribution checks."""
+    branch = git_text(["branch", "--show-current"]).strip() or "(detached)"
+    head_commit = git_text(["rev-parse", "HEAD"]).strip()
+    status = git_text(
+        ["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"]
+    )
+    paths: list[dict[str, Any]] = []
+    for token in status.split("\0"):
+        if not token:
+            continue
+        if len(token) < 4 or token[2] != " ":
+            raise ValueError("Git returned malformed porcelain status")
+        index_status, worktree_status = token[0], token[1]
+        path = token[3:].replace("\\", "/")
+        index_line = git_text(["ls-files", "--stage", "--", path]).splitlines()
+        index_blob = None
+        if index_line:
+            fields = index_line[0].split(maxsplit=2)
+            if len(fields) >= 2:
+                index_blob = fields[1]
+        paths.append(
+            {
+                "path": path,
+                "index_status": index_status,
+                "worktree_status": worktree_status,
+                "index_blob": index_blob,
+                "worktree_sha256": worktree_sha256(path),
+            }
+        )
+    return {
+        "branch": branch,
+        "head_commit": head_commit,
+        "captured_at": timestamp(captured_at),
+        "paths": sorted(paths, key=lambda item: item["path"].casefold()),
+    }
 
 
 def timestamp(value: str | None = None) -> str:
@@ -86,6 +161,8 @@ def initial_record(
     tokens_estimated: int | None,
     operations: list[str],
     owner: dict[str, Any] | None = None,
+    git_baseline: dict[str, Any] | None = None,
+    plan_id: str | None = None,
 ) -> dict[str, Any]:
     if not TASK_ID.match(task_id):
         raise ValueError("task_id must start with TASK-YYYYMMDD-")
@@ -95,7 +172,7 @@ def initial_record(
     if unknown:
         raise ValueError(f"invalid registration operation: {', '.join(unknown)}")
     record = {
-        "schema_version": "1.3",
+        "schema_version": "1.4" if git_baseline is not None else "1.3",
         "task_id": task_id,
         "task_type": task_type,
         "started_at": started_at,
@@ -120,8 +197,12 @@ def initial_record(
         "usability": {"status": "unknown", "evidence": []},
         "notes": [],
     }
+    if plan_id is not None:
+        record["plan_id"] = plan_id
     if owner is not None:
         record["owner"] = owner
+    if git_baseline is not None:
+        record["git_baseline"] = git_baseline
     return record
 
 
@@ -367,6 +448,46 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             errors.append("registration.operations must be a non-empty list")
         elif set(operations) - OPERATIONS:
             errors.append("registration.operations contains an invalid operation")
+    schema_version = str(record.get("schema_version", ""))
+    baseline = record.get("git_baseline")
+    if schema_version == "1.4" and baseline is None:
+        errors.append("schema 1.4 records require git_baseline")
+    if baseline is not None:
+        if not isinstance(baseline, dict):
+            errors.append("git_baseline must be an object")
+        else:
+            for key in ("branch", "head_commit", "captured_at"):
+                if not isinstance(baseline.get(key), str) or not baseline[key]:
+                    errors.append(f"git_baseline.{key} must be a non-empty string")
+            paths = baseline.get("paths")
+            if not isinstance(paths, list):
+                errors.append("git_baseline.paths must be a list")
+            else:
+                seen_paths: set[str] = set()
+                for entry in paths:
+                    if not isinstance(entry, dict):
+                        errors.append("git_baseline.paths entries must be objects")
+                        continue
+                    path = entry.get("path")
+                    if not isinstance(path, str) or not path:
+                        errors.append("git_baseline path must be a non-empty string")
+                        continue
+                    normalized = path.replace("\\", "/").casefold()
+                    if normalized in seen_paths:
+                        errors.append(f"duplicate git_baseline path: {path}")
+                    seen_paths.add(normalized)
+                    for key in ("index_status", "worktree_status"):
+                        value = entry.get(key)
+                        if not isinstance(value, str) or len(value) != 1:
+                            errors.append(
+                                f"git_baseline path {path} has invalid {key}"
+                            )
+                    for key in ("index_blob", "worktree_sha256"):
+                        value = entry.get(key)
+                        if value is not None and not isinstance(value, str):
+                            errors.append(
+                                f"git_baseline path {path} has invalid {key}"
+                            )
     origin = record.get("origin")
     if origin is not None:
         if not isinstance(origin, dict) or origin.get("kind") != "external_workspace":
@@ -389,6 +510,9 @@ def validate_record(record: dict[str, Any]) -> list[str]:
                 not isinstance(binding, str) or not binding for binding in bindings
             ):
                 errors.append("workspace session owner requires string bindings")
+    plan_id = record.get("plan_id")
+    if plan_id is not None and (not isinstance(plan_id, str) or not re.match(r"^PLAN-\d{8}-\d{3}$", plan_id)):
+        errors.append("plan_id must use PLAN-YYYYMMDD-NNN")
     if (
         record.get("status") == "successful"
         and record.get("validation", {}).get("status") == "not_run"
@@ -432,11 +556,15 @@ def active_registration(
         "path": display_path,
         "status": "active",
         "task_type": record.get("task_type"),
+        "origin": origin,
+        "git_baseline": record.get("git_baseline"),
+        "schema_version": record.get("schema_version"),
     }
 
 
 def init(args: argparse.Namespace) -> dict[str, Any]:
     started_at = timestamp(args.started_at)
+    git_baseline = capture_git_baseline(captured_at=started_at)
     path = record_path(args.task_id, started_at)
     record = initial_record(
         args.task_id,
@@ -444,6 +572,8 @@ def init(args: argparse.Namespace) -> dict[str, Any]:
         started_at=started_at,
         tokens_estimated=tokens_estimated(args),
         operations=args.operation,
+        git_baseline=git_baseline,
+        plan_id=getattr(args, "plan_id", None),
     )
     try:
         create_record(path, record)
@@ -454,6 +584,7 @@ def init(args: argparse.Namespace) -> dict[str, Any]:
 
 def start(args: argparse.Namespace) -> dict[str, Any]:
     started_at = timestamp(args.started_at)
+    git_baseline = capture_git_baseline(captured_at=started_at)
     parsed = dt.datetime.fromisoformat(started_at.replace("Z", "+00:00"))
     folder = RECORD_ROOT / f"{parsed:%Y}" / f"{parsed:%m}" / f"{parsed:%d}"
     existing = {
@@ -462,6 +593,10 @@ def start(args: argparse.Namespace) -> dict[str, Any]:
         if path.is_file()
     }
     estimate = tokens_estimated(args)
+    plan_id = getattr(args, "plan_id", None)
+    if plan_id:
+        from scripts.workspace import task_plans
+        task_plans.execution_ready(plan_id)
     for sequence in range(1, 10_000):
         task_id = f"TASK-{parsed:%Y%m%d}-{sequence:03d}"
         if task_id in existing:
@@ -474,9 +609,14 @@ def start(args: argparse.Namespace) -> dict[str, Any]:
             tokens_estimated=estimate,
             operations=args.operation,
             owner=workspace_session_owner(args),
+            git_baseline=git_baseline,
+            plan_id=plan_id,
         )
         try:
             create_record(path, record)
+            if plan_id:
+                from scripts.workspace import task_plans
+                task_plans.link_execution(plan_id, task_id)
             return record
         except FileExistsError:
             continue
@@ -575,7 +715,7 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
     record["validation"]["status"] = args.validation
     record["validation"]["commands"] = args.command
     record["usability"]["status"] = args.usability
-    record["schema_version"] = "1.3"
+    record.setdefault("schema_version", "1.3")
     usage = host_usage(record["task_id"])
     existing_usage = record.get("usage")
     if (
@@ -606,6 +746,9 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
     if errors:
         raise ValueError("; ".join(errors))
     write_record(path, record)
+    if record.get("plan_id"):
+        from scripts.workspace import task_plans
+        task_plans.record_execution_outcome(record["plan_id"], record["task_id"], args.status)
     from scripts.workspace.task_ledger import upsert_task_record
 
     upsert_task_record(path, record)
@@ -661,6 +804,7 @@ def main() -> int:
         command.add_argument("--started-at")
         command.add_argument("--tokens-estimated", type=int)
         command.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
+        command.add_argument("--plan-id")
 
     p = sub.add_parser("start", help="Allocate and register an active task record.")
     add_registration_arguments(p)

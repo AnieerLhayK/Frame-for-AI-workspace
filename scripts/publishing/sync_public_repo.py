@@ -39,6 +39,7 @@ from scripts.workspace.agent_governance import (
     load_yaml,
 )
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.publishing.workspace_state import workspace_clean_for_record
 PUBLISHER_ID = "frame_for_ai_workspace"
 PUBLISHER_SCRIPT = "scripts/publishing/sync_public_repo.py"
 DEFAULT_STAGING_ROOT = Path(r"${DATA_ROOT}/codex\cache\staging")
@@ -85,22 +86,9 @@ def cleanup_staging(staging: str, keep_staging: bool = False) -> None:
     print(f"[OK] Removed disposable staging checkout: {staging_path}")
 
 
-def check_workspace_clean() -> bool:
-    """Return True if the workspace git tree is clean."""
-    result = subprocess.run(
-        ["git", "status", "--porcelain"],
-        capture_output=True, text=True, cwd=WORKSPACE_ROOT,
-    )
-    if result.returncode != 0:
-        print("[FAIL] Cannot check git status — not a git repository?", file=sys.stderr)
-        return False
-    if result.stdout.strip():
-        print("[WARN] Workspace has uncommitted changes:", file=sys.stderr)
-        for line in result.stdout.strip().split("\n"):
-            print(f"       {line}", file=sys.stderr)
-        print(file=sys.stderr)
-        return False
-    return True
+def check_workspace_clean(record_id: str) -> bool:
+    """Allow no dirt except the exact active task-record path."""
+    return workspace_clean_for_record(WORKSPACE_ROOT, record_id)
 
 
 def regenerate(staging: str, repo_name: str = "Frame-for-AI-workspace") -> bool:
@@ -331,7 +319,7 @@ def main() -> int:
 
     # Step 1: Clean workspace check
     print("[1/5] Checking workspace git status ...")
-    if not args.force_dirty and not check_workspace_clean():
+    if not args.force_dirty and not check_workspace_clean(args.record_id):
         print("[ABORT] Workspace has uncommitted changes.", file=sys.stderr)
         print("        Commit or stash them first, or use --force-dirty.", file=sys.stderr)
         return 1

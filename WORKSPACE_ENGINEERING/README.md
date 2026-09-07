@@ -42,6 +42,9 @@ The current method files cover general posture, architecture, workspace
 organization, governance, migration, portability, anti-patterns, and
 knowledge provenance.
 
+See [`methods/anti_patterns.md`](methods/anti_patterns.md) for the method and
+operating guide for removing concept residue after deletion or simplification.
+
 ### Proposals
 
 `proposals/` contains bounded plans and evaluations that have not yet become
