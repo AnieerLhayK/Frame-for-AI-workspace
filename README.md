@@ -8,8 +8,11 @@ Use `workspace_manifest.yaml` to configure paths and authority.
 
 - `skills/`: add skills developed for your workspace.
 - `external-skills/`: add reviewed third-party skills.
+- `mcp/`: keep reusable configuration templates for MCP connections.
+- `packages/`: organize related skills, policies, and implementation by domain.
 
-Each directory contains a README with guidance for adding skills.
+The extension directories contain guidance or configuration templates for the
+components you choose to add.
 
 ## Start
 

@@ -47,12 +47,14 @@ EXPECTED_DOCS: set[str] = {
 # Paths that must NOT exist
 FORBIDDEN_DIRS: set[str] = {
     "packages/character-system",
+    "packages/teaching-system",
 }
-FORBIDDEN_PATH_SEGMENTS: set[str] = {"character-system"}
+FORBIDDEN_PATH_SEGMENTS: set[str] = {"character-system", "teaching-system"}
 
 REQUIRED_EXTENSION_LAYER_FILES: dict[str, set[str]] = {
     "skills": {"README.md"},
     "external-skills": {"README.md"},
+    "packages": {"README.md"},
 }
 
 # Paths that MUST exist

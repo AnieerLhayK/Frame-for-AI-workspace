@@ -51,9 +51,9 @@ tasks:
     - shared/governance/agent_governance_policy.md
     - shared/governance/agent_governance.yaml
     - scripts/publishing/sync_public_projections.py
-    - scripts/publishing/sync_public_projections.py
     - scripts/tests/publishing/test_sync_public_projections.py
     - scripts/publishing/publish_public.py
+    - scripts/publishing/publish_check.py
     - scripts/publishing/sync_public_repo.py
     - scripts/publishing/sync_chatty_ch_system_repo.py
     - scripts/publishing/sync_qq_raw_filter_repo.py

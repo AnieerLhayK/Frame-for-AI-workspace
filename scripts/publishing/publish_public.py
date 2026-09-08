@@ -120,7 +120,7 @@ EXCLUDED_PATHS = {
     # skills or product-specific publishers.
     "packages/character-system",
     "shared/packages/character-system",
-    "packages/teaching-system/skills",
+    "packages/teaching-system",
     "WORKSPACE_ENGINEERING/evidence",
     "WORKSPACE_ENGINEERING/proposals",
     "scripts/publishing/publish_chatty_ch_system.py",
@@ -282,7 +282,7 @@ SKELETON_DIRS: list[tuple[str, list[str], str]] = [
 SKELETON_DIRS = []
 
 # Tracked extension points. They contain documentation only, never bundled skills.
-PUBLIC_EXTENSION_LAYERS = ("skills", "external-skills")
+PUBLIC_EXTENSION_LAYERS = ("skills", "external-skills", "packages")
 
 EXTENSION_LAYER_READMES: dict[str, str] = {
     "skills": """# Local Skills
@@ -300,6 +300,14 @@ Add reviewed third-party skills in this directory.
 Before importing a skill, review provenance, license, privacy implications,
 maintenance ownership, and the permissions it would receive in the downstream
 workspace.
+""",
+    "packages": """# Packages
+
+Add a domain package here when related skills, policies, and implementation
+need to be maintained together.
+
+Register package content and its authority in the downstream workspace before
+making it available to agents.
 """,
 }
 
@@ -493,8 +501,11 @@ Use `workspace_manifest.yaml` to configure paths and authority.
 
 - `skills/`: add skills developed for your workspace.
 - `external-skills/`: add reviewed third-party skills.
+- `mcp/`: keep reusable configuration templates for MCP connections.
+- `packages/`: organize related skills, policies, and implementation by domain.
 
-Each directory contains a README with guidance for adding skills.
+The extension directories contain guidance or configuration templates for the
+components you choose to add.
 
 ## Start
 
@@ -523,8 +534,10 @@ def generate_public_readme_zh(repo_name: str) -> str:
 
 - `skills/`：添加为当前工作区开发的技能。
 - `external-skills/`：添加经过审查的第三方技能。
+- `mcp/`：保存 MCP 连接所需的可复用配置模板。
+- `packages/`：按领域组织相关的技能、策略和实现代码。
 
-两个目录内的 README 提供技能添加指南。
+扩展目录提供添加所需组件的说明或配置模板。
 
 ## 开始使用
 

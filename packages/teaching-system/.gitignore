@@ -1,3 +1,0 @@
-# Local skill runs may contain copied PNG/JPG inputs, rendered pages, and PDFs.
-skills/*/tester/
-skills/*/scripts/__pycache__/
