@@ -441,7 +441,7 @@ tasks:
     ledger: true
     budget:
       required_warn_tokens: 16000
-      expanded_warn_tokens: 20000
+      expanded_warn_tokens: 21000
       hard_max_tokens: 21000
     write_scope:
     - packages/character-system/distribution/

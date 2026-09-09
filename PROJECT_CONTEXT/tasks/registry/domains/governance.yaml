@@ -36,9 +36,9 @@ tasks:
     tool_profile: workspace_maintenance
     ledger: true
     budget:
-      required_warn_tokens: 60000
-      expanded_warn_tokens: 65000
-      hard_max_tokens: 65000
+      required_warn_tokens: 73000
+      expanded_warn_tokens: 75000
+      hard_max_tokens: 75000
     write_scope:
     - workspace_manifest.yaml
     - shared/
