@@ -17,6 +17,8 @@ tasks:
     - scripts/workspace/merge_safety.py
     - scripts/workspace/task_records.py
     - scripts/workspace/workspace_cli.py
+    - scripts/workspace/verify_change_scope.py
+    - scripts/workspace/workflow_check.py
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_merge_safety.py
     - scripts/tests/workspace/test_task_records.py
@@ -59,6 +61,10 @@ tasks:
     - scripts/tests/workspace/test_task_records.py
     - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/workspace/verify_change_scope.py
+    - scripts/workspace/workflow_check.py
+    - scripts/tests/workspace/test_verify_change_scope.py
+    - scripts/tests/workspace/test_workflow_check.py
     - scripts/publishing/sync_public_repo.py
     - scripts/publishing/sync_chatty_ch_system_repo.py
     - scripts/publishing/sync_qq_raw_filter_repo.py

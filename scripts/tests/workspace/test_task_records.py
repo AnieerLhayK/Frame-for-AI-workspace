@@ -12,6 +12,22 @@ from scripts.workspace import task_ledger, task_records
 
 
 class TaskRecordsTests(unittest.TestCase):
+    def test_concurrent_sessions_can_hold_write_registrations(self) -> None:
+        from argparse import Namespace
+        args = Namespace(task_type="demo", tokens_estimated=1, bind=[],
+                         operation=["workspace_write"], started_at="2026-09-08T00:00:00Z",
+                         owner_agent="codex", owner_session="one")
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            task_records, "RECORD_ROOT", Path(directory)
+        ), patch.object(task_records, "capture_git_baseline", return_value=None):
+            first = task_records.start(args)
+            args.owner_session = "two"
+            second = task_records.start(args)
+            for record in (first, second):
+                self.assertEqual(task_records.active_registration(
+                    record["task_id"], "workspace_write")["status"], "active")
+            self.assertNotEqual(first["task_id"], second["task_id"])
+
     def test_git_baseline_records_status_and_fingerprints_without_content(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -273,7 +289,7 @@ class TaskRecordsTests(unittest.TestCase):
                 "client_root": "/external-host",
                 "task_type": "demo",
                 "tokens_estimated": 123,
-                "bind": [],
+                "bind": ["name=demo"],
                 "operation": ["workspace_write"],
                 "started_at": "2026-07-16T00:00:00Z",
             },
@@ -290,6 +306,7 @@ class TaskRecordsTests(unittest.TestCase):
             "kind": "external_workspace",
             "agent": "opencode",
             "client_root": "/external-host",
+            "bindings": ["name=demo"],
         })
         self.assertFalse(task_records.validate_record(record))
 

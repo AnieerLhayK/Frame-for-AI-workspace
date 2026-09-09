@@ -635,6 +635,7 @@ def external_start(args: argparse.Namespace) -> dict[str, Any]:
         "kind": "external_workspace",
         "agent": agent,
         "client_root": client_root,
+        "bindings": sorted(set(getattr(args, "bind", []))),
     }
     errors = validate_record(record)
     if errors:
@@ -755,9 +756,24 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
     return record
 
 
+def ensure_audit_not_delivered(task_id: str, target: str) -> None:
+    path, _ = read_record(task_id)
+    relative = path.relative_to(ROOT).as_posix()
+    delivered = json.loads(git_text(["show", f"{target}:{relative}"]))
+    if any(isinstance(note, dict) and note.get("kind") == "merge_review"
+           and note.get("audit_close") and note.get("status") == "completed"
+           for note in delivered.get("notes", [])):
+        raise ValueError("audit closure already delivered for this TASK")
+
+
 def add_merge_review_note(args: argparse.Namespace) -> dict[str, Any]:
     path, record = read_record(args.task_id)
-    if record.get("status") != "in_progress":
+    audit_close = getattr(args, "audit_close", False)
+    if audit_close:
+        if record.get("status") != "successful" or record.get("validation", {}).get("status") != "passed":
+            raise ValueError("audit closure requires a successfully finalized, validated task")
+        ensure_audit_not_delivered(args.task_id, args.target_branch)
+    elif record.get("status") != "in_progress":
         raise ValueError("merge review notes require an active task record")
     if args.status == "skipped_user_approved" and not args.reason:
         raise ValueError("--reason is required when review is skipped")
@@ -770,6 +786,17 @@ def add_merge_review_note(args: argparse.Namespace) -> dict[str, Any]:
         "review_base": args.review_base,
         "reason": args.reason,
     }
+    if args.status == "completed":
+        commands = getattr(args, "validation_command", [])
+        if not commands:
+            raise ValueError("completed review requires --validation-command evidence")
+        note.update({
+            "source_commit": git_text(["rev-parse", args.source_branch]).strip(),
+            "target_commit": git_text(["rev-parse", args.target_branch]).strip(),
+            "validation": {"status": "passed", "commands": commands},
+            "ready_tasks": sorted(set(getattr(args, "ready_task", []))),
+            "audit_close": audit_close,
+        })
     record.setdefault("notes", []).append(note)
     errors = validate_record(record)
     if errors:
@@ -849,6 +876,9 @@ def main() -> int:
     p.add_argument("--strategy", choices=("ff-only", "merge-commit"), default="ff-only")
     p.add_argument("--review-base", default="main")
     p.add_argument("--reason")
+    p.add_argument("--validation-command", action="append", default=[])
+    p.add_argument("--ready-task", action="append", default=[], help="Other active TASK whose owner confirmed this complete batch is ready.")
+    p.add_argument("--audit-close", action="store_true", help="Review only final audit files of a successfully finalized TASK.")
     p = sub.add_parser("show")
     p.add_argument("task_id")
     p = sub.add_parser("sync-ledger", help="Backfill finalized records into the task ledger.")

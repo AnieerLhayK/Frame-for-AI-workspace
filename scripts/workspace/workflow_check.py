@@ -37,6 +37,9 @@ def check_workflow(
     agent_id: str | None = None,
     acting_skill: str | None = None,
     external_client_root: str | None = None,
+    include_committed: bool = False,
+    coordinated_paths: Sequence[str] = (),
+    batch_task_ids: Sequence[str] = (),
     command_runner: CommandRunner = run_command,
 ) -> dict[str, Any]:
     task = resolve_task(task_id, bindings)
@@ -63,6 +66,34 @@ def check_workflow(
             registration_error = str(error)
     else:
         registration_error = "--record-id is required for a mutating workspace task"
+    batch_owners = []
+    baseline = registration.get("git_baseline") if registration else None
+    if batch_task_ids:
+        from scripts.workspace.task_records import read_record
+        if not include_committed or not baseline:
+            raise ValueError("batch validation requires --include-committed and a TASK baseline")
+        bases = [baseline["head_commit"]]
+        for batch_id in sorted(set(batch_task_ids)):
+            member = active_registration(batch_id, "workspace_write", allow_external_origin=True)
+            _, member_record = read_record(batch_id)
+            owner = member_record.get("owner") or member_record.get("origin") or {}
+            if not owner.get("agent") or not member.get("git_baseline"):
+                raise ValueError("batch TASK requires recorded agent ownership and Git baseline")
+            if member["git_baseline"]["branch"] != baseline["branch"]:
+                raise ValueError("batch TASKs must share the same development branch")
+            member_bindings = owner.get("bindings")
+            if not isinstance(member_bindings, list) or any(
+                not isinstance(value, str) or not value for value in member_bindings
+            ):
+                raise ValueError("batch TASK requires recorded string bindings; renew legacy registration")
+            member_task = resolve_task(member["task_type"], member_bindings)
+            batch_owners.append({"task_id": batch_id, "agent": owner["agent"],
+                                 "write_scope": member_task["context"]["write_scope"]})
+            bases.append(member["git_baseline"]["head_commit"])
+        common = command_runner(["git", "merge-base", "--octopus", *bases])
+        if common.returncode or not common.stdout.strip():
+            raise ValueError("cannot resolve a shared batch baseline")
+        baseline = {**baseline, "head_commit": common.stdout.strip()}
     verification = verify_changes(
         task_id,
         bindings,
@@ -72,8 +103,11 @@ def check_workflow(
         acting_skill=acting_skill,
         task_resolver=lambda *_: task,
         additional_write_scope=[registration["path"]] if registration else [],
-        git_baseline=registration.get("git_baseline") if registration else None,
+        git_baseline=baseline,
         warn_on_missing_baseline=bool(registration) and not registration.get("git_baseline"),
+        include_committed=include_committed,
+        coordinated_paths=coordinated_paths,
+        batch_owners=batch_owners,
     )
     actual_paths = [item["path"] for item in verification.get("actual_changes", [])]
     if registration and registration.get("git_baseline") is not None:
@@ -94,6 +128,10 @@ def check_workflow(
             diff_checks.append(
                 command_runner(["git", "diff", "--cached", "--check"])
             )
+    if include_committed and registration and registration.get("git_baseline"):
+        diff_checks.append(command_runner([
+            "git", "diff", "--check", baseline["head_commit"], "HEAD"
+        ]))
     diff_check_passed = all(check.returncode == 0 for check in diff_checks)
     diff_check_output = "\n".join(
         output
@@ -148,7 +186,7 @@ def check_workflow(
                 "Run only the task validation commands relevant to the change.",
                 "Inspect git diff before staging or committing.",
                 (
-                    "Obtain explicit user confirmation for destructive, migration, "
+                    "Use existing authorization and the standing Git delivery policy; obtain confirmation for other destructive, migration, "
                     "external-environment, projection, or history-rewrite operations."
                 ),
             ]
@@ -205,6 +243,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--agent")
     parser.add_argument("--skill")
     parser.add_argument("--external-client-root")
+    parser.add_argument("--include-committed", action="store_true", help="Verify all changes since the TASK baseline, requiring fast-forward history.")
+    parser.add_argument("--coordinated-path", action="append", default=[], help="Exact already-dirty file whose concurrent edits were coordinated.")
+    parser.add_argument("--batch-task", action="append", default=[], help="Validate an explicitly coordinated batch against participating TASK scopes and owners.")
     parser.add_argument(
         "--include-staged",
         action=argparse.BooleanOptionalAction,
@@ -230,6 +271,9 @@ def main() -> int:
             agent_id=args.agent,
             acting_skill=args.skill,
             external_client_root=args.external_client_root,
+            include_committed=args.include_committed,
+            coordinated_paths=args.coordinated_path,
+            batch_task_ids=args.batch_task,
         )
     except (RuntimeError, KeyError, OSError, ValueError) as exc:
         payload = {

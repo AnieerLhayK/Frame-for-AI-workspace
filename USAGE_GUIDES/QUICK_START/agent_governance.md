@@ -140,3 +140,17 @@ reports/agent-experiments/<agent-id>/**
 
 It may not inherit a full role or receive `structural_write` or
 `platform_write`. Registration never creates external cache or Session data.
+
+## Shared development delivery
+
+All agents use `dev` concurrently, including coordinated same-file edits.
+Serialize Git mutations and stage only intended changes. Start a TASK with `--owner-agent` and
+`--owner-session`, retaining it through delivery. Follow
+`shared/governance/git_integration_policy.md` for whole-batch review, validation,
+receipt commits, automatic ff-only integration and registered publication.
+Standing delivery authority preserves existing capability and path checks.
+
+For a complete batch spanning active TASKs, collect owner readiness confirmations
+and repeat `--ready-task <TASK-ID>` on the merge review note. After publication,
+finalize and deliver the restricted final audit with `--audit-close`; do not
+create another TASK just to deliver a completed TASK receipt.

@@ -187,3 +187,10 @@
 - consequence: `pending_retirement` remains non-authorizing; an approved
   `cleanup_migration` run must pass a fresh GitHub audit and exact ID/path
   confirmation before the checkout is sent to the Windows Recycle Bin.
+
+## Shared Development And Standing Delivery Authority
+
+- decision: All agents develop concurrently on dev, including coordinated same-file edits; complete validated and reviewed batches fast-forward to main. Ordinary commits, dev/main pushes and registered publication have standing user authorization.
+- reason: Agent-specific branches imposed synchronization overhead without matching task boundaries. Shared development retains parallel editing; sessions coordinate overlapping work and serialize Git mutations.
+- date if known: 2026-09-08, explicitly confirmed by the user.
+- consequence: Preserve capability scopes; stop on unfinished batches, stale evidence, divergence, conflicts or failed delivery. Retire codex/claude refs only after ancestry and worktree checks.

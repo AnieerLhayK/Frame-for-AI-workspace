@@ -105,3 +105,15 @@ not yet proven removed. It grants no deletion authority.
 A machine-local map such as `${DATA_ROOT}/claude\project_roots.json` that may
 refer only to existing local roots. A retirement removes only entries that
 exactly match the retired checkout path.
+
+## development branch
+
+The shared line of unfinished and completed development, used concurrently by all agents. This workspace uses `dev`.
+
+## stable integration branch
+
+The line containing complete batches that passed validation and code-review. This workspace uses `main`.
+
+## concurrent development session
+
+A session with its own active TASK that may edit the shared development branch alongside other sessions, including the same files. Sessions coordinate overlapping edits and serialize Git mutations.

@@ -408,6 +408,9 @@ def build_parser() -> argparse.ArgumentParser:
     workflow_check.add_argument("--agent")
     workflow_check.add_argument("--skill")
     workflow_check.add_argument("--external-client-root")
+    workflow_check.add_argument("--include-committed", action="store_true")
+    workflow_check.add_argument("--coordinated-path", action="append", default=[])
+    workflow_check.add_argument("--batch-task", action="append", default=[])
     workflow_check.add_argument(
         "--include-staged",
         action=argparse.BooleanOptionalAction,
@@ -726,6 +729,12 @@ def dispatch(args: argparse.Namespace) -> int:
         ]
         for binding in args.bind:
             command.extend(["--bind", binding])
+        if args.include_committed:
+            command.append("--include-committed")
+        for path in args.coordinated_path:
+            command.extend(["--coordinated-path", path])
+        for record_id in args.batch_task:
+            command.extend(["--batch-task", record_id])
         if args.strict:
             command.append("--strict")
         if args.agent:

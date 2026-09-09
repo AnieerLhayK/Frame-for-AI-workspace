@@ -91,6 +91,7 @@ def collect_changes(
     include_staged: bool,
     include_untracked: bool,
     runner: GitRunner = run_git,
+    committed_base: str | None = None,
 ) -> tuple[str, list[Change]]:
     branch = require_git(runner, ["branch", "--show-current"]).strip() or "(detached)"
     changes: dict[str, Change] = {}
@@ -147,6 +148,12 @@ def collect_changes(
             if path.strip():
                 add(path, "??", "untracked")
 
+    if committed_base:
+        require_git(runner, ["merge-base", "--is-ancestor", committed_base, "HEAD"])
+        for path, status in parse_name_status(require_git(
+            runner, ["diff", "--name-status", "--find-renames", committed_base, "HEAD"]
+        )):
+            add(path, status, "committed")
     return branch, sorted(changes.values(), key=lambda item: item.path.casefold())
 
 
@@ -241,13 +248,19 @@ def verify_changes(
     git_baseline: dict[str, Any] | None = None,
     warn_on_missing_baseline: bool = False,
     baseline_snapshotter: BaselineSnapshotter = capture_git_baseline,
+    include_committed: bool = False,
+    coordinated_paths: Sequence[str] = (),
+    batch_owners: Sequence[dict[str, Any]] = (),
 ) -> dict[str, Any]:
     task = task_resolver(task_id, bindings)
     governance_policy = governance_policy or load_governance_policy()
+    if include_committed and not git_baseline:
+        raise ValueError("committed verification requires a recorded Git baseline")
     branch, changes = collect_changes(
         include_staged=include_staged,
         include_untracked=include_untracked,
         runner=runner,
+        committed_base=git_baseline["head_commit"] if include_committed else None,
     )
     baseline_unchanged_files: list[str] = []
     baseline_overlap_conflicts: list[str] = []
@@ -258,7 +271,7 @@ def verify_changes(
             baseline_state_errors.append(
                 "Git branch changed after the task baseline was captured."
             )
-        if current_baseline.get("head_commit") != git_baseline.get("head_commit"):
+        if not include_committed and current_baseline.get("head_commit") != git_baseline.get("head_commit"):
             baseline_state_errors.append(
                 "Git HEAD changed after the task baseline was captured."
             )
@@ -277,13 +290,13 @@ def verify_changes(
             path = str(original["path"])
             if current == original:
                 baseline_unchanged_files.append(path)
-            else:
+            elif key not in {normalize_git_path(p) for p in coordinated_paths}:
                 baseline_overlap_conflicts.append(path)
-        task_change_keys = set(current_by_path) - set(original_by_path)
+        task_change_keys = (set(current_by_path) - set(original_by_path)) | {normalize_git_path(p) for p in coordinated_paths}
         changes = [
             change
             for change in changes
-            if normalize_git_path(change.path) in task_change_keys
+            if normalize_git_path(change.path) in task_change_keys or "committed" in change.sources
         ]
     write_scope = [
         *[str(value) for value in task["context"]["write_scope"]],
@@ -318,6 +331,16 @@ def verify_changes(
         in_scope = any(
             scope_matches(change.path, scope) for scope in concrete_scopes
         )
+        covering_tasks = []
+        for owner in batch_owners:
+            if any(scope_matches(change.path, scope) for scope in owner["write_scope"]):
+                access = check_access(
+                    governance_policy, load_manifest(), agent_name=owner["agent"],
+                    operation="write", raw_path=change.path, registry=load_registry(),
+                )
+                if access["status"] == "ALLOW":
+                    covering_tasks.append(owner["task_id"])
+        in_scope = in_scope or bool(covering_tasks)
         risk = risk_assessment(
             change,
             governance_policy,
@@ -351,6 +374,7 @@ def verify_changes(
             "statuses": sorted(change.statuses),
             "sources": sorted(change.sources),
             "in_scope": in_scope,
+            "batch_scope_owners": covering_tasks,
             "authorization": authorization,
             **risk,
         }
@@ -419,7 +443,7 @@ def verify_changes(
         if errors
         else [
             "Review the listed Git changes, then run the task's routed validation.",
-            "Use human confirmation for destructive or externally visible actions.",
+            "Obtain confirmation only for actions outside existing authorization and the standing Git delivery policy.",
         ]
     )
     return {

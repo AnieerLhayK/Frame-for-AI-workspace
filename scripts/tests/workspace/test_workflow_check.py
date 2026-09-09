@@ -8,6 +8,35 @@ from scripts.workspace.workflow_check import check_workflow
 
 
 class WorkflowCheckTests(unittest.TestCase):
+    def test_external_batch_preserves_recorded_bindings(self) -> None:
+        baseline = {"branch": "dev", "head_commit": "a" * 40, "paths": []}
+        primary = {"path": "primary.json", "git_baseline": baseline}
+        member = {"task_type": "bound-task", "git_baseline": baseline}
+        record = {"origin": {"agent": "opencode", "bindings": ["name=demo"]}}
+        task = {"context": {"write_scope": ["packages/demo/**"], "validation": []}}
+        verification = {"actual_changes": [], "recommended_next_steps": []}
+        with (
+            patch("scripts.workspace.workflow_check.active_registration", side_effect=[primary, member]),
+            patch("scripts.workspace.task_records.read_record", return_value=(None, record)),
+            patch("scripts.workspace.workflow_check.resolve_task", return_value=task) as resolve,
+            patch("scripts.workspace.workflow_check.verify_changes", return_value=verification) as verify,
+        ):
+            result = check_workflow("primary", [], record_id="primary", include_committed=True,
+                batch_task_ids=["member"], command_runner=lambda args: subprocess.CompletedProcess(args, 0, "a" * 40, ""))
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(resolve.call_args.args, ("bound-task", ["name=demo"]))
+        self.assertEqual(verify.call_args.kwargs["batch_owners"], [
+            {"task_id": "member", "agent": "opencode", "write_scope": ["packages/demo/**"]}])
+        del record["origin"]["bindings"]
+        with (
+            patch("scripts.workspace.workflow_check.active_registration", side_effect=[primary, member]),
+            patch("scripts.workspace.task_records.read_record", return_value=(None, record)),
+            patch("scripts.workspace.workflow_check.resolve_task", return_value=task),
+            self.assertRaisesRegex(ValueError, "requires recorded string bindings"),
+        ):
+            check_workflow("primary", [], record_id="primary", include_committed=True,
+                batch_task_ids=["member"])
+
     def test_external_record_requires_matching_agent_and_client_root(self) -> None:
         task = {"context": {"validation": [], "write_scope": ["scripts/demo.py"]}}
         verification = {

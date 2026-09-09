@@ -178,7 +178,8 @@ second path list in this document.
 
 A high-risk path remains editable by Codex or Claude Code when the resolved
 task declares it and routed validation passes. Explicit user confirmation is
-still required for destructive or externally visible operations such as Skill
+still required for destructive or externally visible operations outside the
+standing Git delivery authority in `git_integration_policy.md`, such as Skill
 deletion or movement, platform projection changes, large moves, external data
 migration, bulk cleanup, or Git history rewriting.
 

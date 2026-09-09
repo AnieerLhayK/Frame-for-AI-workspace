@@ -957,7 +957,7 @@ def check_access(
 
     branch_payload: dict[str, Any] | None = None
     branch_policy = policy.get("git_branch_governance", {})
-    expected_branch = registry.get("agents", {}).get(resolved["agent"], {}).get("git_branch")
+    expected_branch = branch_policy.get("development_branch", "dev")
     if operation == "write" and expected_branch and target["workspace_relative"]:
         actual_branch = branch or current_git_branch()
         integration_branch = str(branch_policy.get("integration_branch", "main"))
@@ -987,7 +987,7 @@ def check_access(
                     f"{resolved['agent']} writes require branch {expected_branch}; "
                     f"current branch is {actual_branch}"
                 ),
-                "next_action": "Switch to the registered agent branch, or use the limited --integration exception on main after user approval.",
+                "next_action": "Use dev with a distinct TASK per session, coordinate overlapping edits and serialize Git mutations; main permits only integration audit paths.",
             }
 
     if operation == "read":
