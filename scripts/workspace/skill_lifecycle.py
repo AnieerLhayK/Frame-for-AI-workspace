@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -16,6 +17,13 @@ from scripts.workspace.runtime import WORKSPACE_ROOT
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
 SKILL_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FRONTMATTER_PATTERN = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
+MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+PORTABILITY_VALUES = {"portable", "host-adapted", "workspace-bound"}
+DISTRIBUTION_VALUES = {"internal-only", "review-required", "redistributable"}
+RUNTIME_SCAN_DIRECTORIES = ("scripts", "config", "agents")
+RUNTIME_SCAN_SUFFIXES = {".py", ".ps1", ".sh", ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg"}
+HOST_REQUIREMENTS = {"windows", "windows-powershell", "workspace-cli", "optional-workspace-manifest"}
+HOST_REQUIREMENT_PREFIXES = ("host-",)
 
 
 def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
@@ -70,6 +78,12 @@ def manifest_skill_by_source(
     )
 
 
+def source_path_requires_contract(source_path: str) -> bool:
+    """Standalone source packages live under the manifest's skills/ root."""
+    normalized = source_path.replace("\\", "/").strip("/")
+    return normalized.startswith("skills/")
+
+
 def projection_by_id(manifest: dict[str, Any], projection_id: str) -> dict[str, Any] | None:
     return next(
         (
@@ -96,6 +110,198 @@ def parse_frontmatter(path: Path) -> tuple[dict[str, Any] | None, str | None]:
     if not isinstance(payload, dict):
         return None, "YAML frontmatter must be a mapping"
     return payload, None
+
+
+def runtime_contract_files(source: Path) -> list[Path]:
+    """Return executable/configuration surfaces, excluding documentation examples."""
+    files = [source / "SKILL.md"]
+    for directory_name in RUNTIME_SCAN_DIRECTORIES:
+        directory = source / directory_name
+        if not directory.is_dir():
+            continue
+        for path in directory.rglob("*"):
+            relative = path.relative_to(source)
+            if not path.is_file() or "__pycache__" in relative.parts:
+                continue
+            if path.suffix.lower() in RUNTIME_SCAN_SUFFIXES:
+                files.append(path)
+    return files
+
+
+def assignment_strings(path: Path) -> list[str]:
+    """Extract literal Python assignment values, not detector expressions or prose."""
+    if path.suffix.lower() != ".py":
+        return []
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeError, SyntaxError):
+        return []
+    values: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        names = [target.id.lower() for target in targets if isinstance(target, ast.Name)]
+        if any(name.endswith(("_markers", "_patterns")) for name in names):
+            continue
+        if node.value is None:
+            continue
+        if any(
+            isinstance(child, ast.Call)
+            and isinstance(child.func, ast.Attribute)
+            and isinstance(child.func.value, ast.Name)
+            and child.func.value.id == "re"
+            and child.func.attr == "compile"
+            for child in ast.walk(node.value)
+        ):
+            continue
+        for child in ast.walk(node.value):
+            if isinstance(child, ast.Constant) and isinstance(child.value, str):
+                values.append(child.value)
+    return values
+
+
+def normalized_host_couplings(source: Path) -> set[str]:
+    """Find host-bound runtime references without treating reference material as code."""
+    couplings: set[str] = set()
+    for path in runtime_contract_files(source):
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError):
+            continue
+        values = assignment_strings(path) if path.suffix.lower() == ".py" else [text]
+        normalized_values = [
+            re.sub(r"/+", "/", value.replace("\\", "/").lower()) for value in values
+        ]
+        if any(re.search(r"\b[a-z]:/", value) for value in normalized_values):
+            couplings.add("windows-path")
+        if any("workspace_manifest.yaml" in value for value in normalized_values):
+            couplings.add("workspace-manifest")
+        if any(
+            re.search(r"(?:^|[^a-z0-9_-])workspace(?:\.cmd)?\s+(?:records|task|agent|skill)\b", value)
+            for value in normalized_values
+        ):
+            couplings.add("workspace-cli")
+    return couplings
+
+
+def has_host_requirement(requires: list[str]) -> bool:
+    return any(
+        requirement in HOST_REQUIREMENTS
+        or requirement.startswith(HOST_REQUIREMENT_PREFIXES)
+        for requirement in requires
+    )
+
+
+def enhanced_contract_findings(source: Path, metadata: dict[str, Any]) -> list[str]:
+    findings: list[str] = []
+    contract = metadata.get("metadata")
+    has_contract = contract is not None
+    if has_contract and not isinstance(contract, dict):
+        findings.append("frontmatter metadata must be a mapping")
+
+    portability: str | None = None
+    requires: list[str] | None = None
+    if isinstance(contract, dict):
+        portability = contract.get("portability")
+        distribution = contract.get("distribution")
+        raw_requires = contract.get("requires")
+        if portability not in PORTABILITY_VALUES:
+            findings.append(
+                "metadata.portability must be one of: " + ", ".join(sorted(PORTABILITY_VALUES))
+            )
+        if distribution not in DISTRIBUTION_VALUES:
+            findings.append(
+                "metadata.distribution must be one of: " + ", ".join(sorted(DISTRIBUTION_VALUES))
+            )
+        if not isinstance(raw_requires, list) or any(
+            not isinstance(item, str) or not item.strip() for item in raw_requires
+        ):
+            findings.append("metadata.requires must be a list of non-empty strings")
+        elif len(raw_requires) != len(set(raw_requires)):
+            findings.append("metadata.requires must not contain duplicates")
+        else:
+            requires = raw_requires
+
+    openai_path = source / "agents" / "openai.yaml"
+    if not openai_path.is_file():
+        if has_contract:
+            findings.append("missing required file: agents/openai.yaml")
+    else:
+        try:
+            openai = yaml.safe_load(openai_path.read_text(encoding="utf-8-sig"))
+        except (OSError, yaml.YAMLError) as exc:
+            findings.append(f"invalid agents/openai.yaml: {exc}")
+        else:
+            policy = openai.get("policy") if isinstance(openai, dict) else None
+            actual = policy.get("allow_implicit_invocation") if isinstance(policy, dict) else None
+            expected = metadata.get("disable-model-invocation") is not True
+            if actual is not expected:
+                findings.append(
+                    "agents/openai.yaml policy.allow_implicit_invocation must mirror "
+                    f"SKILL.md invocation policy ({str(expected).lower()})"
+                )
+
+    for markdown in source.rglob("*.md"):
+        if "reports" in markdown.relative_to(source).parts:
+            continue
+        try:
+            content = markdown.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError):
+            continue
+        for match in MARKDOWN_LINK_PATTERN.finditer(content):
+            target = match.group(1).split("#", 1)[0].strip()
+            if not target or target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            if not (markdown.parent / target).exists():
+                relative = markdown.relative_to(source).as_posix()
+                findings.append(f"broken local Markdown link: {relative} -> {target}")
+
+    pollution = []
+    for path in source.rglob("*"):
+        relative = path.relative_to(source)
+        if "__pycache__" in relative.parts or path.suffix == ".pyc":
+            pollution.append(relative.as_posix())
+        elif "reports" in relative.parts and path.is_file() and path.name != ".gitkeep":
+            pollution.append(relative.as_posix())
+    if pollution:
+        findings.append("runtime artifacts must stay outside the skill source: " + ", ".join(sorted(pollution)[:10]))
+
+    if portability in PORTABILITY_VALUES and requires is not None:
+        couplings = normalized_host_couplings(source)
+        if portability == "portable":
+            host_requirements = [
+                requirement
+                for requirement in requires
+                if requirement in HOST_REQUIREMENTS
+                or requirement.startswith(HOST_REQUIREMENT_PREFIXES)
+            ]
+            if host_requirements:
+                findings.append(
+                    "portable skill cannot require host capabilities: "
+                    + ", ".join(sorted(host_requirements))
+                )
+            if couplings:
+                findings.append(
+                    "portable skill contains host coupling in runtime surfaces: "
+                    + ", ".join(sorted(couplings))
+                )
+        elif couplings and not has_host_requirement(requires):
+            findings.append(
+                "host-coupled skill metadata.requires must declare a host capability: "
+                + ", ".join(sorted(couplings))
+            )
+        if "workspace-cli" in couplings and "workspace-cli" not in requires:
+            findings.append("Workspace CLI coupling requires metadata.requires to include workspace-cli")
+        if "workspace-manifest" in couplings and not {"workspace-cli", "workspace-manifest", "optional-workspace-manifest"}.intersection(requires):
+            findings.append(
+                "Workspace manifest coupling requires metadata.requires to include optional-workspace-manifest"
+            )
+        if "windows-path" in couplings and not {"windows", "windows-powershell"}.intersection(requires):
+            findings.append(
+                "Windows path coupling requires metadata.requires to include windows or windows-powershell"
+            )
+    return findings
 
 
 def projection_state(link_path: Path, target_path: Path) -> str:
@@ -201,6 +407,9 @@ def validate_skill(
                     )
                 if not description:
                     findings.append("frontmatter description must be non-empty")
+                if source_path_requires_contract(source_value) and "metadata" not in metadata:
+                    findings.append("standalone skill requires frontmatter metadata")
+                findings.extend(enhanced_contract_findings(source, metadata))
         if registered:
             for relative in registered.get("required_files", []):
                 if not (source / Path(str(relative))).exists():

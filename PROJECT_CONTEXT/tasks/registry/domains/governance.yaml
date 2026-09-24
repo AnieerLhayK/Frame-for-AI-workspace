@@ -23,7 +23,7 @@ tasks:
     - scripts/tests/workspace/test_merge_safety.py
     - scripts/tests/workspace/test_task_records.py
     optional:
-    - shared/operations/reporting_policy.md
+    - explicitly selected reporting policy when changing report production
     - shared/schemas/package_protocol_manifest.schema.json
     - selected registry, guard, or publisher route evidence
     ignore:
@@ -444,6 +444,8 @@ tasks:
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/tasks/registry/domains/governance.yaml
     - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/decisions.md
     - PROJECT_CONTEXT/tasks/records/**
     - PROJECT_CONTEXT/tasks/ledger/**
     - PROJECT_CONTEXT/todo/README.md
@@ -487,6 +489,10 @@ tasks:
     - reports/current/protocol_validation_report.md
     - reports/current/workspace_health_report.md
     - reports/current/workspace_setup_report.md
+    - scripts/platform/Start-DeepSeekHarnessWorkspacePilot.ps1
+    - scripts/platform/dsh.cmd
+    - scripts/platform/dsh-pilot.cmd
+    - scripts/platform/deepseek-harness-governance/**
     validation:
     - python -m unittest scripts.tests.reporting.test_ci_run scripts.tests.workspace.test_agent_governance
       scripts.tests.workspace.test_hermes_workspace_guard scripts.tests.platform.test_platform_agent_guards
@@ -508,6 +514,7 @@ tasks:
     - python -m scripts.workspace.workspace_cli health --with-tests
     - python -m scripts.validation.validate_manifest
     - python -m scripts.validation.validate_protocols
+    - npm test --prefix scripts/platform/deepseek-harness-governance
     - git diff --check
   runtime_guard_update:
     use_when:

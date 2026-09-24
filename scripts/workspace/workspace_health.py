@@ -56,6 +56,7 @@ REASONIX_CONFIG = WORKSPACE_ROOT / "reasonix.toml"
 OPENCODE_CONFIG = WORKSPACE_ROOT / "opencode.json"
 OPENCODE_GUARD = WORKSPACE_ROOT / ".opencode" / "plugins" / "workspace-governance.js"
 AGENT_REGISTRY = WORKSPACE_ROOT / "shared" / "governance" / "agent_registry.yaml"
+DSH_GOVERNANCE_ROOT = WORKSPACE_ROOT / "scripts" / "platform" / "deepseek-harness-governance"
 PLATFORM_REQUIRED_READ_ROOTS = {
     _workspace_source_path("packages", "character-system", "shared").casefold(),
     _workspace_source_path(
@@ -571,6 +572,56 @@ def check_platform_agent_guards(
     )
 
 
+def check_deepseek_harness_pilot_contract(
+    governance_root: Path | None = None,
+) -> CheckResult:
+    """Check the source-side contract for the external DSH pilot profile."""
+    governance_root = governance_root or DSH_GOVERNANCE_ROOT
+    package_path = governance_root / "package.json"
+    policy_path = governance_root / "src" / "policy.js"
+    contract_path = governance_root / "workspace-pilot-contract.yaml"
+    findings: list[str] = []
+    try:
+        package = json.loads(package_path.read_text(encoding="utf-8-sig"))
+        contract = yaml.safe_load(contract_path.read_text(encoding="utf-8-sig")) or {}
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        return CheckResult(
+            "deepseek-harness-pilot",
+            "FAIL",
+            "DeepSeek Harness pilot governance contract could not be read.",
+            {"error": str(exc)},
+        )
+    if package.get("name") != "@workspace/dsh-workspace-governance":
+        findings.append("adapter package name drifted")
+    if package.get("version") != contract.get("adapter", {}).get("version"):
+        findings.append("adapter package version does not match the pilot contract")
+    if package.get("dsh", {}).get("bundle", {}).get("patch") != "cordis.patch.yml":
+        findings.append("adapter no longer exports a DSH bundle patch")
+    if not policy_path.exists():
+        findings.append("fail-closed policy module is missing")
+    if contract.get("dsh_version") != "0.1.0-rc.6":
+        findings.append("pilot does not pin the reviewed DSH release")
+    if contract.get("pilot", {}).get("lease_capability") != "structural_write":
+        findings.append("pilot lease capability drifted")
+    forbidden = set(contract.get("forbidden_surfaces", []))
+    for required in ("MCP client", "web tool", "subagent tool", "remote Git"):
+        if required not in forbidden:
+            findings.append(f"forbidden-surface contract omits {required}")
+    if findings:
+        return CheckResult(
+            "deepseek-harness-pilot",
+            "FAIL",
+            "DeepSeek Harness pilot source contract has drifted.",
+            {"findings": findings},
+        )
+    return CheckResult(
+        "deepseek-harness-pilot",
+        "PASS",
+        "DeepSeek Harness pilot has a pinned, fail-closed source-side governance contract.",
+        {"profile": contract.get("profile"), "dsh_version": contract.get("dsh_version")},
+    )
+
+
 def _path_is_within(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root.resolve())
@@ -626,6 +677,7 @@ def run_health(
     *,
     with_tests: bool = False,
     runner: Callable[[Sequence[str]], subprocess.CompletedProcess[str]] = run_process,
+    hygiene_checker: Callable[[], CheckResult] = check_hygiene,
     hermes_guard_checker: Callable[[], CheckResult] = check_hermes_guard,
     platform_guard_checker: Callable[[], CheckResult] = check_platform_agent_guards,
 ) -> dict[str, Any]:
@@ -634,10 +686,11 @@ def run_health(
         check_knowledge(runner),
         check_reports(runner),
         check_links(runner),
-        check_hygiene(),
+        hygiene_checker(),
         check_claude_model_routing(),
         hermes_guard_checker(),
         platform_guard_checker(),
+        check_deepseek_harness_pilot_contract(),
     ]
     if with_tests:
         checks.append(check_tests(runner))
@@ -685,6 +738,7 @@ HEALTH_GROUPS = (
         (
             ("hermes-guard", "Hermes hooks/MCP guard"),
             ("platform-agent-guards", "Agent roles and platform guards"),
+            ("deepseek-harness-pilot", "DeepSeek Harness pilot contract"),
         ),
     ),
     (

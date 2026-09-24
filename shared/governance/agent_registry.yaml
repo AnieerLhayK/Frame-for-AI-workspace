@@ -218,10 +218,15 @@ agents:
       reviewed_at: "2026-08-17T19:00:00+08:00"
       expires_at: null
     unresolved:
-      - No workspace runtime-enforcement adapter is installed for the Web UI.
-      - Skill and plugin exposure will be registered separately after a supported
-        Harness integration mechanism is selected.
-    active_lease_refs: []
+      - The workspace-pilot profile is a temporary, local-only structural_write
+        trial enforced by scripts/platform/deepseek-harness-governance; it is
+        not a permanent role upgrade.
+      - Permanent structural_maintainer promotion requires a separate TASK,
+        user review of the pilot evidence, and a fresh authority decision.
+      - Selected maintenance skills are profile-local and default-denied unless
+        the active skill permits source_patch mode.
+    active_lease_refs:
+      - ${DATA_ROOT}/workspace-governance/leases/LEASE-20260915-DSH-PILOT.yaml
 
   reasonix:
     id: reasonix

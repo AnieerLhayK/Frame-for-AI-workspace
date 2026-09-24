@@ -20,6 +20,7 @@ from scripts.workspace.resolve_task_context import (
     load_prompt_registry,
     parse_bindings,
     print_task_list,
+    print_text,
     routing_events_path,
     resolve_prompt,
     resolve_task,
@@ -27,6 +28,41 @@ from scripts.workspace.resolve_task_context import (
 
 
 class ResolverTests(unittest.TestCase):
+    def test_yaml_context_view_is_emitted_counted_and_refreshed(self) -> None:
+        registry_path = self.root / "PROJECT_CONTEXT/tasks/registry/index.yaml"
+        data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+        task = data["tasks"]["demo"]
+        task["required"] = ["workspace_manifest.yaml"]
+        task["context_views"] = {"workspace_manifest.yaml": ["workspace"]}
+        registry_path.write_text(yaml.safe_dump(data), encoding="utf-8")
+        manifest = self.root / "workspace_manifest.yaml"
+        manifest.write_text(yaml.safe_dump({"workspace": {"name": "example"}, "unrelated": "x" * 12000}), encoding="utf-8")
+
+        def resolve(optional=False):
+            return resolve_task(self.root, "demo", {"target": ["src"]}, optional, False, True, "missing-test-encoding")
+
+        result = resolve()
+        view = result["context"]["required_views"][0]
+        self.assertEqual(view["source_path"], "workspace_manifest.yaml")
+        self.assertNotIn("workspace_manifest.yaml", result["context"]["required_paths"])
+        self.assertEqual(yaml.safe_load(view["content"]), {"workspace": {"name": "example"}})
+        self.assertEqual(result["token_budget"]["required_file_tokens"], TokenCounter("missing-test-encoding").count(view["content"]))
+        rendered = StringIO()
+        with redirect_stdout(rendered):
+            print_text(result)
+        self.assertIn(view["content"], rendered.getvalue())
+        manifest.write_text("workspace: {name: changed}\n", encoding="utf-8")
+        self.assertIn("changed", resolve()["context"]["required_views"][0]["content"])
+        task["required"] = []
+        task["optional"] = ["workspace_manifest.yaml"]
+        registry_path.write_text(yaml.safe_dump(data), encoding="utf-8")
+        self.assertEqual(resolve()["context"]["optional_views"], [])
+        expanded = resolve(True)
+        self.assertEqual(expanded["token_budget"]["optional_tokens"], TokenCounter("missing-test-encoding").count(expanded["context"]["optional_views"][0]["content"]))
+        manifest.write_text("different: {}\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "keys missing"):
+            resolve(True)
+
     def test_prompt_registry_rejects_duplicate_yaml_keys(self) -> None:
         registry = self.root / "USAGE_GUIDES" / "duplicate-prompts.yaml"
         registry.write_text(

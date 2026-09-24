@@ -233,10 +233,12 @@
   errors: two qq-filter tests need the package import environment and two
   disk-scan tests use legacy `scripts.*` imports. No new collection failure was
   introduced by this documentation pass.
-- The latest live check is `NEEDS_ATTENTION` only because Hermes runtime
-  governance is not fully enforced. The workspace script-test health check
-  passes when run with an isolated test runtime. This is a tracked runtime
-  issue, not a README claim to hide.
+- The latest live check is `NEEDS_ATTENTION` only because the ignored root
+  `.ruff_cache` directory violates the Claude Code boundary hygiene check.
+  Current report groups are fresh, and Hermes runtime governance passes. The
+  remaining cache cleanup is blocked by the current execution environment's
+  file-deletion policy; it is a local hygiene action, not a runtime-governance
+  defect.
 - Manifest and protocol validation report 0 errors, with the known portability
   and lightweight-schema warnings. All three current report groups are fresh.
 - Link and registered Markdown companion checks pass. Existing Chinese

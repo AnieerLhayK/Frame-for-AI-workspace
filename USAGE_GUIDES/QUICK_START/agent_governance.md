@@ -98,9 +98,17 @@ permissions and bounded filesystem roots. These are repository-local adapters,
 so using either executable from another project does not automatically apply
 this workspace's authority contract.
 
-DeepSeek Harness is currently registered without a runtime adapter or Skill
-exposure. Its declared authority becomes enforceable only after a supported
-Harness plugin integration is added.
+DeepSeek Harness remains a `record_producer`. Its `workspace-pilot` profile is
+a temporary, separately leased structural-write trial: the local Cordis adapter
+checks the active TASK, lease, path, skill mode, and manual approval before an
+edit, staging operation, or local commit. It denies networked Git, MCP, web,
+dynamic Cordis, subagent, credential, and unclassified tool paths. A pilot is
+not a permanent `structural_maintainer` promotion.
+
+The pilot launcher must use its isolated worktree and the lease variables in
+`scripts/platform/deepseek-harness-governance/workspace-pilot-contract.yaml`.
+Do not start the profile through a generic `workspace` launcher: it can resolve
+to the shared source tree rather than the pilot worktree.
 
 ## Submit A Request
 

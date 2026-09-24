@@ -562,6 +562,31 @@ def count_files(
     return counted, warnings
 
 
+def resolve_context_views(
+    workspace_root: Path, group: dict[str, Any], selections: dict[str, Any],
+) -> list[dict[str, str]]:
+    """Replace selected YAML files with source-backed, emitted context views."""
+    views = []
+    for path in list(group["files"]):
+        relative = path.relative_to(workspace_root.resolve()).as_posix()
+        if relative not in selections:
+            continue
+        keys = selections[relative]
+        if not isinstance(keys, list) or not keys or any(not isinstance(k, str) for k in keys):
+            raise ValueError(f"context_views requires nonempty key lists: {relative}")
+        payload = load_yaml(path, reject_duplicate_keys=True)
+        missing = set(keys) - payload.keys()
+        if missing:
+            raise ValueError(f"context view keys missing in {relative}: {sorted(missing)}")
+        label = relative + "#" + ",".join(keys)
+        content = yaml.safe_dump({key: payload[key] for key in keys}, sort_keys=False, allow_unicode=True)
+        views.append({"path": label, "source_path": relative, "content": content})
+        group["files"].remove(path)
+        group["paths"] = [entry for entry in group["paths"] if entry != relative]
+        group["consumed"].append(relative)
+    return views
+
+
 def heading_slug(value: str) -> str:
     lowered = value.strip().lower()
     lowered = re.sub(r"[^\w\s-]", "", lowered, flags=re.UNICODE)
@@ -708,6 +733,11 @@ def resolve_task(
         retain_consumed,
         "optional",
     )
+    selections = task.get("context_views", {})
+    if not isinstance(selections, dict):
+        raise ValueError("context_views must be a mapping of YAML paths to key lists")
+    required_views = resolve_context_views(workspace_root, required, selections)
+    optional_views = resolve_context_views(workspace_root, optional, selections) if include_optional else []
     write_scope, write_scope_unresolved = expand_text_entries(
         [str(item) for item in task.get("write_scope", [])],
         bindings,
@@ -808,6 +838,13 @@ def resolve_task(
                 workspace_root, optional["files"], counter, max_file_bytes, "optional"
             )
             count_warnings.extend(warnings)
+        for views, counted, source in (
+            (required_views, counted_required, "required"),
+            (optional_views, counted_optional, "optional"),
+        ):
+            for view in views:
+                content = view["content"]
+                counted.append(CountedFile(view["path"], len(content.encode("utf-8")), counter.count(content), counter.method, source))
         prompt_tokens = counter.count("\n".join(prompt_text_parts))
 
     preloaded_tokens = sum(item.tokens for item in counted_preloaded)
@@ -877,6 +914,8 @@ def resolve_task(
             "preloaded_paths": preloaded["paths"],
             "required_paths": required["paths"],
             "optional_paths": optional["paths"],
+            "required_views": required_views,
+            "optional_views": optional_views,
             "external_evidence": required["evidence"],
             "optional_evidence": optional["evidence"],
             "ignored": task_ignore,
@@ -1120,6 +1159,10 @@ def print_text(result: dict[str, Any]) -> None:
         print(f"- {path}")
     if not context["required_paths"]:
         print("- None.")
+    for category in ("required_views", "optional_views"):
+        for view in context.get(category, []):
+            print(f"\nResolved {category}: {view['path']} (read full source only when expanding scope)")
+            print(view["content"])
     if context["resolver_consumed_files"]:
         print("")
         print("Resolved internally; do not reread by default:")

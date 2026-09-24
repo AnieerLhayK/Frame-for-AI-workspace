@@ -121,6 +121,14 @@ EXCLUDED_PATHS = {
     "packages/character-system",
     "shared/packages/character-system",
     "packages/teaching-system",
+    # Frame exposes the public packages extension layer as a README-only
+    # placeholder; private package implementations stay in their source repo.
+    "packages/sci-system",
+    # Local pilot deployment launchers and contract are not framework source.
+    "scripts/platform/dsh-pilot.cmd",
+    "scripts/platform/dsh.cmd",
+    "scripts/platform/Start-DeepSeekHarnessWorkspacePilot.ps1",
+    "scripts/platform/deepseek-harness-governance",
     "WORKSPACE_ENGINEERING/evidence",
     "WORKSPACE_ENGINEERING/proposals",
     "scripts/publishing/publish_chatty_ch_system.py",
@@ -143,6 +151,9 @@ EXCLUDED_PATHS = {
     # table. The public skeleton receives a scrubbed generator, so retaining
     # the test would make the generated public suite fail by design.
     "scripts/tests/publishing/test_publish_public.py",
+    # This test validates standalone skill sources and CLIs, which Frame omits
+    # with the private skills tree.
+    "scripts/tests/workspace/test_standalone_skill_contracts.py",
     # These tests exercise private platform hooks, character paths, or local
     # governance registrations that are intentionally absent from Frame.
     "scripts/tests/workspace/test_agent_governance.py",
@@ -478,6 +489,7 @@ def generate_public_manifest(source_manifest: Path) -> str:
         },
     }
     data["output_roots"] = {"workspace": "${DATA_ROOT}/out/workspace"}
+    data["runtime_roots"] = {"staging": "${DATA_ROOT}/codex/cache/staging"}
     data["external_roots"] = {
         "research": "${DATA_ROOT}/research",
         "raw_skills": "${DATA_ROOT}/research/skills",

@@ -522,7 +522,8 @@ def validate_record(record: dict[str, Any]) -> list[str]:
 
 
 def active_registration(
-    task_id: str, operation: str, *, allow_external_origin: bool = False
+    task_id: str, operation: str, *, allow_external_origin: bool = False,
+    expected_task_type: str | None = None, expected_bindings: list[str] | None = None,
 ) -> dict[str, Any]:
     """Return the active record or raise a caller-ready registration error."""
     if operation not in OPERATIONS:
@@ -539,6 +540,15 @@ def active_registration(
         raise ValueError(
             f"task record {task_id} is not registered for {operation}"
         )
+    if expected_task_type and record.get("task_type") != expected_task_type:
+        raise ValueError(
+            f"task record {task_id} task type {record.get('task_type')!r}; expected {expected_task_type!r}"
+        )
+    owner = record.get("owner")
+    recorded_bindings = owner.get("bindings", []) if isinstance(owner, dict) else []
+    missing_bindings = sorted(set(expected_bindings or []) - set(recorded_bindings))
+    if missing_bindings:
+        raise ValueError(f"task record {task_id} missing exact binding(s): " + ", ".join(missing_bindings))
     origin = record.get("origin")
     if (
         isinstance(origin, dict)
@@ -626,10 +636,14 @@ def start(args: argparse.Namespace) -> dict[str, Any]:
 def external_start(args: argparse.Namespace) -> dict[str, Any]:
     if "workspace_write" not in args.operation:
         raise ValueError("external workspace tasks must declare workspace_write")
+    if "external_write" in args.operation:
+        raise ValueError(
+            "external-start records provenance only; register external_write "
+            "separately after target authorization"
+        )
     agent = external_agent_id(args.agent)
     client_root = external_client_root(args.client_root)
     record = start(args)
-    record["registration"]["operations"].append("external_write")
     path = record_path(record["task_id"], record["started_at"])
     record["origin"] = {
         "kind": "external_workspace",
@@ -851,6 +865,10 @@ def main() -> int:
     p = sub.add_parser("require", help="Verify an active task registration for a write.")
     p.add_argument("task_id")
     p.add_argument("--operation", choices=sorted(OPERATIONS), required=True)
+    p.add_argument("--task-type")
+    p.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
+    p.add_argument("--external-client-root")
+    p.add_argument("--agent")
     p = sub.add_parser("finalize")
     p.add_argument("task_id")
     p.add_argument("--status", choices=sorted(STATUSES), required=True)
@@ -895,7 +913,11 @@ def main() -> int:
         elif args.action == "init":
             output = init(args)
         elif args.action == "require":
-            output = active_registration(args.task_id, args.operation)
+            if args.external_client_root:
+                if not args.agent:
+                    raise ValueError("--external-client-root requires --agent")
+                active_external_registration(args.task_id, agent=args.agent, client_root=args.external_client_root)
+            output = active_registration(args.task_id, args.operation, expected_task_type=args.task_type, expected_bindings=args.bind, allow_external_origin=bool(args.external_client_root))
         elif args.action == "finalize":
             output = finalize(args)
         elif args.action == "report-usage":

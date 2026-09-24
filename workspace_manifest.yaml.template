@@ -28,6 +28,9 @@
   "output_roots": {
     "workspace": "${DATA_ROOT}/out/workspace"
   },
+  "runtime_roots": {
+    "staging": "${DATA_ROOT}/codex/cache/staging"
+  },
   "external_roots": {
     "research": "${DATA_ROOT}/research",
     "raw_skills": "${DATA_ROOT}/research/skills",

@@ -88,6 +88,8 @@ tasks:
     validation:
     - workspace skill list --platform <platform> --format json
   platform_exposure:
+    context_views:
+      workspace_manifest.yaml: [workspace, platform_roots, shared, packages, skills, plugin_skills, projections, discovery, failure_policy]
     use_when:
     - Changing an explicitly named Codex, Claude Code, OpenCode, or Hermes loading surface, projection root, junction, or CLI path.
     use_when_zh:
@@ -349,6 +351,8 @@ tasks:
     - git diff -- <target-skill>/SKILL.md
     - platform-specific skill discovery check when available
   skill_release_packaging:
+    context_views:
+      workspace_manifest.yaml: [workspace, output_roots, runtime_roots, packages, skills, portability]
     use_when:
     - Packaging one or more workspace skills as a versioned external product bundle
       or preparing a GitHub Release.
@@ -421,6 +425,8 @@ tasks:
     - python -m scripts.workspace.workspace_cli workflow check skill_release_packaging
     - git diff --check
   skill_bundle_release:
+    context_views:
+      workspace_manifest.yaml: [workspace, output_roots, runtime_roots, packages, skills, portability]
     use_when:
     - Building or verifying a versioned skill bundle without changing a registered public projection publisher.
     use_when_zh:

@@ -1,6 +1,8 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
   cleanup_migration:
+    context_views:
+      workspace_manifest.yaml: [workspace, platform_roots, session_stores, output_roots, runtime_roots, external_roots, shared, packages, skills, plugin_skills, projections, protocols, portability, discovery, failure_policy]
     use_when:
     - Deleting legacy directories, moving tool binaries, migrating data, or changing
       local deployment paths.

@@ -176,6 +176,27 @@ class TaskRecordsTests(unittest.TestCase):
                     "TASK-20260715-001", "external_write"
                 )
 
+    def test_active_registration_can_require_task_type_and_exact_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, patch.object(task_records, "RECORD_ROOT", Path(directory)):
+            binding = "retirement-target=D:\\repos\\demo"
+            record = task_records.initial_record(
+                "TASK-20260715-001", task_type="cleanup_migration", started_at="2026-07-15T00:00:00Z",
+                tokens_estimated=0, operations=["workspace_write"],
+                owner={"kind": "workspace_session", "agent": "codex", "session_id": "test", "bindings": [binding]},
+            )
+            task_records.create_record(task_records.record_path(record["task_id"], record["started_at"]), record)
+            task_records.active_registration(
+                record["task_id"], "workspace_write", expected_task_type="cleanup_migration", expected_bindings=[binding]
+            )
+            with self.assertRaisesRegex(ValueError, "expected 'skill_architecture_update'"):
+                task_records.active_registration(
+                    record["task_id"], "workspace_write", expected_task_type="skill_architecture_update"
+                )
+            with self.assertRaisesRegex(ValueError, "missing exact binding"):
+                task_records.active_registration(
+                    record["task_id"], "workspace_write", expected_bindings=["retirement-target=D:\\repos\\other"]
+                )
+
     def test_active_registration_rejects_historical_unregistered_record(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.object(
             task_records, "RECORD_ROOT", Path(directory)
@@ -308,7 +329,25 @@ class TaskRecordsTests(unittest.TestCase):
             "client_root": "/external-host",
             "bindings": ["name=demo"],
         })
+        self.assertEqual(record["registration"]["operations"], ["workspace_write"])
         self.assertFalse(task_records.validate_record(record))
+
+    def test_external_start_cannot_grant_external_write(self) -> None:
+        args = type(
+            "Args",
+            (),
+            {
+                "agent": "external-host",
+                "client_root": "/external-host",
+                "task_type": "demo",
+                "tokens_estimated": 123,
+                "bind": [],
+                "operation": ["workspace_write", "external_write"],
+                "started_at": "2026-07-16T00:00:00Z",
+            },
+        )()
+        with self.assertRaisesRegex(ValueError, "register external_write separately"):
+            task_records.external_start(args)
 
     def test_external_client_root_requires_existing_directory_outside_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -390,6 +429,14 @@ class TaskRecordsTests(unittest.TestCase):
                     task_records.active_external_registration(
                         record["task_id"], agent="opencode", client_root=str(other_root)
                     )
+                args = ["task_records", "require", record["task_id"], "--operation", "workspace_write", "--agent", "opencode", "--external-client-root", str(client_root)]
+                with patch("sys.argv", args):
+                    self.assertEqual(task_records.main(), 0)
+                with patch("sys.argv", args[:-1] + [str(other_root)]):
+                    self.assertEqual(task_records.main(), 2)
+                args[4] = "external_write"
+                with patch("sys.argv", args):
+                    self.assertEqual(task_records.main(), 2)
 
     def test_finalize_preserves_usage_reported_during_external_task(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

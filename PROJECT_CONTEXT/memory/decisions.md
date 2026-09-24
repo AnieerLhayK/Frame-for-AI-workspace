@@ -1,5 +1,25 @@
 # Decisions
 
+## Sci-system expands by evidence-bearing stages
+
+Sci-system begins with a package-local scientific presentation contract and one
+unexposed development skill, project-showcase-pack. The user owns and
+authorized its import from the configured research source; it is adapted for
+scientific evidence state and output safety, but has no workspace projection.
+Its authorized capability sequence is presentation and reporting, controlled
+provenance and intake, processing and analysis, then reproducible automation
+and visualization. A later stage requires an explicit design, task record,
+fixtures, and authority decision; the current package does not authorize
+research-data mutation, network access, or publication.
+
+## Showcase-Packer is a clean-room native skill
+
+The unversioned, unlicensed research source `project-showcase-pack` is design
+inspiration only and is neither migrated nor copied. `skills/showcase-packer/`
+is independently authored, with a user-confirmed preview-before-build gate and
+default exclusion of high-risk material. Its derived output is confined to the
+manifest-declared workspace output root and never changes source material.
+
 ## Manifest-Declared Workspace Is The Only Source Center
 
 - decision: Treat `workspace_manifest.yaml -> workspace.source_of_truth` as the only source-of-truth workspace.
@@ -194,3 +214,30 @@
 - reason: Agent-specific branches imposed synchronization overhead without matching task boundaries. Shared development retains parallel editing; sessions coordinate overlapping work and serialize Git mutations.
 - date if known: 2026-09-08, explicitly confirmed by the user.
 - consequence: Preserve capability scopes; stop on unfinished batches, stale evidence, divergence, conflicts or failed delivery. Retire codex/claude refs only after ancestry and worktree checks.
+
+## Branches And Worktrees Are Reused By Default
+
+- decision: Workspace-managed repository work starts from its configured collaboration branch and reuses a suitable existing worktree. New worktrees require a mandatory isolation workflow, an unavailable safe checkout for the required operation, a workspace that cannot safely contain the work after coordination, or an explicit user request. A worktree need does not itself authorize a new branch; branch creation is justified separately by the user, target repository rules, or a workflow requiring an independent commit line.
+- reason: Per-task branches and checkouts add maintenance and coordination cost. Reuse keeps ordinary work on established collaboration lines while preserving isolation for workflows that require it.
+- date if known: 2026-09-23, user-confirmed Git workflow rule.
+- consequence: Reuse a suitable main checkout for integration; create one only when unavailable and keep using it. Target repository instructions take precedence over this Workspace default. Record the reason for each newly created branch or worktree.
+
+## Claude LiteLLM Routes Are Locally Managed
+
+- decision: Manage Claude Code-facing LiteLLM routes through the local interactive route manager; retain provider credentials only in Claude `settings.json -> env` and reference them from LiteLLM YAML as `os.environ/<VARIABLE>`.
+- reason: A logical route decouples Claude Code selection from provider model IDs, while centralizing credential handling, backups, compatibility slots, and rollback.
+- date if known: 2026-09-13 Claude LiteLLM V4.1 Flash migration.
+- consequence: Add, update, remove, or reassign routes through `Configure-ClaudeLiteLLM.ps1`; do not place a literal provider credential in `litellm-config.yaml`.
+
+## DeepSeek Harness Uses A Two-Phase, Default-Deny Promotion Path
+
+- decision: Keep DeepSeek Harness registered as `record_producer`; permit only
+  a separately leased, at-most-24-hour `structural_write` pilot in an isolated
+  worktree, protected by the local Cordis governance adapter.
+- reason: Structural capability needs runtime enforcement, a narrow scope, and
+  verifiable evidence; prompts, dynamic plugins, and broad tool permissions are
+  not a security boundary.
+- date if known: 2026-09-15 controlled-pilot implementation.
+- consequence: Pin DSH and adapter versions, use local JSONL only, deny web,
+  MCP, dynamic Cordis, subagents, remote Git, credential tools, and telemetry
+  export. A separate reviewed TASK is required for permanent promotion.

@@ -962,6 +962,15 @@ def check_access(
         actual_branch = branch or current_git_branch()
         integration_branch = str(branch_policy.get("integration_branch", "main"))
         allowed_paths = branch_policy.get("integration_paths", [])
+        lease_isolation = lease.get("isolation", {}) if isinstance(lease, dict) else {}
+        lease_worktree = str(lease_isolation.get("worktree_path", ""))
+        lease_branch = str(lease_isolation.get("branch", ""))
+        isolated_lease_branch = (
+            str(lease_isolation.get("mode", "")) == "worktree"
+            and lease_branch == actual_branch
+            and lease_worktree
+            and absolute_path_relative_to(str(WORKSPACE_ROOT), lease_worktree) == ""
+        )
         comparable_path = target["workspace_relative"] or target["path"]
         integration_allowed = (
             integration
@@ -972,8 +981,13 @@ def check_access(
             "expected": expected_branch,
             "actual": actual_branch,
             "integration": integration_allowed,
+            "isolated_lease": isolated_lease_branch,
         }
-        if actual_branch != expected_branch and not integration_allowed:
+        if (
+            actual_branch != expected_branch
+            and not integration_allowed
+            and not isolated_lease_branch
+        ):
             return {
                 "status": "DENY",
                 "agent": resolved["agent"],
@@ -987,7 +1001,7 @@ def check_access(
                     f"{resolved['agent']} writes require branch {expected_branch}; "
                     f"current branch is {actual_branch}"
                 ),
-                "next_action": "Use dev with a distinct TASK per session, coordinate overlapping edits and serialize Git mutations; main permits only integration audit paths.",
+                "next_action": "Use dev with a distinct TASK per session, or use a valid worktree lease whose branch and root exactly match this checkout; main otherwise permits only integration audit paths.",
             }
 
     if operation == "read":

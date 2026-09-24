@@ -1,5 +1,33 @@
 # Glossary
 
+## Sci-system
+
+A generic workspace package for staged scientific data processing, analysis,
+and presentation capability. It owns package-local shared protocols and skills;
+its first member is the unexposed development skill project-showcase-pack.
+Data intake, processing, analysis, reproducibility, and visualization remain
+separately planned stages.
+
+## project-showcase-pack
+
+An unexposed Sci-system development skill that prepares a research-period
+showcase package. It requires the scientific presentation contract, a read-only
+preview before an explicit build confirmation, an external export-root boundary,
+and per-file risk exceptions.
+
+## scientific presentation contract
+
+The Sci-system shared protocol requiring research question and audience, data
+provenance and state, analysis state, evidence-linked claims, uncertainty,
+limitations, and a decision-oriented narrative.
+
+## Showcase-Packer
+
+A native, domain-neutral workflow that assembles a reviewed portable package from
+explicitly scoped materials. It keeps source material read-only, previews all
+candidate copies before any build, and structures the result around data,
+approach, conclusions, evidence, limitations, and next actions.
+
 ## source-of-truth
 
 The authoritative source for a given decision. For paths and workspace registry data, this is `workspace_manifest.yaml`.
@@ -114,6 +142,36 @@ The shared line of unfinished and completed development, used concurrently by al
 
 The line containing complete batches that passed validation and code-review. This workspace uses `main`.
 
+## suitable worktree
+
+An existing checkout for the target repository and required branch or commit
+whose active work is compatible with the task and can be coordinated and
+preserved within its authorized scope.
+
+## branch and worktree reuse
+
+The default practice of using a repository's configured collaboration branch
+and a suitable existing checkout. New branches and worktrees require a
+repository rule, an isolation workflow, an explicit user request, or the absence
+of a safe reusable checkout.
+
+## DeepSeek Harness workspace governance adapter
+
+The local, version-controlled Cordis bundle at
+`scripts/platform/deepseek-harness-governance`. It intercepts DSH tool execution
+and denies mutable operations unless a scoped TASK, active lease, allowed skill
+execution mode, in-worktree path, and manual approval all pass.
+
+## two-phase controlled promotion
+
+A permission process that grants a time-limited, isolated trial lease first and
+requires a separate review task before any permanent authority change. Passing
+a pilot never automatically changes an agent's registered role.
+
 ## concurrent development session
 
 A session with its own active TASK that may edit the shared development branch alongside other sessions, including the same files. Sessions coordinate overlapping edits and serialize Git mutations.
+
+## LiteLLM logical model route
+
+A stable, Claude Code-facing model name declared in LiteLLM `model_list`. It maps independently to an upstream provider model ID and optional API base, so Claude Code selection does not expose provider-specific names or credentials.

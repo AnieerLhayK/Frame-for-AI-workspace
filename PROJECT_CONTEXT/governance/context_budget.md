@@ -46,6 +46,14 @@ Examples:
 
 Reason: task-required context should be enough to start work safely.
 
+Tasks may declare `context_views` mapping a YAML source path to explicit top-level
+keys. The resolver emits those values directly in text and JSON output and counts
+the emitted YAML instead of loading the whole source file into model context.
+Views are derived from current source, never stored copies; missing keys fail
+resolution. Read the full source when editing surrounding structure or expanding
+scope, and account for that additional context. Optional views are emitted and
+counted only with `--include-optional`. Budget limits remain unchanged.
+
 The resolver normally omits these routing files from model context after consuming them:
 
 - `PROJECT_CONTEXT/tasks/registry/index.yaml`

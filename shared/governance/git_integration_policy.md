@@ -21,10 +21,40 @@ the batch review note. Missing confirmations stop integration, not editing.
 Confirm a session stopped before cancelling abandoned records.
 
 Use the shared workspace on `dev`. Do not switch branches or rewrite history
-there. Integrate `main` in an isolated worktree. The initial migration has one
-user-authorized exception: with other writers stopped and a clean tree, create
-`dev` from verified `main` and switch the existing workspace once. Preserve owned
-migration edits through a named stash and restore them afterwards.
+there. Integrate `main` in a suitable registered worktree. The initial migration
+has one user-authorized exception: with other writers stopped and a clean tree,
+create `dev` from verified `main` and switch the existing workspace once.
+Preserve owned migration edits through a named stash and restore them afterwards.
+
+## Branch and worktree reuse
+
+This is the default for repositories managed by Workspace. A target repository's
+explicit Git instructions take precedence; otherwise, reuse its configured
+collaboration branch and an existing suitable worktree. For this Workspace,
+agents share `dev` for development.
+
+A worktree is suitable when it belongs to the target repository, is on the
+required branch or commit, has no incompatible active operation, and its current
+changes can be safely coordinated and preserved under the task scopes. A dirty
+tree alone is not a reason to create another one.
+
+Create a worktree only when the applicable repository policy or workflow
+requires isolation, no suitable worktree exists for the required operation, the
+current workspace cannot safely contain the work even after coordination, or
+the user explicitly requests one. For `main` integration, reuse an existing
+suitable `main` worktree. If none is available, create one using the host's
+usual worktree location and reuse it for later integrations. Record the reason
+when creating a worktree.
+
+Decide separately whether a new branch is needed. A worktree request alone does
+not justify creating a branch. Reuse the repository's collaboration branch when
+the workflow permits; use a detached worktree when appropriate. Create a branch
+only when the user or target repository requires it, or when the isolated
+workflow needs an independent commit line. Record that reason as well.
+
+The lease policy's structural isolation requirement remains mandatory. Other
+worktree recommendations are signals to assess whether isolation is actually
+needed; they do not require a new worktree by themselves.
 
 ## Automatic delivery
 
@@ -73,6 +103,13 @@ history rewriting, arbitrary remote targets, or bypassing capabilities.
    not trigger another publication. This is the terminal delivery step.
    A completed audit-close receipt already present on main blocks another
    closure for the same TASK. Undelivered stale receipts may be renewed.
+   Commit the finalized audit batch before recording its review. Append exactly
+   one review note in the receipt commit; multiple appended notes or other
+   field edits invalidate receipt-only coverage. If preflight stops, diagnose
+   its exact finding and renew the receipt against the current committed batch.
+   Do not create successive TASKs to integrate each other's closure records or
+   merge directly after a STOP. Record historical deviations truthfully in the
+   corrective task; a later receipt does not retroactively authorize them.
 
 A failed check, unresolved finding, dirty tree, divergence or conflict stops
 integration. Preserve commits for human arbitration. Publication failure stops
