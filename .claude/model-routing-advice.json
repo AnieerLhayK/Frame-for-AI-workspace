@@ -1,6 +1,0 @@
-{
-  "interface_version": 1,
-  "enabled": false,
-  "mode": "advisory_pause",
-  "description": "Tracked default keeps Claude model-tier advice disabled. Day-to-day on/off changes should write .claude/model-routing-advice.local.json, which is ignored by Git and overrides this file."
-}

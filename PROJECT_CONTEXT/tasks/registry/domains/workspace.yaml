@@ -116,8 +116,6 @@ tasks:
     - scripts/validation/validate_manifest.py
     - scripts/validation/validate_protocols.py
     - scripts/validation/check_links.ps1
-    - scripts/*_model_advice.py
-    - scripts/tests/workspace/test_*model_advice.py
     ignore:
     - reports/
     - private corpus material
@@ -131,9 +129,7 @@ tasks:
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - README.md
     - scripts/workspace/workspace_cli.py
-    - scripts/*_model_advice.py
     - scripts/tests/workspace/test_workspace_cli.py
-    - scripts/tests/workspace/test_*model_advice.py
     - USAGE_GUIDES/QUICK_START/
     validation:
     - python -m unittest scripts.tests.workspace.test_workspace_cli

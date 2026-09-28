@@ -183,7 +183,6 @@ task_files:
   agent_governance_update: domains/governance.yaml
   change_scope_verification: domains/governance.yaml
   change_surface_planning: domains/workspace.yaml
-  claude_model_routing: domains/governance.yaml
   claude_notification_hooks: domains/governance.yaml
   claude_project_boundary: domains/governance.yaml
   cleanup_migration: domains/continuity.yaml

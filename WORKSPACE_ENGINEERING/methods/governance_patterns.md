@@ -235,33 +235,6 @@ route legitimate writes through path-aware file tools. For multiplexed MCP
 tools, classify the requested action and fail closed when a mutating action
 does not expose a resolvable target path.
 
-### Visible Advice Needs Lifecycle Enforcement
-
-Observed and validated locally on 2026-06-30: a prompt-only Claude Code rule
-that said "recommend Pro before complex work" was not reliable enough. Claude
-sometimes launched an Explore Agent or file read before producing any visible
-model-tier assessment. After stronger text in `CLAUDE.md`, the model produced
-an assessment but still downgraded high-risk read-only planning to Flash when
-the user said not to modify files.
-
-The durable pattern is:
-
-1. Keep the cognitive rule in tracked project instructions and shared policy.
-2. Add a `UserPromptSubmit` hook that injects a short current-turn reminder.
-3. Add a broad `PreToolUse` hook that blocks tool or subagent execution until
-   the transcript contains a visible model-tier assessment after the last user
-   message.
-4. Classify read-only planning by underlying risk, not by the first permitted
-   action. Workspace guard design, permission design, multi-agent governance,
-   health/out-of-scope diagnosis, and Git conflict planning remain Pro-class
-   even when the user asks only for a plan.
-
-This remains advisory governance: the hook does not switch models or edit
-provider configuration. It only makes the recommendation visible before Claude
-spends tool calls or delegates exploration. Use ASCII-only PowerShell hook
-strings when supporting Windows PowerShell; UTF-8 without BOM plus non-ASCII
-string literals can break parsing in older hosts.
-
 ### Completion Notifications Belong On Per-Turn Stop
 
 Claude Code `Stop` hooks are per-turn completion hooks, not process-exit hooks.

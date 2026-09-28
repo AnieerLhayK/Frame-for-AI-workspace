@@ -33,17 +33,6 @@ MECHANISMS: dict[str, dict[str, Any]] = {
             "workspace workflow check <task-id>",
         ],
     },
-    "model-routing": {
-        "title": "Claude model recommendation policy",
-        "purpose": "Tell Claude Code when to visibly recommend deepseek-v4-pro without changing model configuration or authority.",
-        "entrypoints": ["CLAUDE.md", "workspace health"],
-        "sources": [
-            "shared/claude/policies/model-routing-policy.md",
-            "scripts/workspace/workspace_health.py",
-            "scripts/tests/workspace/test_workspace_health.py",
-        ],
-        "checks": ["python -m unittest scripts.tests.test_workspace_health"],
-    },
     "report-freshness": {
         "title": "Snapshot report freshness",
         "purpose": "Detect stale generated reports and refresh them explicitly from source evidence.",
@@ -188,7 +177,6 @@ def test_candidates(path: str) -> list[str]:
         stem = Path(normalized).stem
         test_groups = {
             "agent_governance": "workspace",
-            "claude_model_advice": "workspace",
             "failure_check": "workspace",
             "find_knowledge": "workspace",
             "hermes_workspace_guard": "workspace",

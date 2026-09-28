@@ -186,7 +186,6 @@ tasks:
     - .claude/rules/workspace-boundary.md
     - .claude/settings.json
     - .claude/hooks/workspace_boundary_guard.ps1
-    - shared/claude/policies/model-routing-policy.md
     - scripts/claude_long_task_notifications/
     - scripts/platform/install_claude_long_task_notifications.ps1
     - scripts/workspace/workspace_health.py
@@ -197,8 +196,6 @@ tasks:
     - PROJECT_CONTEXT/continuity/current_status.md
     - PROJECT_CONTEXT/continuity/session_handoff.md
     - USAGE_GUIDES/QUICK_START/claude_code.md
-    - scripts/workspace/claude_model_advice.py
-    - scripts/tests/workspace/test_claude_model_advice.py
     - machine-local Claude project registry and launcher scripts
     ignore:
     - external project implementation details
@@ -214,11 +211,8 @@ tasks:
     - README.md
     - PROJECT_CONTEXT/
     - USAGE_GUIDES/
-    - shared/claude/policies/model-routing-policy.md
     - scripts/claude_long_task_notifications/
     - scripts/platform/install_claude_long_task_notifications.ps1
-    - scripts/workspace/claude_model_advice.py
-    - scripts/tests/workspace/test_claude_model_advice.py
     - scripts/workspace/workspace_health.py
     - scripts/tests/workspace/test_workspace_health.py
     - explicitly approved machine-local Claude registry and launchers
@@ -230,16 +224,15 @@ tasks:
     - git diff --check
   claude_notification_hooks:
     use_when:
-    - Changing Claude long-task notification hooks or their installer without changing model selection.
+    - Changing Claude long-task notification hooks or their installer.
     use_when_zh:
-    - 修改 Claude 长任务通知钩子或安装器，但不修改模型选择
+    - 修改 Claude 长任务通知钩子或安装器
     required:
     - .claude/settings.json
     - scripts/claude_long_task_notifications/
     - scripts/platform/install_claude_long_task_notifications.ps1
     optional: []
     ignore:
-    - Claude model-routing policy
     - private session history
     - unrelated project launchers
     tool_profile: workspace_maintenance
@@ -253,36 +246,6 @@ tasks:
     - PROJECT_CONTEXT/tasks/ledger/**
     validation:
     - parse every PowerShell notification script
-    - git diff --check
-  claude_model_routing:
-    use_when:
-    - Changing Claude two-stage model advice or its policy and focused tests without changing notification hooks.
-    use_when_zh:
-    - 修改 Claude 两阶段模型建议、对应策略或聚焦测试，但不修改通知钩子
-    required:
-    - shared/claude/policies/model-routing-policy.md
-    - scripts/workspace/claude_model_advice.py
-    - scripts/tests/workspace/test_claude_model_advice.py
-    optional:
-    - CLAUDE.md
-    - USAGE_GUIDES/QUICK_START/claude_code.md
-    ignore:
-    - notification hooks
-    - provider credentials and authentication
-    - private session history
-    tool_profile: workspace_maintenance
-    ledger: true
-    budget: {required_warn_tokens: 10000, expanded_warn_tokens: 14000, hard_max_tokens: 14000}
-    write_scope:
-    - shared/claude/policies/model-routing-policy.md
-    - scripts/workspace/claude_model_advice.py
-    - scripts/tests/workspace/test_claude_model_advice.py
-    - CLAUDE.md
-    - USAGE_GUIDES/QUICK_START/claude_code.md
-    - PROJECT_CONTEXT/tasks/records/**
-    - PROJECT_CONTEXT/tasks/ledger/**
-    validation:
-    - python -m unittest scripts.tests.workspace.test_claude_model_advice
     - git diff --check
   governance_workflow_simplification:
     use_when:

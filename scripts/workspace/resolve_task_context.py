@@ -67,7 +67,6 @@ TASK_GROUPS = (
             "runtime_authorization_enforcement",
             "governance_workflow_simplification",
             "claude_notification_hooks",
-            "claude_model_routing",
             "claude_project_boundary",
             "platform_exposure_audit",
             "platform_exposure",

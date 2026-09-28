@@ -33,23 +33,6 @@ risks:
       - "opencode.json"
       - "scripts/publishing/"
 
-  - id: "RISK-20260718-005"
-    title: "Claude Code routing checks can add duplicate interaction latency"
-    status: "observed"
-    trigger_when:
-      - "The same model-routing guard runs on both prompt submission and broad tool use."
-      - "Interactive Claude Code work shows repeated routing delay or inconsistent routing decisions."
-    impact:
-      - "Every interaction can pay routing-check latency, while removing either phase can lose assessment-before-tool coverage."
-    current_handling:
-      - "Treat prompt submission and tool use as separate phases: one injects the assessment requirement and the other enforces it."
-      - "Optimize only after a measured latency audit proves an equivalent replacement preserves both phases."
-      - "Do not change the independent workspace write-boundary guard as part of routing optimization."
-    related_files:
-      - ".claude/settings.json"
-      - ".claude/hooks/model_routing_guard.ps1"
-      - ".claude/hooks/workspace_boundary_guard.ps1"
-
   - id: "RISK-20260715-003"
     title: "Path references drift after workspace package moves"
     status: "candidate"

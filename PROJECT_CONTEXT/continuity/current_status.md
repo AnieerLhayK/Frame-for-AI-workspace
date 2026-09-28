@@ -80,10 +80,10 @@
 - Task ledger is partitioned under `PROJECT_CONTEXT/tasks/ledger/YYYY/MM.md` to preserve maintenance decisions without rereading broad context.
 - Task outcomes have a separate tracked fact layer under `PROJECT_CONTEXT/tasks/records/`; `workspace records` validates and summarizes success, validation, edits, duration, token fields, and usability.
 - Task resolver established with `scripts/workspace/resolve_task_context.py`; it emits a bounded task view and avoids rereading the full task registry by default.
-- Eight focused second-batch task routes now isolate skill bundle release,
+- Seven focused second-batch task routes now isolate skill bundle release,
   projection publisher edits, agent registry edits, runtime guards, report
-  freshness status, Claude notification hooks, Claude model routing, and
-  cleanup audits. Their aggregate compatibility routes retain fixed hard
+  freshness status, Claude notification hooks, and cleanup audits. Their
+  aggregate compatibility routes retain fixed hard
   limits rather than raising budgets to hide context growth.
 - The shared prompt registry and task-prompt injection were retired. Durable
   guidance belongs in its owning package or skill; user guides contain only

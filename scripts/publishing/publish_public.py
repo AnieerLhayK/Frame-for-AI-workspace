@@ -617,9 +617,6 @@ This public repository is a governed AI workspace framework template.
 Run `python scripts/setup_public_workspace.py`, then use the read-only health,
 task-routing, and test commands documented in `BEGINNER_GUIDE.md`.
 
-The optional Claude model-advice toggle is documented at
-`.claude/model-routing-advice.json`; it is advisory and does not grant extra
-permissions.
 """
 
 
