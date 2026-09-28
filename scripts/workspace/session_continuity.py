@@ -9,6 +9,7 @@ from typing import Any
 
 from scripts.workspace.project_context import PROJECT_CONTEXT_ROOT
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.manifest_loader import load_manifest
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
 REGISTRY_PATH = PROJECT_CONTEXT_ROOT / "continuity" / "session_migrations.json"
 
@@ -197,7 +198,7 @@ def run_audit(
     migration_id: str | None = None,
     workspace_root: Path = WORKSPACE_ROOT,
 ) -> dict[str, Any]:
-    manifest = load_json(manifest_path)
+    manifest = load_manifest(manifest_path)
     registry = load_json(registry_path)
     migrations = [
         item

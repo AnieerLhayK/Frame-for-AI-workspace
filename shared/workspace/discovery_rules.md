@@ -58,7 +58,9 @@ After the manifest is found:
 
 ## Required Files
 
-Required files are declared by each skill in `skills[].required_files`.
+Required files are declared by each skill in the manifest loader's
+`skills[].required_files` view. Source registrations remain in owner-local
+catalogs.
 
 If a required file is missing:
 
@@ -68,7 +70,8 @@ If a required file is missing:
 
 ## Optional Files
 
-Optional files are declared by each skill in `skills[].optional_files`.
+Optional files are declared by each skill in the manifest loader's
+`skills[].optional_files` view.
 
 If an optional file is missing:
 

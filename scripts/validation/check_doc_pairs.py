@@ -153,7 +153,8 @@ def analyze_changes(
     changes: list[tuple[str, str]],
     strict: bool = False,
 ) -> dict[str, Any]:
-    changed = {path for _, path in changes}
+    changed_status = {path: status.strip() for status, path in changes}
+    changed = set(changed_status)
     warnings: list[str] = []
     errors: list[str] = []
 
@@ -161,6 +162,9 @@ def analyze_changes(
         if not is_markdown(path):
             continue
         if is_zh_companion(path):
+            primary = primary_for(path)
+            if changed_status.get(path) == "D" and changed_status.get(primary) == "D":
+                continue
             if not companion_is_registered(path, registry):
                 errors.append(f"unregistered zh-CN companion changed: {path}")
             continue

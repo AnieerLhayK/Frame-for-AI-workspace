@@ -1,26 +1,26 @@
 # Canonical knowledge topic.
 topics:
   runtime_skill_usage:
-    title: Runtime skill usage and user-facing guidance
+    title: Runtime skill usage and authority
     aliases:
     - runtime skill
     - use skill
     - invoke skill
-    - zyc usage
     - 用户端
     - 运行时 skill
-    - 调用 skill
     entries:
-    - path: USAGE_GUIDES/REFERENCE/README.md
+    - path: packages/character-system/runtime/characters/zyc/SKILL.md
+      layer: package
+      purpose: Canonical ZYC runtime behavior and boundaries.
+    - path: packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
+      layer: package
+      purpose: Canonical runtime drift diagnosis role and handoff.
+    - path: packages/character-system/engineering/maintenance/character-maintainer/SKILL.md
+      layer: package
+      purpose: Canonical maintenance authority and patch workflow.
+    - path: USAGE_GUIDES/QUICK_START/codex.md
       layer: usage_guides
-      purpose: Role-oriented map for runtime, engineering, workflow, and platform
-        reference material.
-    - path: USAGE_GUIDES/REFERENCE/runtime/zyc.md
+      purpose: Codex discovery and loading.
+    - path: USAGE_GUIDES/QUICK_START/opencode.md
       layer: usage_guides
-      purpose: Detailed runtime usage guidance for the ZYC character skill.
-    - path: USAGE_GUIDES/REFERENCE/runtime/diagnosis-maintenance-relationships.md
-      layer: usage_guides
-      purpose: When runtime use should hand off to diagnosis or maintenance.
-    - path: USAGE_GUIDES/PROMPT_TEMPLATES/character-system/runtime/zyc.md
-      layer: usage_guides
-      purpose: Copy-ready prompts for invoking the ZYC runtime skill.
+      purpose: OpenCode discovery and loading.

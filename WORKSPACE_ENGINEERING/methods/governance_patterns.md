@@ -56,7 +56,7 @@ The task registry (`PROJECT_CONTEXT/tasks/registry/index.yaml`) prevents broad c
 
 Before the registry, the first route consumed ~15k tokens. After declaring optional context and limiting preloaded files, the same route dropped to ~5k tokens and `PASS`.
 
-Key design: the registry does not duplicate file content — it routes which files to load. The resolver joins the registry, prompt registry, and budget without writing files.
+Key design: the registry does not duplicate file content — it routes which files to load. The resolver joins task routes and context budgets without writing files.
 
 ### PreToolUse Write Guard
 

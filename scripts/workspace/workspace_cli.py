@@ -31,11 +31,9 @@ def resolver_command(args: argparse.Namespace, *, strict_budget: bool = False) -
     ]
 
     if args.action == "list":
-        command.append("--list-prompts" if args.command == "prompt" else "--list")
+        command.append("--list")
     elif args.action == "resolve":
         command.append(args.task_id)
-    elif args.action == "show":
-        command.extend(["--prompt-id", args.prompt_id])
     else:
         raise ValueError(f"Unsupported resolver action: {args.action}")
 
@@ -44,8 +42,6 @@ def resolver_command(args: argparse.Namespace, *, strict_budget: bool = False) -
         command.extend(["--bind", binding])
     if getattr(args, "include_optional", False):
         command.append("--include-optional")
-    if getattr(args, "include_template", False):
-        command.append("--include-template")
     if getattr(args, "no_token_count", False):
         command.append("--no-token-count")
     if strict_budget or getattr(args, "strict_budget", False):
@@ -63,7 +59,6 @@ def add_resolution_options(parser: argparse.ArgumentParser) -> None:
     add_output_options(parser)
     parser.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
     parser.add_argument("--include-optional", action="store_true")
-    parser.add_argument("--include-template", action="store_true")
     parser.add_argument("--no-token-count", action="store_true")
     parser.add_argument("--strict-budget", action="store_true")
     parser.add_argument("--encoding")
@@ -113,17 +108,6 @@ def build_parser() -> argparse.ArgumentParser:
     task_resolve = task_commands.add_parser("resolve", help="Resolve bounded task context.")
     task_resolve.add_argument("task_id")
     add_resolution_options(task_resolve)
-
-    prompt_parser = commands.add_parser("prompt", help="List or resolve registered prompts.")
-    prompt_commands = prompt_parser.add_subparsers(dest="action", required=True)
-    prompt_list = prompt_commands.add_parser("list", help="List prompt ids.")
-    add_output_options(prompt_list)
-    prompt_show = prompt_commands.add_parser("show", help="Resolve one prompt.")
-    prompt_show.add_argument("prompt_id")
-    prompt_show.add_argument("--include-template", action="store_true")
-    prompt_show.add_argument("--no-token-count", action="store_true")
-    prompt_show.add_argument("--encoding")
-    add_output_options(prompt_show)
 
     preflight = commands.add_parser(
         "preflight",
@@ -466,7 +450,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def dispatch(args: argparse.Namespace) -> int:
-    if args.command in {"task", "prompt"}:
+    if args.command == "task":
         return run_command(resolver_command(args))
     if args.command == "preflight":
         return run_command(resolver_command(args, strict_budget=True))

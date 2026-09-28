@@ -1,7 +1,7 @@
 # Canonical knowledge topic.
 topics:
   skill_engineering_operations:
-    title: Skill generation, diagnosis, and maintenance operations
+    title: Character-skill generation, diagnosis, and maintenance
     aliases:
     - character generator
     - character maintainer
@@ -14,23 +14,15 @@ topics:
     - skill 诊断
     - skill 维护
     entries:
-    - path: USAGE_GUIDES/REFERENCE/README.md
-      layer: usage_guides
-      purpose: Role-oriented map for runtime, engineering, workflow, and platform
-        reference material.
-    - path: USAGE_GUIDES/REFERENCE/engineering/generation/character-generator.md
-      layer: usage_guides
-      purpose: Detailed character generation responsibilities and invocation guidance.
-    - path: USAGE_GUIDES/REFERENCE/engineering/diagnosis/style-doctor.md
-      layer: usage_guides
-      purpose: Detailed style diagnosis responsibilities and safe usage.
-    - path: USAGE_GUIDES/REFERENCE/engineering/maintenance/character-maintainer.md
-      layer: usage_guides
-      purpose: Detailed character maintenance responsibilities and patch guidance.
-    - path: USAGE_GUIDES/REFERENCE/engineering/production-maintenance-relationships.md
-      layer: usage_guides
-      purpose: Boundaries between generation, diagnosis, and maintenance roles.
+    - path: packages/character-system/engineering/generation/character-generator/SKILL.md
+      layer: package
+      purpose: Generator role, authority, and supported workflows.
+    - path: packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
+      layer: package
+      purpose: Diagnosis authority, runtime loop, and handoff.
+    - path: packages/character-system/engineering/maintenance/character-maintainer/SKILL.md
+      layer: package
+      purpose: Maintenance authority, patch decisions, and validation.
     - path: WORKSPACE_ENGINEERING/methods/skill_engineering/personal_corpus_preparation.md
       layer: workspace_engineering
-      purpose: Reusable method for preparing uneven personal corpora, source READMEs,
-        and profile guidance before character generation.
+      purpose: Reusable method for preparing personal corpora before generation.

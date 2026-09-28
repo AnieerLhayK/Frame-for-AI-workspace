@@ -174,7 +174,10 @@ EXCLUDED_PATHS = {
     "PROJECT_CONTEXT/reports/history",
     "PROJECT_CONTEXT/tasks/ledger",
     "PROJECT_CONTEXT/tasks/records",
-    "USAGE_GUIDES/PROMPT_TEMPLATES/character-system",
+    # These source templates are rendered as root-level public documents.
+    "USAGE_GUIDES/QUICK_START/beginner_guide.md",
+    "USAGE_GUIDES/QUICK_START/onboarding.md",
+    "USAGE_GUIDES/QUICK_START/path_mapping_reference.md",
     "opencode.json",
     "scripts/reporting/report_status.py",
     "scripts/reporting/report_routing_quality.py",
@@ -216,7 +219,6 @@ SCRUB_FILES: set[str] = {
     "PROJECT_CONTEXT/governance/context_budget.md",
     "WORKSPACE_ENGINEERING/external_knowledge/external_rag_planning.md",
     "USAGE_GUIDES/QUICK_START/claude_code.md",
-    "USAGE_GUIDES/QUICK_START/agent_governance.md",
     "scripts/start_hermes_gateway.ps1",
     "scripts/stop_hermes_gateway.ps1",
     "scripts/claude_long_task_notifications/hermes-mcp-client.js",
@@ -329,7 +331,7 @@ This is a structural skeleton. See the workspace architecture documentation
 for how to implement a skill in this category.
 
 Related:
-- workspace_manifest.yaml → skills[] for registration
+- `skills/<category>/registry.json` or package `package_manifest.json` for registration
 - shared/governance/agent_governance.yaml → surface class conventions
 - ARCHITECTURE.md → layer hierarchy
 """,
@@ -357,8 +359,9 @@ patterns defined in workspace_manifest.yaml and shared/governance/agent_governan
 
 ## Registration
 
-To register this skill, add an entry in workspace_manifest.yaml → skills[]
-with the appropriate role, authority, execution_modes, and exposures.
+To register this skill, add it to its category registry (or package catalog)
+with the appropriate role, authority, execution_modes, and exposures. The root
+manifest points to catalogs; runtime consumers use the central loader.
 """,
     "SHARED_PROTOCOLS.md": """# Shared Protocols
 
@@ -463,7 +466,9 @@ def is_template(rel_path: str) -> bool:
 
 def generate_public_manifest(source_manifest: Path) -> str:
     """Build a generic manifest without private packages, skills, or links."""
-    data = json.loads(source_manifest.read_text(encoding="utf-8"))
+    from scripts.workspace.manifest_loader import load_manifest
+
+    data = load_manifest(source_manifest)
     workspace = data.setdefault("workspace", {})
     workspace["workspace_name"] = "governed-ai-workspace-template"
     workspace["source_of_truth"] = "${WORKSPACE_ROOT}"
@@ -497,6 +502,7 @@ def generate_public_manifest(source_manifest: Path) -> str:
     }
     data["packages"] = []
     data["skills"] = []
+    data.pop("skill_catalogs", None)
     data["projections"] = []
     return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
 
@@ -617,49 +623,18 @@ permissions.
 """
 
 
+PUBLIC_QUICK_START_ROOT = WORKSPACE_ROOT / "USAGE_GUIDES" / "QUICK_START"
+PUBLIC_TEMPLATE_REPO_NAME = "governed-skill-workspace-template"
+
+
+def _read_public_guide_source(filename: str) -> str:
+    """Read a canonical public guide template from the usage-guide source tree."""
+    return (PUBLIC_QUICK_START_ROOT / filename).read_text(encoding="utf-8")
+
+
 def generate_path_mapping_md() -> str:
-    """Return the content for PATH_MAPPING_REFERENCE.md."""
-    return """# PATH_MAPPING_REFERENCE
-
-This workspace skeleton uses template variables to replace machine-specific
-absolute paths. Before first use, copy each `.template` file over the real
-file and replace the variables with your local paths.
-
-## Template Variables
-
-| Variable | Default (example) | Description |
-|----------|-------------------|-------------|
-| `${WORKSPACE_ROOT}` | `~/workspace` | Root of the cloned workspace repository |
-| `${DATA_ROOT}` | `~/.ai-data` | Base directory for AI-tool runtime data |
-| `${USER_HOME}` | `~` (Unix) / `%USERPROFILE%` (Windows) | User home directory |
-| `${DEV_ROOT}` | `~/dev` | Development projects root |
-| `${SCRATCH_ROOT}` | `~/tmp` | Scratch / temporary directory |
-| `${OTHER_PROJECT_ROOT}` | `~/projects` | Other repository roots (multi-project setups) |
-
-## What Needs Configuration
-
-1. **`workspace_manifest.yaml`** — Set `source_of_truth` to your clone path.
-   Review `platform_roots.*` and `projections[].link_path` for each AI platform
-   you use (Claude Code, Codex, OpenCode, Hermes).
-
-2. **`mcp/configs/installed-local.mcp.json`** — Fix the `python.exe` and
-   `node` binary paths, and the filesystem server's allowed directories.
-
-3. **`mcp/configs/wps-agent.mcp.json`** — Fix the `python.exe` path for the
-   WPS Office automation server.
-
-4. **`shared/governance/agent_registry.yaml`** — Set `data_root` and `cache_root` for
-   each registered agent to match your local environment.
-
-## Verification
-
-After configuration, run:
-```bash
-python -m scripts.workspace.workspace_cli health --with-tests
-python -m scripts.workspace.resolve_task_context --list
-python -m scripts.workspace.workspace_cli agent list
-```
-"""
+    """Return the source guide rendered as root-level PATH_MAPPING_REFERENCE.md."""
+    return _read_public_guide_source("path_mapping_reference.md")
 
 
 def generate_public_setup_py() -> str:
@@ -804,151 +779,17 @@ if __name__ == "__main__":
 
 
 def generate_beginner_guide_md(repo_name: str) -> str:
-    """Return beginner-focused guidance for the public skeleton."""
-    return f"""# BEGINNER_GUIDE - {repo_name}
-
-This repository is a public framework template for building a governed AI
-workspace. It keeps the workspace's own structure visible: task routing,
-knowledge lookup, agent boundaries, report checks, and explainable CLI
-entrypoints.
-
-## Quick Start
-
-Clone your fork, then run the conservative first-run helper:
-
-```bash
-git clone <your-fork-url>
-cd {repo_name}
-python scripts/setup_public_workspace.py
-```
-
-The helper:
-
-- copies `.template` configuration files to their real names when missing;
-- replaces standard path variables such as `${{WORKSPACE_ROOT}}` and `${{DATA_ROOT}}`;
-- creates the basic data root;
-- runs read-only checks for `workspace_cli.py`, task routing, `workspace explain`,
-  agent listing, and health.
-
-It does not configure provider credentials, install AI-platform plugins, create
-platform projections, or grant extra permissions. Use `--overwrite` only when
-you want to regenerate local config files from templates.
-
-## Core Commands To Learn First
-
-```bash
-python -m scripts.workspace.workspace_cli --help
-python -m scripts.workspace.workspace_cli task list
-python -m scripts.workspace.workspace_cli task resolve workspace_developer_experience
-python -m scripts.workspace.workspace_cli explain mechanism task-routing
-python -m scripts.workspace.workspace_cli explain path scripts/workspace/workspace_cli.py
-python -m scripts.workspace.workspace_cli agent list
-python -m scripts.workspace.workspace_cli health
-```
-
-These commands show the framework's own basic functions before you add your
-own skills under `skills/` or separately reviewed external skills under
-`external-skills/`.
-
-## What To Configure Manually
-
-After the helper runs, review:
-
-- `workspace_manifest.yaml` for your local source root and platform roots;
-- `shared/governance/agent_registry.yaml` for per-agent data/cache roots;
-- `mcp/configs/*.json` only if you use those MCP servers;
-- platform-specific loading surfaces only after you understand the projection
-  model in `ARCHITECTURE.md`.
-
-Keep credentials and provider settings out of this repository unless you have a
-separate, private policy for them.
-"""
+    """Render the canonical beginner guide for the public repository name."""
+    return _read_public_guide_source("beginner_guide.md").replace(
+        PUBLIC_TEMPLATE_REPO_NAME, repo_name
+    )
 
 
 def generate_onboarding_md(repo_name: str) -> str:
-    """Return the content for ONBOARDING.md."""
-    return f"""# ONBOARDING — Getting Started with {repo_name}
-
-This template provides the framework for a governed AI workspace.
-Follow these steps to set it up in your local environment. For the shortest
-beginner path, start with `BEGINNER_GUIDE.md`.
-
-## Prerequisites
-
-- Python 3.11+
-- Git
-- (Optional) One or more AI coding platforms: Claude Code, Codex, OpenCode, Hermes
-
-## Step 1: Clone
-
-```bash
-git clone <your-fork-url>
-cd {repo_name}
-```
-
-## Step 2: Configure Template Variables
-
-```bash
-# Copy template files to real names
-cp workspace_manifest.yaml.template workspace_manifest.yaml
-cp mcp/configs/installed-local.mcp.json.template mcp/configs/installed-local.mcp.json
-cp mcp/configs/wps-agent.mcp.json.template mcp/configs/wps-agent.mcp.json
-
-# Edit each file and replace ${{WORKSPACE_ROOT}}, ${{DATA_ROOT}}, ${{USER_HOME}}
-# with your actual local paths. See PATH_MAPPING_REFERENCE.md for details.
-```
-
-Or run the conservative helper:
-
-```bash
-python scripts/setup_public_workspace.py
-```
-
-The helper prepares only the framework's own basic functions. It does
-not configure provider credentials, AI-platform plugins, or external model
-settings.
-
-## Step 3: Install Dependencies
-
-```bash
-pip install -r scripts/requirements-context-tools.txt -r scripts/requirements-publish.txt
-pip install pytest
-```
-
-## Step 4: Verify
-
-```bash
-# Run the test suite
-python -m pytest scripts/tests -q
-
-# Check workspace health
-python -m scripts.workspace.workspace_cli health
-
-# List available tasks
-python -m scripts.workspace.workspace_cli task list
-
-# Explain how a mechanism or path connects to the workspace
-python -m scripts.workspace.workspace_cli explain mechanism task-routing
-python -m scripts.workspace.workspace_cli explain path scripts/workspace/workspace_cli.py
-
-# View agent registrations
-python -m scripts.workspace.workspace_cli agent list
-```
-
-## Step 5: Register Your Own Skills
-
-See `workspace_manifest.yaml` → `skills[]` for the skill declaration format.
-Add your own skills under `skills/`, then
-register them in `workspace_manifest.yaml` under `skills[]`.
-Each skill needs:
-1. A unique `id`
-2. A `role` (governance, production, maintenance, feedback_diagnosis, runtime_character)
-3. An `authority` block defining default and allowed capabilities
-4. `execution_modes` specifying write permissions
-5. `exposures[]` declaring which platforms can discover the skill
-
-Use `python -m scripts.workspace.workspace_cli skill init <id>` to scaffold a new skill.
-"""
+    """Render the canonical onboarding guide for the public repository name."""
+    return _read_public_guide_source("onboarding.md").replace(
+        PUBLIC_TEMPLATE_REPO_NAME, repo_name
+    )
 
 
 def write_file(out_dir: Path, rel_path: str, content: str) -> None:

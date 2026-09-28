@@ -19,7 +19,9 @@ REPORT_PATH = WORKSPACE_ROOT / "reports" / "history" / "migration_dry_run_report
 
 
 def load_manifest() -> dict[str, Any]:
-    return json.loads(MANIFEST_PATH.read_text(encoding="utf-8-sig"))
+    from scripts.workspace.manifest_loader import load_manifest as load_workspace_manifest
+
+    return load_workspace_manifest(MANIFEST_PATH)
 
 
 def get_source_commit() -> str:

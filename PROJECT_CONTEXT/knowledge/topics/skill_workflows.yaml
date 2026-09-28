@@ -1,7 +1,7 @@
 # Canonical knowledge topic.
 topics:
   skill_workflows:
-    title: End-to-end skill engineering workflows
+    title: Character-system engineering workflows
     aliases:
     - skill workflow
     - character workflow
@@ -11,18 +11,15 @@ topics:
     - 角色生成流程
     - 诊断修复流程
     entries:
-    - path: USAGE_GUIDES/REFERENCE/workflows/generate_character.md
-      layer: usage_guides
-      purpose: End-to-end character generation workflow.
-    - path: USAGE_GUIDES/REFERENCE/workflows/diagnose_runtime_drift.md
-      layer: usage_guides
-      purpose: End-to-end runtime drift diagnosis workflow.
-    - path: USAGE_GUIDES/REFERENCE/workflows/patch_existing_character.md
-      layer: usage_guides
-      purpose: End-to-end workflow for patching an existing character.
-    - path: USAGE_GUIDES/REFERENCE/workflows/validate_patch.md
-      layer: usage_guides
-      purpose: Validation workflow for a proposed character patch.
-    - path: USAGE_GUIDES/REFERENCE/workflows/generator_generalization.md
-      layer: usage_guides
-      purpose: Workflow for deciding whether a runtime fix belongs in generator logic.
+    - path: packages/character-system/engineering/generation/character-generator/docs/workflow.md
+      layer: package
+      purpose: Canonical generation pipeline.
+    - path: packages/character-system/engineering/diagnosis/style-doctor/SKILL.md
+      layer: package
+      purpose: Diagnosis workflow, output, and maintainer handoff.
+    - path: packages/character-system/engineering/maintenance/character-maintainer/SKILL.md
+      layer: package
+      purpose: Decision-gated patch, validation, and generalization workflow.
+    - path: packages/character-system/runtime/characters/zyc/SKILL.md
+      layer: package
+      purpose: Runtime task selection and anti-drift workflow.

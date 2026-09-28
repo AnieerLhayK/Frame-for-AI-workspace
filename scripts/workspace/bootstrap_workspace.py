@@ -15,7 +15,14 @@ DEFAULT_MANIFEST_FILENAME = "workspace_manifest.yaml"
 
 
 def read_manifest(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8-sig"))
+    import sys
+
+    workspace_root = path.resolve().parent
+    if str(workspace_root) not in sys.path:
+        sys.path.insert(0, str(workspace_root))
+    from scripts.workspace.manifest_loader import load_manifest
+
+    return load_manifest(path)
 
 
 def find_manifest(start: Path, filename: str, max_depth: int) -> tuple[Path | None, list[Path]]:

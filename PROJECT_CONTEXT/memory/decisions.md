@@ -15,7 +15,7 @@ research-data mutation, network access, or publication.
 ## Showcase-Packer is a clean-room native skill
 
 The unversioned, unlicensed research source `project-showcase-pack` is design
-inspiration only and is neither migrated nor copied. `skills/showcase-packer/`
+inspiration only and is neither migrated nor copied. `skills/content/showcase-packer/`
 is independently authored, with a user-confirmed preview-before-build gate and
 default exclusion of high-risk material. Its derived output is confined to the
 manifest-declared workspace output root and never changes source material.
@@ -106,15 +106,19 @@ manifest-declared workspace output root and never changes source material.
   reports may retain the old name, but registered publishers and manifest
   projections define current Git boundaries.
 
-## Package Protocols Use Profiles And Skill Inventories
+## Package Protocols And Asset Catalogs Have Separate Ownership
 
-- decision: Validate every package against the generic protocol schema, then
-  apply a declared profile for domain-specific contracts.
-- reason: Character-only runtime-loop fields should not be mandatory for a
-  teaching package, while all packages need auditable skill lifecycle state.
-- date if known: 2026-08-30 workspace optimization batch 2.
-- consequence: `skill_inventory` records active/development/retired and actual
-  Workspace registration; legacy `core_skills` remains readable with warnings.
+- decision: Validate each package's protocol manifest against a generic protocol schema and a declared domain profile; keep package-owned skills/tools in its separate package catalog.
+- reason: Protocol consumers should not have to interpret asset inventory fields, while package owners still need auditable lifecycle state.
+- date if known: 2026-09-25 Workspace skill taxonomy migration, superseding the 2026-08-30 combined inventory decision.
+- consequence: `protocol_manifest.json` contains protocol data only; `package_manifest.json` owns package skill/tool inventory and registration status.
+
+## Skill Registration Is Owned By Local Catalogs
+
+- decision: Keep only catalog roots and package declarations in the root manifest; store standalone registrations in category registries and package-owned skill/tool records in each package's `package_manifest.json`. A single loader aggregates registered skills into the runtime `skills[]` view.
+- reason: The root manifest had become a coordination bottleneck. Local ownership lowers contention while preserving one compatibility contract for runtime consumers and keeping package protocols focused on protocols.
+- date if known: 2026-09-25 Workspace skill taxonomy migration.
+- consequence: New consumers must use `scripts.workspace.manifest_loader`; do not scan catalog directories or restore per-skill root registrations. Category changes require a planned path/reference migration and an effective-registration parity check.
 
 ## Runtime-Loop History Is Audited Read-Only
 
@@ -126,15 +130,18 @@ manifest-declared workspace output root and never changes source material.
 - consequence: malformed, duplicate, broken, or inconsistent records are
   errors; unledgered history is a warning and strict mode exits 2.
 
-## Prompt And Natural-Language Routing Fail Closed
+## Task Routing Stays Declarative
 
-- decision: Reject duplicate Prompt Registry YAML keys and route uncertain task
-  language through bounded knowledge lookup before selecting an exact task id.
-- reason: Silent key shadowing and guessed task ids make instruction authority
-  difficult to audit.
-- date if known: 2026-08-30 workspace optimization batch 2.
-- consequence: Prompt templates retain explicit authority boundaries, and no
-  external RAG or broad `task suggest` service is introduced before observation.
+- decision: Keep task routing in the task registry and resolve only registered
+  context, scope, validation, and tool policy. Do not maintain a second prompt
+  registry or inject task-specific prompt frames. Put durable behavior in the
+  owning `packages/` or `skills/` instructions; keep `USAGE_GUIDES/` for platform
+  loading, workspace CLI onboarding, and the three published template guides.
+- reason: The prompt registry duplicated task and skill guidance, expanded the
+  resolver/CLI surface, and created another path inventory to maintain.
+- date if known: 2026-09-27 USAGE_GUIDES simplification.
+- consequence: Retire prompt list/show and prompt-token reporting. Use bounded
+  knowledge lookup when task intent is uncertain, then resolve one exact task id.
 
 ## Full-Drive Discovery Is Forbidden
 

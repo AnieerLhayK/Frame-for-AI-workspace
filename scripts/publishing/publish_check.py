@@ -82,7 +82,6 @@ REQUIRED_PATHS: set[str] = {
     "scripts/workspace/workspace_health.py",
     "scripts/setup_public_workspace.py",
     "PROJECT_CONTEXT/tasks/registry/index.yaml",
-    "USAGE_GUIDES/prompt_registry.yaml",
     ".claude/rules/workspace-boundary.md",
     ".claude/project-boundary.json",
     ".github/workflows/ci.yml",

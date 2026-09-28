@@ -25,3 +25,4 @@ Current references:
 - `style_alignment.md`
 - `evolution_patterns.md`
 - `personal_corpus_preparation.md`
+- `skill_catalog_partitioning.md`

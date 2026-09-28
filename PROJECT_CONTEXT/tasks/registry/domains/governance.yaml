@@ -31,7 +31,6 @@ tasks:
     - platform session stores
     - active external lease contents unless explicitly supplied
     - unrelated skill implementation
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -45,7 +44,7 @@ tasks:
     - reports/agent-requests/
     - reports/agent-experiments/
     - PROJECT_CONTEXT/
-    - USAGE_GUIDES/QUICK_START/agent_governance.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - README.md
     - ARCHITECTURE.md
     - scripts/workspace/agent_governance.py
@@ -102,7 +101,6 @@ tasks:
     - runtime platform guards
     - publisher registration
     - unrelated task records
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -144,7 +142,6 @@ tasks:
     - platform loading surfaces as editable source
     - unrelated Skill implementation
     - external data and Session stores
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -208,7 +205,6 @@ tasks:
     - private Claude session history
     - Claude authentication and provider settings
     - unrelated skill behavior
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -246,7 +242,6 @@ tasks:
     - Claude model-routing policy
     - private session history
     - unrelated project launchers
-    prompt: [task_routing]
     tool_profile: workspace_maintenance
     ledger: true
     budget: {required_warn_tokens: 10000, expanded_warn_tokens: 14000, hard_max_tokens: 14000}
@@ -275,7 +270,6 @@ tasks:
     - notification hooks
     - provider credentials and authentication
     - private session history
-    prompt: [task_routing]
     tool_profile: workspace_maintenance
     ledger: true
     budget: {required_warn_tokens: 10000, expanded_warn_tokens: 14000, hard_max_tokens: 14000}
@@ -318,7 +312,6 @@ tasks:
     - platform loading surfaces as editable source
     - unrelated Skill implementation
     - external Session, cache, and tool data
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -362,8 +355,6 @@ tasks:
     - PROJECT_CONTEXT/memory/decisions.md
     - shared/operations/reporting_policy.md
     - shared/schemas/package_protocol_manifest.schema.json
-    - USAGE_GUIDES/prompt_registry.yaml
-    - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/
     - workspace_manifest.yaml
     - packages/character-system/shared/protocol_manifest.json
     - packages/character-system/shared/schemas/protocol_manifest.schema.json
@@ -422,7 +413,7 @@ tasks:
     - scripts/reporting/ci_run.py
     optional:
     - AGENTS.md
-    - USAGE_GUIDES/QUICK_START/agent_governance.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - WORKSPACE_ENGINEERING/methods/governance_patterns.md
     - packages/character-system/runtime/characters/zyc/SKILL.md
@@ -432,7 +423,6 @@ tasks:
     - unrelated Skill implementation
     - external Session contents except bounded incident evidence
     - platform data unrelated to workspace runtime enforcement
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -480,7 +470,7 @@ tasks:
     - PROJECT_CONTEXT/tasks/records/README.md
     - PROJECT_CONTEXT/tasks/records/README.zh-CN.md
     - scripts/tests/reporting/test_ci_run.py
-    - USAGE_GUIDES/QUICK_START/agent_governance.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - WORKSPACE_ENGINEERING/methods/governance_patterns.md
     - packages/character-system/runtime/characters/zyc/SKILL.md
@@ -531,7 +521,6 @@ tasks:
     - agent registration schema
     - public publishers
     - unrelated skill implementation
-    prompt: [task_routing]
     tool_profile: workspace_maintenance
     ledger: true
     budget: {required_warn_tokens: 30000, expanded_warn_tokens: 32000, hard_max_tokens: 32000}
@@ -567,7 +556,6 @@ tasks:
     - platform settings and environment variables
     - unrelated project implementation
     - private session history
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true

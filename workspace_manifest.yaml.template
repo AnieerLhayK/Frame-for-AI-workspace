@@ -43,7 +43,6 @@
     "projection_paths": {}
   },
   "packages": [],
-  "skills": [],
   "plugin_skills": [
     {
       "id": "gh-fix-ci",
@@ -162,5 +161,6 @@
     "required_missing": "error_stop",
     "optional_missing": "warning_degraded_mode",
     "error_format": "standard_block"
-  }
+  },
+  "skills": []
 }

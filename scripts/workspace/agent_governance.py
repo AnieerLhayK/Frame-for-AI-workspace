@@ -12,6 +12,7 @@ from typing import Any
 import yaml
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.manifest_loader import load_manifest as load_workspace_manifest
 from scripts.workspace.task_records import active_external_registration, active_registration, read_record
 from scripts.workspace.governance.hermes_approval import (
     HERMES_GUARD_EVENTS,
@@ -47,10 +48,7 @@ def load_yaml(path: Path) -> dict[str, Any]:
 
 
 def load_manifest() -> dict[str, Any]:
-    payload = json.loads(MANIFEST_PATH.read_text(encoding="utf-8-sig"))
-    if not isinstance(payload, dict):
-        raise ValueError("workspace manifest must be an object")
-    return payload
+    return load_workspace_manifest(MANIFEST_PATH)
 
 
 def load_registry() -> dict[str, Any]:

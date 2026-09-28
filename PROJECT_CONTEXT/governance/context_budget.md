@@ -26,11 +26,11 @@ Load or execute these for almost every maintenance task:
 - `git status --short --untracked-files=all`
 - `workspace task resolve <task-id>`
 
-Use `workspace task list` when the exact task id is unknown. The resolver reads the full task and prompt registries itself and emits only the selected task view.
+Use `workspace task list` when the exact task id is unknown. The resolver reads the task registry and emits only the selected task view.
 
 The resolver also returns a task-level tool profile. Unlisted capabilities are denied by default; capabilities under `confirm` require explicit user approval for the current task.
 
-Reason: this establishes routing, prompt guidance, Git safety, tool boundaries, and a measured context budget without loading the full governance layer into model context.
+Reason: this establishes task routing, Git safety, tool boundaries, and a measured context budget without loading the full governance layer into model context.
 
 ### Level B: Task-Required Context
 
@@ -40,9 +40,7 @@ Examples:
 
 - platform exposure work: manifest, current status, architecture, quick starts, platform debug output;
 - runtime drift work: runtime loop policy, drift taxonomy, target character `SKILL.md`;
-- prompt usage work: `USAGE_GUIDES/README.md`, `START_HERE.md`, `USAGE_GUIDES/prompt_registry.yaml`, and relevant prompt templates.
-- task prompt frames are returned directly by the resolver;
-- use `--include-template` only when the full copy-ready template is required.
+- usage guide work: `USAGE_GUIDES/README.md`, platform quick starts, and the workspace CLI guide.
 
 Reason: task-required context should be enough to start work safely.
 
@@ -58,7 +56,6 @@ The resolver normally omits these routing files from model context after consumi
 
 - `PROJECT_CONTEXT/tasks/registry/index.yaml`
 - `PROJECT_CONTEXT/governance/context_budget.md`
-- `USAGE_GUIDES/prompt_registry.yaml`
 
 Tasks that maintain those files retain them explicitly.
 
@@ -184,7 +181,6 @@ Run:
 ```powershell
 python -m scripts.workspace.resolve_task_context <task-id>
 python -m scripts.workspace.resolve_task_context <task-id> --include-optional
-python -m scripts.workspace.resolve_task_context --prompt-id <prompt-id> --include-template
 ```
 
 The default mode warns rather than blocks. Use `--strict-budget` in CI or explicit audits when a warning should produce a non-zero exit code.

@@ -25,6 +25,6 @@ topics:
       layer: shared
       purpose: Concrete agent identity, status, scope, platform, storage, and lifecycle
         registrations.
-    - path: USAGE_GUIDES/QUICK_START/agent_governance.md
+    - path: USAGE_GUIDES/QUICK_START/workspace_cli.md
       layer: usage_guides
-      purpose: Commands for checking writes, creating requests, and validating leases.
+      purpose: Concise task, authority check, request, lease, and workflow commands.

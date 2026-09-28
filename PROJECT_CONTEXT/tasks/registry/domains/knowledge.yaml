@@ -12,7 +12,6 @@ tasks:
     - PROJECT_CONTEXT/tasks/registry/
     - PROJECT_CONTEXT/governance/context_budget.md
     - PROJECT_CONTEXT/tasks/ledger/README.md
-    - USAGE_GUIDES/prompt_registry.yaml
     - scripts/workspace/resolve_task_context.py
     - scripts/tests/workspace/test_resolve_task_context.py
     optional:
@@ -23,7 +22,6 @@ tasks:
     - private corpus material
     - platform loading surfaces
     - unrelated skill implementation
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -39,7 +37,6 @@ tasks:
     validation:
     - python -m unittest scripts.tests.workspace.test_resolve_task_context
     - python -m scripts.workspace.resolve_task_context --list
-    - python -m scripts.workspace.resolve_task_context --list-prompts
     - python -m scripts.workspace.resolve_task_context platform_exposure_audit --bind platform=codex --format json
     - git diff --check
   knowledge_interface_tooling:
@@ -63,7 +60,6 @@ tasks:
     - private corpus material
     - platform loading surfaces
     - indexed entry content unless a missing or incorrect route is demonstrated
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -115,7 +111,6 @@ tasks:
     - platform loading surfaces
     - skill implementation
     - ledger entries older than the latest 5 unless a named task requires reconciliation
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -134,20 +129,18 @@ tasks:
     - python -m scripts.workspace.workspace_cli summary --format json
     - python -m scripts.workspace.workspace_cli health --with-tests
     - git diff --check
-  prompt_usage_update:
+  usage_guide_edit:
     use_when:
-    - Changing user-facing prompt templates, quick starts, or usage guides.
+    - Changing platform loading notes, workspace CLI guidance, or public template guides.
     use_when_zh:
-    - 修改面向用户的 prompt 模板、快速入门或使用指南
+    - 修改平台加载说明、workspace CLI 指南或公开模板引导文档
     required:
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/governance/context_budget.md
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
     - USAGE_GUIDES/README.md
-    - USAGE_GUIDES/START_HERE.md
-    - USAGE_GUIDES/prompt_registry.yaml
-    - USAGE_GUIDES/PROMPT_TEMPLATES/README.md
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
     optional:
     - workspace_manifest.yaml
     - PROJECT_CONTEXT/continuity/current_status.md
@@ -155,8 +148,6 @@ tasks:
     - reports/
     - packages/character-system/engineering/generation/character-generator/scripts/
     - packages/character-system/runtime/characters/zyc/references/
-    prompt:
-    - usage_guide_edit
     tool_profile: workspace_maintenance
     ledger: true
     write_scope:
@@ -165,8 +156,7 @@ tasks:
     - PROJECT_CONTEXT/tasks/ledger/README.md
     validation:
     - python -m scripts.validation.check_doc_pairs --validate-coverage
-    - git diff -- USAGE_GUIDES
-    - all task prompt ids exist in USAGE_GUIDES/prompt_registry.yaml
+    - git diff --check
   source_of_truth_dedup:
     use_when:
     - Removing duplicated path, projection, platform-root, or source-of-truth facts
@@ -181,20 +171,17 @@ tasks:
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - PROJECT_CONTEXT/continuity/current_status.md
     - ARCHITECTURE.md
-    - USAGE_GUIDES/prompt_registry.yaml
     - shared/workspace/workspace_path_policy.md
     optional:
     - PROJECT_CONTEXT/continuity/session_handoff.md
     - PROJECT_CONTEXT/memory/decisions.md
     - PROJECT_CONTEXT/memory/glossary.md
     - USAGE_GUIDES/QUICK_START/
-    - USAGE_GUIDES/PROMPT_TEMPLATES/
     - rg output for duplicated local paths
     ignore:
     - reports/ unless regenerating snapshots is explicitly part of the task
     - platform loading surfaces
     - skill runtime logic
-    prompt:
     - source_truth_dedup
     tool_profile: workspace_maintenance
     ledger: true
@@ -205,7 +192,6 @@ tasks:
     - workspace_manifest.yaml only when a missing fact needs a canonical home
     validation:
     - rg for duplicated absolute local path facts outside manifest and reports
-    - all task prompt ids exist in USAGE_GUIDES/prompt_registry.yaml
     - python -m scripts.validation.validate_protocols when shared protocols change
     - git diff --check
   startup_context_optimization:
@@ -232,7 +218,6 @@ tasks:
     - private corpus material
     - platform loading surfaces
     - skill implementation beyond entry files
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -277,7 +262,6 @@ tasks:
     - reports/
     - packages/character-system/engineering/generation/character-generator/characters/
     - packages/character-system/runtime/characters/zyc/references/
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -341,7 +325,6 @@ tasks:
     - platform session stores
     - unrelated runtime reports
     - raw third-party repositories unless explicitly approved as evidence
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true

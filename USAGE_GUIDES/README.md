@@ -1,57 +1,21 @@
 # Usage Guides
 
-`USAGE_GUIDES/` is the prompt-first usage layer for this workspace.
+`USAGE_GUIDES/` contains platform loading notes, workspace CLI onboarding, and three public template guides. Skill behavior and authority live in `packages/` and `skills/`; paths and projections are defined by `workspace_manifest.yaml`.
 
-Use this folder when you want to run a skill, copy a safe prompt template, understand where a skill is currently exposed, or follow a cross-platform workflow.
+## Start here
 
-## Start Here
+- Codex: [quick start](QUICK_START/codex.md)
+- Claude Code: [project switching](QUICK_START/claude_code.md)
+- OpenCode: [quick start](QUICK_START/opencode.md)
+- Hermes: [quick start](QUICK_START/hermes.md)
+- Workspace maintenance: [CLI guide](QUICK_START/workspace_cli.md)
 
-1. Open `START_HERE.md`.
-2. Open `QUICK_START/workspace_cli.md` when maintaining or developing the workspace.
-3. Open `PROMPT_LIBRARY.md` when you need the prompt library entry point.
-4. Check `prompt_registry.yaml` when you need a reusable prompt id or task-specific prompt frame.
-5. Copy a prompt from `PROMPT_TEMPLATES/`.
-6. Check `QUICK_START/` if you are unsure which platform to use.
-7. Open `REFERENCE/README.md` when you need detailed role or workflow guidance.
+## Public workspace template guides
 
-## What This Is
+These source files retain the existing publishing contract and generate root-level public documents:
 
-- A low-maintenance user guide layer.
-- A prompt template library.
-- A prompt registry for reusable prompt ids and meta-prompts.
-- A practical usage map organized by runtime and engineering role, with
-  separate platform loading guidance where deployment details differ.
-- A place for safe invocation patterns.
+- [Beginner guide](QUICK_START/beginner_guide.md)
+- [Onboarding](QUICK_START/onboarding.md)
+- [Path mapping reference](QUICK_START/path_mapping_reference.md)
 
-## What This Is Not
-
-- Not the source of truth. That remains `workspace_manifest.yaml`.
-- Not the protocol layer. Protocols live in `shared/`.
-- Not current project memory. That lives in `PROJECT_CONTEXT/`.
-- Not runtime drift records. Those live in `packages/character-system/reports/runtime-loop/`.
-
-## Main Entry Points
-
-- `PROMPT_TEMPLATES/`: copy-ready prompts.
-- `PROMPT_LIBRARY.md`: prompt library purpose, commands, maturity, and build plan.
-- `prompt_registry.yaml`: prompt id registry for task routing, reusable meta-prompts, and template lookup.
-- `QUICK_START/`: short platform usage notes.
-- `QUICK_START/workspace_cli.md`: beginner guide for the unified maintenance CLI.
-- `REFERENCE/README.md`: index of detailed guidance by role and workflow.
-- `REFERENCE/runtime/`: user-facing runtime skill details.
-- `REFERENCE/engineering/`: generation, diagnosis, maintenance, and lifecycle details.
-- `REFERENCE/workflows/`: end-to-end workflows that cross multiple roles.
-- `REFERENCE/platforms/`: platform-specific loading and safety notes.
-- `SAFETY.md`: compact guardrails for avoiding common misuse.
-
-## Reference And Template Split
-
-`REFERENCE/` and `PROMPT_TEMPLATES/` may cover the same skill or workflow, but
-they are not duplicate sources:
-
-- Use `REFERENCE/` for explanation, role boundaries, and when-to-use guidance.
-- Use `PROMPT_TEMPLATES/` for text that can be copied into an AI session.
-
-When both layers need the same safety rule, keep the full operational wording in
-the prompt template and point the reference guide to the template instead of
-repeating long prompt text.
+`workspace_manifest.yaml` is the path and projection source of truth. Shared protocols live in `shared/`; current project state and task routing live in `PROJECT_CONTEXT/`.

@@ -88,6 +88,29 @@ class DocPairCheckTests(unittest.TestCase):
         self.assertEqual(payload["status"], "PASS")
         self.assertFalse(payload["errors"])
 
+    def test_deleting_unregistered_pair_together_passes(self) -> None:
+        payload = analyze_changes(
+            self.root,
+            self.registry,
+            [
+                (" D", "retired/guide.md"),
+                (" D", "retired/guide.zh-CN.md"),
+            ],
+        )
+
+        self.assertEqual(payload["status"], "PASS")
+        self.assertFalse(payload["errors"])
+
+    def test_deleting_unregistered_companion_without_primary_still_errors(self) -> None:
+        payload = analyze_changes(
+            self.root,
+            self.registry,
+            [(" D", "retired/guide.zh-CN.md")],
+        )
+
+        self.assertEqual(payload["status"], "ERROR")
+        self.assertIn("unregistered zh-CN companion", payload["errors"][0])
+
     def test_existing_coverage_accepts_directory_rules(self) -> None:
         primary = self.root / "docs" / "guide.md"
         companion = self.root / "docs" / "guide.zh-CN.md"

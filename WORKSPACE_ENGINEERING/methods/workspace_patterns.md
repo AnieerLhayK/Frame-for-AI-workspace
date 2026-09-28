@@ -10,8 +10,11 @@ platform.
 
 ## `skills/`
 
-Standalone source layer for unrelated skills that share workspace governance
-but do not yet need a domain package.
+Categorized source layer for standalone skills that share workspace governance
+but do not belong to a package. Category registries own each skill entry, and
+the root `catalog.json` indexes those registries. See
+`methods/skill_engineering/skill_catalog_partitioning.md` before changing its
+categories or references.
 
 ## `shared/`
 
@@ -94,7 +97,7 @@ The resolver (`scripts/workspace/resolve_task_context.py`) unifies three registr
 
 ```text
 tasks/registry/index.yaml → what files to read + tool profile + scope
-prompt_registry.yaml  →  what prompts to load + anchors
+task registry  →  required context, write scope, validation, and tool policy
 context_budget.md     →  token ceiling per level
 ```
 

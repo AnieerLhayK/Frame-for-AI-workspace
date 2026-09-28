@@ -11,7 +11,7 @@ default_rules:
   - Run git status --short --untracked-files=all.
   - Use workspace task list when the exact task id is unknown.
   - Resolve the exact task through workspace task resolve before broad discovery.
-  - Treat the resolver output as the bounded task registry and prompt registry view.
+  - Treat resolver output as the bounded task registry view.
   - Read the latest 5 entries in PROJECT_CONTEXT/tasks/ledger/README.md when continuity
     or previous decisions matter.
   - Load only the resolver-declared required context first.
@@ -159,18 +159,17 @@ default_rules:
       consumed_files:
       - PROJECT_CONTEXT/tasks/registry/index.yaml
       - PROJECT_CONTEXT/governance/context_budget.md
-      - USAGE_GUIDES/prompt_registry.yaml
       retain_consumed_for_tasks:
       - startup_context_optimization
       - context_resolution_tooling
       - task_registry_update
-      - prompt_usage_update
+      - usage_guide_edit
   task_ledger:
     path: PROJECT_CONTEXT/tasks/ledger/
     read_recent_entries: 5
     append_when:
     - source-of-truth boundaries change
-    - task routing, context budget, or prompt routing changes
+    - task routing or context budget changes
     - platform exposure or local loading surfaces change
     - shared protocol, runtime loop, or validation behavior changes
     - cleanup, migration, archival, or deletion decisions are made
@@ -179,16 +178,6 @@ default_rules:
     - machine-readable paths
     - shared protocol contracts
     - current git state
-  prompt_registry:
-    path: USAGE_GUIDES/prompt_registry.yaml
-    use_for:
-    - mapping task prompt ids to reusable prompt frames
-    - finding existing copy-ready prompt templates
-    - avoiding repeated meta-prompt reconstruction
-    not_source_of_truth_for:
-    - task classification
-    - workspace paths
-    - protocol contracts
 task_files:
   agent_registry_update: domains/governance.yaml
   agent_governance_update: domains/governance.yaml
@@ -210,7 +199,7 @@ task_files:
   platform_exposure: domains/skills.yaml
   platform_exposure_audit: domains/skills.yaml
   project_memory_maintenance: domains/knowledge.yaml
-  prompt_usage_update: domains/knowledge.yaml
+  usage_guide_edit: domains/knowledge.yaml
   public_projection_synchronization: domains/publishing.yaml
   public_projection_publisher_update: domains/publishing.yaml
   raw_material_filter_tooling: domains/skills.yaml

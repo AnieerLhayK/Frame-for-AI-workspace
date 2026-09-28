@@ -14,6 +14,7 @@ import yaml
 
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.manifest_loader import load_manifest as load_workspace_manifest
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
 SKILL_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FRONTMATTER_PATTERN = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
@@ -27,10 +28,7 @@ HOST_REQUIREMENT_PREFIXES = ("host-",)
 
 
 def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding="utf-8-sig"))
-    if not isinstance(payload, dict):
-        raise ValueError("workspace manifest must be an object")
-    return payload
+    return load_workspace_manifest(path)
 
 
 def workspace_root(manifest: dict[str, Any]) -> Path:

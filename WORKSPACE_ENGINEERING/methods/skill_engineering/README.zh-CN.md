@@ -20,3 +20,4 @@
 - `drift_patterns.md`
 - `style_alignment.md`
 - `evolution_patterns.md`
+- `skill_catalog_partitioning.md`

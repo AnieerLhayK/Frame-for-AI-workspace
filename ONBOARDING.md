@@ -68,9 +68,12 @@ python -m scripts.workspace.workspace_cli agent list
 
 ## Step 5: Register Your Own Skills
 
-See `workspace_manifest.yaml` → `skills[]` for the skill declaration format.
-Add your own skills under `skills/`, then
-register them in `workspace_manifest.yaml` under `skills[]`.
+See `skills/<category>/registry.json` for standalone skill registrations and
+`packages/<package>/package_manifest.json` for package-owned skills. The root
+`workspace_manifest.yaml` points to the catalogs; runtime code reads the
+aggregated `skills[]` view through the manifest loader.
+Add a standalone skill under its primary category in `skills/`, then register
+it in that category's registry. Keep package skills in their package.
 Each skill needs:
 1. A unique `id`
 2. A `role` (governance, production, maintenance, feedback_diagnosis, runtime_character)

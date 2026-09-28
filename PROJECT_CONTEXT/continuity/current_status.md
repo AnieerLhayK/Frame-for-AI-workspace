@@ -16,13 +16,16 @@
 - OpenCode loading root: `workspace_manifest.yaml -> platform_roots.opencode`
 - Hermes loading root: `workspace_manifest.yaml -> platform_roots.hermes`
 - Skill projection links: `workspace_manifest.yaml -> projections[]`
+- Standalone skill registrations: `skills/catalog.json` -> category registries
+- Adapted external skill registrations: `external-skills/catalog.json` -> category registries
+- Package skill/tool registrations: `<package>/package_manifest.json`
 - Raw external skill research root: `workspace_manifest.yaml -> external_roots.raw_skills`
 - Curated adapted external skill root: `workspace_manifest.yaml -> external_roots.adapted_skills`
 - Core skills:
-  - `skills/collaboration-builder`
-  - `skills/disk-scan-reporter`
-  - `skills/far-repo-governor`
-  - `skills/windows-ai-storage-governor`
+  - `skills/productivity/collaboration-builder`
+  - `skills/governance/disk-scan-reporter`
+  - `skills/governance/far-repo-governor`
+  - `skills/governance/windows-ai-storage-governor`
   - `packages/character-system/engineering/generation/character-generator`
   - `packages/character-system/engineering/maintenance/character-maintainer`
   - `packages/character-system/engineering/diagnosis/style-doctor`
@@ -47,8 +50,8 @@
 - Skill contracts now separate `role`, `authority`, `execution_modes`, and `exposures[]`.
 - `platform` and `projection_path` remain temporary compatibility aliases for the first declared exposure.
 - Related character skills are grouped by lifecycle role under
-  `packages/character-system/`; unrelated future skills use `skills/`.
-- Standalone governance skills live under `skills/`: `disk-scan-reporter`
+  `packages/character-system/`; standalone skills use task categories under `skills/`.
+- Standalone governance skills live under `skills/governance/`: `disk-scan-reporter`
   provides bounded read-only disk inventory and `windows-ai-storage-governor`
   provides storage governance. Their sources remain separate from platform
   projections.
@@ -76,17 +79,15 @@
 - Context budget layer established with `PROJECT_CONTEXT/governance/context_budget.md` to control expansion beyond required task context.
 - Task ledger is partitioned under `PROJECT_CONTEXT/tasks/ledger/YYYY/MM.md` to preserve maintenance decisions without rereading broad context.
 - Task outcomes have a separate tracked fact layer under `PROJECT_CONTEXT/tasks/records/`; `workspace records` validates and summarizes success, validation, edits, duration, token fields, and usability.
-- Prompt registry established with `USAGE_GUIDES/prompt_registry.yaml` to resolve reusable prompt ids before regenerating meta-prompts.
-- Task/prompt resolver established with `scripts/workspace/resolve_task_context.py`; it emits a bounded task view and avoids rereading full routing registries by default.
+- Task resolver established with `scripts/workspace/resolve_task_context.py`; it emits a bounded task view and avoids rereading the full task registry by default.
 - Eight focused second-batch task routes now isolate skill bundle release,
   projection publisher edits, agent registry edits, runtime guards, report
   freshness status, Claude notification hooks, Claude model routing, and
   cleanup audits. Their aggregate compatibility routes retain fixed hard
   limits rather than raising budgets to hide context growth.
-- Prompt Registry loading rejects duplicate YAML keys. The bilingual
-  `skill_release` template preserves source → staging → validation/checksum →
-  registered-target traceability and does not treat local success as push
-  authority.
+- The shared prompt registry and task-prompt injection were retired. Durable
+  guidance belongs in its owning package or skill; user guides contain only
+  platform loading, workspace CLI onboarding, and the three published guides.
 - Package registration now declares `protocol_profile`; the shared generic
   schema applies to every package, while the character profile adds
   runtime-loop registries. `skill_inventory` marks `putogether` active and
@@ -130,7 +131,7 @@
   - `scripts/workspace/migration_dry_run.py`
   - `shared/workspace/manifest_portability_policy.md`
 - The single-agent developer CLI roadmap is complete:
-  - bounded task and prompt routing;
+  - bounded task routing;
   - context-budget preflight;
   - change-surface planning;
   - knowledge lookup;
@@ -279,7 +280,7 @@ would improve workspace maintenance is recorded under
   generalization records. `workspace validate runtime-loop` audits them without
   changing history; known malformed and unledgered historical records remain
   visible as errors or warnings.
-- Prompt registry entries are lightweight; future prompt-heavy work can split long prompt bodies into dedicated template files if needed.
+- Do not recreate a shared prompt registry without evidence of a repeated user need; maintain durable instructions in their owning package or skill.
 - Runtime loop ledger updates are still manual.
 - Package protocol manifests use a generic schema plus declared profiles and
   auditable skill inventories; packet semantics are checked by the read-only
@@ -293,7 +294,7 @@ would improve workspace maintenance is recorded under
 - Retired legacy projection roots may still appear in old reports or prompts. Treat `workspace_manifest.yaml` as current truth before acting on any historical path.
 - Cross-agent work is supported through Git branches and tracked project context,
   but each agent must verify its branch is based on current `main` before editing.
-- The next unrelated skill should begin under `skills/<skill-id>/`; package
+- The next unrelated skill should begin under `skills/<category>/<skill-id>/`; package
   promotion remains conditional on demonstrated domain sharing.
 - External business projects must not be created as new workspace top-level
   directories. `workspace health` treats a root `claude/` project directory as
@@ -301,7 +302,7 @@ would improve workspace maintenance is recorded under
 - Raw external skill snapshots are kept under the resolved
   `workspace_manifest.yaml -> external_roots.raw_skills` path and are not
   workspace source or platform projections. Adapted candidates are
-  tracked under `external-skills/<function>/` only after the compatibility queue
+  tracked under `external-skills/<category>/` only after the compatibility queue
   records provenance, applicability, adaptation, validation, and registration.
 - Every newly discovered raw skill must be added to
   `PROJECT_CONTEXT/todo/external-skills.md` before evaluation, so research

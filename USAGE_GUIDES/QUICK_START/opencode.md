@@ -1,38 +1,16 @@
 # OpenCode Quick Start
 
-Use OpenCode for manifest-declared skills currently exposed to its `/skills` surface.
+OpenCode discovers active skills through its `/skills` surface. The registered root is `workspace_manifest.yaml -> platform_roots.opencode`; source and authority remain defined by the manifest and each source `SKILL.md`.
 
-## Intended Workspace Skills
-
-- `zyc`: runtime character skill.
-- `style-doctor`: runtime drift diagnosis.
-
-## Current Discovery Check
-
-Use:
+Check discovery with:
 
 ```powershell
 opencode debug paths
 opencode debug skill
 ```
 
-The important question is whether `/skills` lists `style-doctor` and `zyc`.
+Confirm the intended skills appear in `/skills`, then reload the skill list or start a new session after exposure changes. Use the registered source tree for edits; never edit through projection links. Visibility does not widen skill authority.
 
-Current `/skills` loading surface:
+## Workspace plugin
 
-```text
-workspace_manifest.yaml -> platform_roots.opencode
-```
-
-## Common Tasks
-
-- Natural ZYC discussion: copy `PROMPT_TEMPLATES/character-system/runtime/zyc.md#natural-discussion`.
-- Use ZYC: copy `PROMPT_TEMPLATES/character-system/runtime/zyc.md`.
-- Safe text-only drift diagnosis: copy `PROMPT_TEMPLATES/character-system/engineering/diagnosis/style-doctor.md#safe-text-only-diagnosis`.
-- Diagnose drift: copy `PROMPT_TEMPLATES/character-system/engineering/diagnosis/style-doctor.md`.
-- Prepare handoff to maintainer: copy the handoff section in `PROMPT_TEMPLATES/character-system/engineering/diagnosis/style-doctor.md`.
-
-## Current Boundary
-
-`character-generator` and `character-maintainer` are not currently exposed to
-OpenCode. That is a deployment choice, not a platform ownership rule.
+The tracked governance plugin source is `.opencode/plugins/workspace-governance.js`. Local npm state under `.opencode/` is runtime support and stays ignored; do not add a blanket `.opencode/` rule to the root ignore file. From `.opencode/`, `npm outdated` checks local package drift.

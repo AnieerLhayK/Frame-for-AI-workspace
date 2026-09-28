@@ -52,8 +52,8 @@ These patterns are drawn from the current workspace and should be treated as reu
 
 ## Manifest Governance
 
-- What: `workspace_manifest.yaml` centralizes roots, skills, projections, protocols, discovery, and failure policy.
-- Why: path truth should not be scattered.
+- What: `workspace_manifest.yaml` centralizes roots and catalog pointers; owner-local catalogs hold skill records, and one loader aggregates the runtime view.
+- Why: path truth stays discoverable while registration changes are owned near their sources.
 - When useful: multiple scripts and agents need consistent path resolution.
 - Risks: a manifest can still be locally absolute.
 - Common mistakes: treating the manifest as magic that never needs migration work.

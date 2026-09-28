@@ -13,6 +13,7 @@ import yaml
 
 from scripts.workspace.project_context import TASK_LEDGER_ROOT, load_knowledge_registry, load_task_registry
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.manifest_loader import load_manifest
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
@@ -101,7 +102,7 @@ def workspace_describe(workspace_version: str | None) -> str:
 
 
 def build_summary(recent: int = 5) -> dict[str, Any]:
-    manifest = load_yaml(MANIFEST_PATH)
+    manifest = load_manifest(MANIFEST_PATH)
     tasks = load_task_registry().get("tasks", {})
     topics = load_knowledge_registry().get("topics", {})
     workspace = manifest.get("workspace", {})

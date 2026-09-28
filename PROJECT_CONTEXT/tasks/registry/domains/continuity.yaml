@@ -22,7 +22,6 @@ tasks:
     ignore:
     - reports/legacy_git_metadata/
     - private corpus material
-    prompt:
     - cleanup_migration
     tool_profile: cleanup_migration
     ledger: true
@@ -35,6 +34,9 @@ tasks:
       - ARCHITECTURE.md
       - README.md
       - README.zh-CN.md
+      - USAGE_GUIDES/QUICK_START/beginner_guide.md
+      - USAGE_GUIDES/QUICK_START/onboarding.md
+      - USAGE_GUIDES/QUICK_START/path_mapping_reference.md
       - workspace_manifest.yaml
       - PROJECT_CONTEXT/
       - reports/
@@ -43,6 +45,8 @@ tasks:
       - USAGE_GUIDES/
       - WORKSPACE_ENGINEERING/
       - packages/character-system/
+      - external-skills/README.md
+      - external-skills/README.zh-CN.md
       - skills/far-repo-governor/SKILL.md
       - packages/character-system/shared/versioning_policy.md
     validation:
@@ -66,7 +70,6 @@ tasks:
     - whole-drive search
     - unnamed legacy paths
     - file contents not needed for path classification
-    prompt:
     - cleanup_migration
     tool_profile: workspace_readonly
     ledger: false
@@ -95,7 +98,6 @@ tasks:
     - private conversation content beyond metadata needed for continuity
     - unrelated skill implementation
     - reports/
-    prompt:
     - cleanup_migration
     tool_profile: cleanup_migration
     ledger: true
@@ -147,7 +149,6 @@ tasks:
     ignore:
     - provider transcripts, credentials, raw prompts, and volatile tool logs
     - generated reports unless a report task explicitly owns them
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -161,9 +162,6 @@ tasks:
     - PROJECT_CONTEXT/README.zh-CN.md
     - PROJECT_CONTEXT/tasks/ledger.md
     - ARCHITECTURE.md
-    - USAGE_GUIDES/prompt_registry.yaml
-    - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.md
-    - USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance/prompt-library-maintenance.zh-CN.md
     - scripts/publishing/publish_public.py
     - scripts/workspace/resolve_task_context.py
     - scripts/workspace/resolve_task_context.py

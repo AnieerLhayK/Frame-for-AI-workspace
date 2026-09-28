@@ -27,36 +27,6 @@ directories:
     companion_suffix: ".zh-CN.md"
     sync_level: "semantic"
     note: "Usage guide root README bilingual companion."
-  - path: "USAGE_GUIDES/REFERENCE"
-    pattern: "README.md"
-    recursive: true
-    companion_suffix: ".zh-CN.md"
-    sync_level: "semantic"
-    note: "Reference guide READMEs with bilingual companions."
-  - path: "USAGE_GUIDES/PROMPT_TEMPLATES"
-    pattern: "README.md"
-    recursive: false
-    companion_suffix: ".zh-CN.md"
-    sync_level: "semantic"
-    note: "Prompt template root README bilingual companion."
-  - path: "USAGE_GUIDES/PROMPT_TEMPLATES/character-system"
-    pattern: "*.md"
-    recursive: true
-    companion_suffix: ".zh-CN.md"
-    sync_level: "semantic"
-    note: "Character-system prompt templates with bilingual companions."
-  - path: "USAGE_GUIDES/PROMPT_TEMPLATES/workflows"
-    pattern: "*.md"
-    recursive: false
-    companion_suffix: ".zh-CN.md"
-    sync_level: "semantic"
-    note: "Workflow prompt templates with bilingual companions."
-  - path: "USAGE_GUIDES/PROMPT_TEMPLATES/workspace-maintenance"
-    pattern: "*.md"
-    recursive: false
-    companion_suffix: ".zh-CN.md"
-    sync_level: "semantic"
-    note: "Workspace-maintenance prompt templates with bilingual companions."
   - path: "WORKSPACE_ENGINEERING"
     pattern: "README.md"
     recursive: true
@@ -95,6 +65,10 @@ directories:
     note: "Tracked adapted external-skill landing area with bilingual entry documentation."
 
 pairs:
+  - primary: "WORKSPACE_ENGINEERING/methods/skill_engineering/skill_catalog_partitioning.md"
+    companion: "WORKSPACE_ENGINEERING/methods/skill_engineering/skill_catalog_partitioning.zh-CN.md"
+    sync_level: "semantic"
+    note: "Bilingual method for stable Workspace skill catalog partitioning and migration."
   - primary: "WORKSPACE_ENGINEERING/methods/context_structure_refactoring.md"
     companion: "WORKSPACE_ENGINEERING/methods/context_structure_refactoring.zh-CN.md"
     sync_level: "semantic"

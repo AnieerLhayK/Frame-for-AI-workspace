@@ -79,7 +79,15 @@ The place for lessons that might affect generator or shared protocol design afte
 
 ## manifest
 
-`workspace_manifest.yaml`, the machine-readable registry for workspace roots, skills, projections, protocols, discovery, failure handling, and portability metadata.
+`workspace_manifest.yaml`, the machine-readable root registry for workspace roots, catalog locations, packages, projections, protocols, discovery, failure handling, and portability metadata. Skill records are owned by their catalogs and exposed to runtime consumers through the Workspace manifest loader.
+
+## skill catalog
+
+An owner-local index of skill registrations. Standalone catalogs group category registries under `skills/` or `external-skills/`; each package owns its `package_manifest.json`. Catalogs preserve registration metadata close to the sources they govern.
+
+## manifest loader
+
+The single Workspace reader that validates and aggregates owner-local catalogs into the runtime-compatible `skills[]` view. Consumers use this view instead of reading or merging individual catalog files.
 
 ## validator
 
@@ -175,3 +183,9 @@ A session with its own active TASK that may edit the shared development branch a
 ## LiteLLM logical model route
 
 A stable, Claude Code-facing model name declared in LiteLLM `model_list`. It maps independently to an upstream provider model ID and optional API base, so Claude Code selection does not expose provider-specific names or credentials.
+
+## USAGE_GUIDES
+
+The workspace's invocation layer for platform skill loading, workspace CLI
+onboarding, and the three public template guides. Skill roles and workflows are
+authoritative in their owning `packages/` or `skills/` instructions.

@@ -24,7 +24,6 @@ tasks:
     - mcp/
     - private corpus material
     - skill-local scripts not owned by the workspace root
-    prompt:
     - task_routing
     tool_profile: cleanup_migration
     ledger: true
@@ -80,7 +79,6 @@ tasks:
     - private corpus material
     - platform loading surfaces
     - unrelated skill implementation
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -125,7 +123,6 @@ tasks:
     - private corpus material
     - platform loading surfaces
     - unrelated skill implementation
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -141,7 +138,6 @@ tasks:
     validation:
     - python -m unittest scripts.tests.workspace.test_workspace_cli
     - python -m scripts.workspace.workspace_cli task list
-    - python -m scripts.workspace.workspace_cli prompt list
     - python -m scripts.workspace.workspace_cli bootstrap --print-json
     - git diff --check
   failure_diagnostics_tooling:
@@ -165,7 +161,6 @@ tasks:
     - private corpus material
     - platform loading surfaces
     - skill implementation
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -206,7 +201,6 @@ tasks:
     - private corpus material
     - skill implementation details
     - task ledger entries beyond the requested recent limit
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -247,7 +241,6 @@ tasks:
     - private corpus material
     - platform projections as editable source
     - unrelated skill-specific ignore conventions
-    prompt:
     - minimal_edit
     tool_profile: workspace_maintenance
     ledger: true
@@ -294,7 +287,6 @@ tasks:
     - external platform configuration
     - private corpus material
     - skill implementation
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -353,7 +345,6 @@ tasks:
     - private corpus material
     - skill implementation
     - platform directories beyond the existing link checker
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -391,7 +382,6 @@ tasks:
     - system-wide PATH
     - unrelated commands in user-local bin
     - skill implementation
-    prompt:
     - minimal_edit
     tool_profile: workspace_maintenance
     ledger: true

@@ -26,10 +26,10 @@ Workspace-internal source paths should be workspace-relative whenever possible:
 - `packages[].shared_path`
 - `packages[].reports_path`
 - `packages[].protocol_manifest`
-- `skills[].source_path`
-- `skills[].package_id`
-- `skills[].protocol_dependencies`
-- `skills[].exposures[].projection_id`
+- `skills[].source_path` in the manifest loader's runtime view
+- `skills[].package_id` in the manifest loader's runtime view
+- `skills[].protocol_dependencies` in the manifest loader's runtime view
+- `skills[].exposures[].projection_id` in the manifest loader's runtime view
 - `projections[].target_path`
 - `protocols[].path`
 - required and optional skill file paths
@@ -50,7 +50,7 @@ python -m scripts.workspace.bootstrap_workspace
 
 Projection paths are local deployment compatibility surfaces for Codex and OpenCode. They are not portable source layout. A moved workspace may require intentionally updating projection roots and recreating links after review.
 
-`skills[].platform` and `skills[].projection_path` are compatibility aliases for the first exposure during the manifest 1.x migration. New readers should prefer `skills[].exposures[]` and resolve paths through `projections[]`.
+`skills[].platform` and `skills[].projection_path` are compatibility aliases for the first exposure during the manifest 1.x migration. Runtime `skills[]` is the aggregated view from `scripts.workspace.manifest_loader`; source records live in owner-local catalogs. New readers should prefer `skills[].exposures[]` and resolve paths through `projections[]`.
 
 ## Protocol Resolution
 
@@ -63,7 +63,7 @@ workspace_manifest.yaml -> shared.source_path
 Resolve domain protocols through:
 
 ```text
-workspace_manifest.yaml -> skills[].package_id
+manifest loader -> skills[].package_id
 workspace_manifest.yaml -> packages[].shared_path
 workspace_manifest.yaml -> packages[].protocol_manifest
 ```

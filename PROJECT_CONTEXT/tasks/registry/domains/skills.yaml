@@ -32,7 +32,6 @@ tasks:
     - private corpus material
     - platform projections
     - external plugin source
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -81,7 +80,6 @@ tasks:
     - workspace_manifest.yaml as a full context payload
     - platform loading surfaces as editable source
     - unrelated skill implementation
-    prompt:
     - platform_exposure
     tool_profile: workspace_readonly
     ledger: false
@@ -111,7 +109,6 @@ tasks:
     - packages/character-system/engineering/generation/character-generator/scripts/
     - packages/character-system/runtime/characters/zyc/references/
     - packages/character-system/reports/runtime-loop/
-    prompt:
     - platform_exposure
     tool_profile: platform_maintenance
     ledger: true
@@ -157,7 +154,6 @@ tasks:
     - raw material output buckets
     - external lexicon data directories
     - unrelated workspace tooling
-    prompt:
     - task_routing
     tool_profile: workspace_maintenance
     ledger: true
@@ -210,7 +206,6 @@ tasks:
     - packages/character-system/engineering/generation/character-generator/templates/
     - USAGE_GUIDES/
     - WORKSPACE_ENGINEERING/
-    prompt:
     - drift_repair
     tool_profile: workspace_maintenance
     ledger: true
@@ -247,12 +242,16 @@ tasks:
     - private corpus material
     - unrelated historical reports
     - unrelated tool configuration
-    prompt:
     - skill_architecture
     tool_profile: platform_maintenance
     ledger: true
     write_scope:
     - workspace_manifest.yaml
+    - README.md
+    - README.zh-CN.md
+    - BEGINNER_GUIDE.md
+    - ONBOARDING.md
+    - PATH_MAPPING_REFERENCE.md
     - AGENTS.md
     - CLAUDE.md
     - ARCHITECTURE.md
@@ -297,7 +296,6 @@ tasks:
     - unrelated skill implementation
     - platform loading surfaces except the single manifest-selected projection during
       expose --apply
-    prompt:
     - task_routing
     tool_profile: platform_maintenance
     ledger: true
@@ -341,7 +339,6 @@ tasks:
     - reports/
     - WORKSPACE_ENGINEERING/
     - USAGE_GUIDES/
-    prompt:
     - minimal_edit
     tool_profile: workspace_maintenance
     ledger: true
@@ -377,7 +374,6 @@ tasks:
     - packages/character-system/runtime/characters/zyc/reports/
     - packages/character-system/runtime/characters/zyc/tests/
     - platform loading surfaces except isolated release-install validation roots
-    prompt:
     - task_routing
     tool_profile: platform_maintenance
     ledger: true
@@ -441,7 +437,6 @@ tasks:
     - private corpus material
     - public repository checkouts
     - platform loading surfaces
-    prompt:
     - skill_release
     tool_profile: platform_maintenance
     ledger: true

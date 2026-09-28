@@ -294,7 +294,6 @@ def check_claude_model_routing(root: Path = WORKSPACE_ROOT) -> CheckResult:
         "Claude Code, Codex, OpenCode, and Hermes": "multi-agent guard Pro signal is missing",
         "workflow out-of-scope errors": "workspace health/out-of-scope Pro signal is missing",
         "Git merge conflicts": "Git conflict Pro signal is missing",
-        "prompt_registry.yaml": "workspace registry conflict Pro example is missing",
         "任务复杂度评估：Flash sufficient": "low-risk first response format is missing",
         "任务复杂度评估：Recommend Pro": "high-risk first response format is missing",
         "Recommend Pro deferred": "late-stage deferred Pro format is missing",

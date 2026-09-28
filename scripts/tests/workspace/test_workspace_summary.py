@@ -83,12 +83,12 @@ class WorkspaceSummaryTests(unittest.TestCase):
     @patch("scripts.workspace.workspace_summary.cli_commands")
     @patch("scripts.workspace.workspace_summary.load_knowledge_registry")
     @patch("scripts.workspace.workspace_summary.load_task_registry")
-    @patch("scripts.workspace.workspace_summary.load_yaml")
+    @patch("scripts.workspace.workspace_summary.load_manifest")
     @patch("scripts.workspace.workspace_summary.git_output")
     def test_build_summary_combines_live_sources(
         self,
         git_output,
-        load_yaml,
+        load_manifest,
         task_registry,
         knowledge_registry,
         cli_command_list,
@@ -102,7 +102,7 @@ class WorkspaceSummaryTests(unittest.TestCase):
             "v1.0.0-4-gabc1234",
             "",
         ]
-        load_yaml.side_effect = [
+        load_manifest.side_effect = [
             {
                 "workspace": {
                     "workspace_name": "example",

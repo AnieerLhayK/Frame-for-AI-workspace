@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve one task into bounded context, prompt guidance, and token estimates."""
+"""Resolve one task into bounded context and token estimates."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ from typing import Any, Iterable
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
 from scripts.workspace.project_context import load_task_registry
+from scripts.workspace.manifest_loader import load_manifest as load_workspace_manifest
 
 try:
     import yaml
@@ -29,7 +30,6 @@ except ImportError:  # pragma: no cover - exercised through CLI failure behavior
 DEFAULT_MAX_PARENT_DEPTH = 5
 DEFAULT_MANIFEST_FILENAME = "workspace_manifest.yaml"
 TASK_REGISTRY_PATH = "PROJECT_CONTEXT/tasks/registry/index.yaml"
-PROMPT_REGISTRY_PATH = "USAGE_GUIDES/prompt_registry.yaml"
 PLACEHOLDER_RE = re.compile(r"<([A-Za-z0-9_-]+)>")
 PATH_SUFFIXES = {
     ".cfg",
@@ -89,13 +89,13 @@ TASK_GROUPS = (
         ),
     ),
     (
-        "Knowledge, Prompts, and Documentation",
+        "Knowledge and Documentation",
         (
             "project_memory_maintenance",
             "startup_context_optimization",
             "knowledge_interface_tooling",
             "workspace_engineering_knowledge",
-            "prompt_usage_update",
+            "usage_guide_edit",
             "source_of_truth_dedup",
             "task_registry_update",
             "shared_policy_update",
@@ -223,11 +223,6 @@ def load_yaml(path: Path, *, reject_duplicate_keys: bool = False) -> dict[str, A
     if not isinstance(data, dict):
         raise ValueError(f"expected a mapping at document root: {path}")
     return data
-
-
-def load_prompt_registry(path: Path) -> dict[str, Any]:
-    """Load the prompt registry without silently accepting shadowed prompt IDs."""
-    return load_yaml(path, reject_duplicate_keys=True)
 
 
 def parse_bindings(values: list[str]) -> dict[str, list[str]]:
@@ -575,6 +570,11 @@ def resolve_context_views(
         if not isinstance(keys, list) or not keys or any(not isinstance(k, str) for k in keys):
             raise ValueError(f"context_views requires nonempty key lists: {relative}")
         payload = load_yaml(path, reject_duplicate_keys=True)
+        # Skill registrations now live in owner catalogs. Preserve the existing
+        # bounded context-view contract by materializing the same aggregate
+        # view used by runtime consumers instead of reading a stale root key.
+        if relative == DEFAULT_MANIFEST_FILENAME and "skills" in keys and "skills" not in payload:
+            payload = load_workspace_manifest(path)
         missing = set(keys) - payload.keys()
         if missing:
             raise ValueError(f"context view keys missing in {relative}: {sorted(missing)}")
@@ -585,50 +585,6 @@ def resolve_context_views(
         group["paths"] = [entry for entry in group["paths"] if entry != relative]
         group["consumed"].append(relative)
     return views
-
-
-def heading_slug(value: str) -> str:
-    lowered = value.strip().lower()
-    lowered = re.sub(r"[^\w\s-]", "", lowered, flags=re.UNICODE)
-    return re.sub(r"[\s_-]+", "-", lowered).strip("-")
-
-
-def extract_markdown_section(text: str, anchor: str) -> str:
-    lines = text.splitlines()
-    start_index: int | None = None
-    start_level = 0
-    for index, line in enumerate(lines):
-        match = re.match(r"^(#{1,6})\s+(.+?)\s*$", line)
-        if match and heading_slug(match.group(2)) == anchor:
-            start_index = index
-            start_level = len(match.group(1))
-            break
-    if start_index is None:
-        raise ValueError(f"markdown anchor not found: #{anchor}")
-
-    end_index = len(lines)
-    for index in range(start_index + 1, len(lines)):
-        match = re.match(r"^(#{1,6})\s+", lines[index])
-        if match and len(match.group(1)) <= start_level:
-            end_index = index
-            break
-    return "\n".join(lines[start_index:end_index]).strip() + "\n"
-
-
-def load_template_content(
-    workspace_root: Path,
-    template_reference: str,
-) -> tuple[str, str]:
-    path_value, separator, anchor = template_reference.partition("#")
-    resolved, relative = normalize_relative_path(workspace_root, path_value)
-    if resolved is None or relative is None:
-        raise ValueError(f"template path escapes workspace: {path_value}")
-    if not resolved.is_file():
-        raise ValueError(f"template path not found: {relative}")
-    text = resolved.read_text(encoding="utf-8-sig")
-    if separator and anchor:
-        return f"{relative}#{anchor}", extract_markdown_section(text, anchor)
-    return relative, text
 
 
 def merge_budget(defaults: dict[str, Any], task: dict[str, Any]) -> dict[str, Any]:
@@ -676,17 +632,10 @@ def resolve_task(
     task_id: str,
     bindings: dict[str, list[str]],
     include_optional: bool,
-    include_template: bool,
     count_tokens: bool,
     encoding_override: str | None = None,
 ) -> dict[str, Any]:
     task_registry = load_task_registry(workspace_root / "PROJECT_CONTEXT")
-    prompt_registry_path = str(
-        task_registry.get("default_rules", {})
-        .get("prompt_registry", {})
-        .get("path", PROMPT_REGISTRY_PATH)
-    )
-    prompt_registry = load_prompt_registry(workspace_root / prompt_registry_path)
     tasks = task_registry.get("tasks", {})
     if task_id not in tasks:
         raise KeyError(f"unknown task id: {task_id}")
@@ -772,58 +721,12 @@ def resolve_task(
         if path.replace("\\", "/").rstrip("/") not in preloaded_relative
     ]
 
-    prompt_ids = [str(item) for item in task.get("prompt", [])]
-    prompts: list[dict[str, Any]] = []
-    prompt_text_parts: list[str] = []
-    counted_templates: list[CountedFile] = []
     errors: list[str] = []
     max_file_bytes = int(budget.get("max_file_bytes", 2097152))
-    for prompt_id in prompt_ids:
-        prompt = prompt_registry.get("prompts", {}).get(prompt_id)
-        if not isinstance(prompt, dict):
-            errors.append(f"prompt id not found: {prompt_id}")
-            continue
-        frame = [str(item) for item in prompt.get("prompt_frame", [])]
-        prompt_text_parts.extend(frame)
-        item = {
-            "id": prompt_id,
-            "type": prompt.get("type"),
-            "purpose": prompt.get("purpose"),
-            "prompt_frame": frame,
-            "template_path": prompt.get("template_path"),
-        }
-        template_path = prompt.get("template_path")
-        if include_template and template_path:
-            try:
-                template_label, template_content = load_template_content(
-                    workspace_root,
-                    str(template_path),
-                )
-                template_bytes = len(template_content.encode("utf-8"))
-                if template_bytes > max_file_bytes:
-                    errors.append(
-                        f"template exceeds max_file_bytes ({template_bytes}): {template_label}"
-                    )
-                else:
-                    item["template_content"] = template_content
-                    counted_templates.append(
-                        CountedFile(
-                            path=template_label,
-                            bytes=template_bytes,
-                            tokens=counter.count(template_content) if count_tokens else 0,
-                            method=counter.method,
-                            source="template",
-                        )
-                    )
-            except (OSError, ValueError) as exc:
-                errors.append(str(exc))
-        prompts.append(item)
-
     counted_preloaded: list[CountedFile] = []
     counted_required: list[CountedFile] = []
     counted_optional: list[CountedFile] = []
     count_warnings: list[str] = []
-    prompt_tokens = 0
     if count_tokens:
         counted_preloaded, warnings = count_files(
             workspace_root, preloaded["files"], counter, max_file_bytes, "preloaded"
@@ -845,17 +748,15 @@ def resolve_task(
             for view in views:
                 content = view["content"]
                 counted.append(CountedFile(view["path"], len(content.encode("utf-8")), counter.count(content), counter.method, source))
-        prompt_tokens = counter.count("\n".join(prompt_text_parts))
 
     preloaded_tokens = sum(item.tokens for item in counted_preloaded)
     required_tokens = sum(item.tokens for item in counted_required)
     optional_tokens = sum(item.tokens for item in counted_optional) if include_optional else None
-    template_tokens = sum(item.tokens for item in counted_templates)
-    initial_tokens = preloaded_tokens + required_tokens + prompt_tokens + template_tokens
+    initial_tokens = preloaded_tokens + required_tokens
     expanded_tokens = initial_tokens + optional_tokens if optional_tokens is not None else None
     status, budget_warnings = budget_status(initial_tokens, expanded_tokens, budget)
 
-    all_counted = counted_preloaded + counted_required + counted_optional + counted_templates
+    all_counted = counted_preloaded + counted_required + counted_optional
     top_count = int(budget.get("top_file_count", 10))
     largest_files = sorted(all_counted, key=lambda item: item.tokens, reverse=True)[:top_count]
     required_unresolved = set(required["unresolved"])
@@ -922,16 +823,12 @@ def resolve_task(
             "write_scope": write_scope,
             "validation": validation,
             "resolver_consumed_files": required["consumed"],
-            "resolver_internal_reads": [
-                TASK_REGISTRY_PATH,
-                prompt_registry_path,
-            ],
+            "resolver_internal_reads": [TASK_REGISTRY_PATH],
             "unresolved_placeholders": unresolved,
             "resource_findings": [
                 finding.__dict__ for finding in resource_findings
             ],
         },
-        "prompts": prompts,
         "tool_policy": tool_policy,
         "token_budget": {
             "enabled": count_tokens,
@@ -944,8 +841,6 @@ def resolve_task(
             "hard_max_tokens": budget.get("hard_max_tokens"),
             "preloaded_tokens": preloaded_tokens,
             "required_file_tokens": required_tokens,
-            "prompt_frame_tokens": prompt_tokens,
-            "template_tokens": template_tokens,
             "optional_tokens": optional_tokens,
             "initial_tokens": initial_tokens,
             "expanded_tokens": expanded_tokens,
@@ -955,84 +850,6 @@ def resolve_task(
             "largest_files": [item.__dict__ for item in largest_files],
         },
         "warnings": warnings,
-        "errors": errors,
-    }
-
-
-def resolve_prompt(
-    workspace_root: Path,
-    prompt_id: str,
-    include_template: bool,
-    count_tokens: bool,
-    encoding_override: str | None = None,
-) -> dict[str, Any]:
-    task_registry = load_task_registry(workspace_root / "PROJECT_CONTEXT")
-    prompt_registry_path = str(
-        task_registry.get("default_rules", {})
-        .get("prompt_registry", {})
-        .get("path", PROMPT_REGISTRY_PATH)
-    )
-    prompt_registry = load_prompt_registry(workspace_root / prompt_registry_path)
-    prompt = prompt_registry.get("prompts", {}).get(prompt_id)
-    if not isinstance(prompt, dict):
-        raise KeyError(f"unknown prompt id: {prompt_id}")
-
-    budget = (
-        task_registry.get("default_rules", {})
-        .get("context_budget", {})
-        .get("token_meter", {})
-    )
-    encoding_name = encoding_override or str(budget.get("encoding", "o200k_base"))
-    counter = TokenCounter(encoding_name)
-    frame = [str(item) for item in prompt.get("prompt_frame", [])]
-    frame_text = "\n".join(frame)
-    template_reference = prompt.get("template_path")
-    template_label = None
-    template_content = None
-    template_tokens = 0
-    errors: list[str] = []
-    if include_template and template_reference:
-        try:
-            template_label, template_content = load_template_content(
-                workspace_root,
-                str(template_reference),
-            )
-            max_file_bytes = int(budget.get("max_file_bytes", 2097152))
-            template_bytes = len(template_content.encode("utf-8"))
-            if template_bytes > max_file_bytes:
-                errors.append(
-                    f"template exceeds max_file_bytes ({template_bytes}): {template_label}"
-                )
-                template_content = None
-            elif count_tokens:
-                template_tokens = counter.count(template_content)
-        except (OSError, ValueError) as exc:
-            errors.append(str(exc))
-
-    return {
-        "mode": "prompt",
-        "workspace_root": str(workspace_root),
-        "prompt": {
-            "id": prompt_id,
-            "type": prompt.get("type"),
-            "purpose": prompt.get("purpose"),
-            "platform": prompt.get("platform"),
-            "exposures": prompt.get("exposures", []),
-            "prompt_frame": frame,
-            "template_path": template_reference,
-            "resolved_template": template_label,
-            "template_content": template_content,
-        },
-        "token_budget": {
-            "enabled": count_tokens,
-            "encoding": encoding_name,
-            "method": counter.method,
-            "exact": counter.exact,
-            "prompt_frame_tokens": counter.count(frame_text) if count_tokens else 0,
-            "template_tokens": template_tokens,
-            "total_tokens": (counter.count(frame_text) if count_tokens else 0)
-            + template_tokens,
-        },
         "errors": errors,
     }
 
@@ -1096,57 +913,6 @@ def print_task_table(rows: list[dict[str, Any]]) -> None:
             print(f"{'':<{id_width}}  {line}")
 
 
-def print_prompt_list(prompt_registry: dict[str, Any], output_format: str) -> None:
-    rows = [
-        {
-            "id": prompt_id,
-            "type": prompt.get("type"),
-            "purpose": prompt.get("purpose"),
-            "template_path": prompt.get("template_path"),
-        }
-        for prompt_id, prompt in prompt_registry.get("prompts", {}).items()
-    ]
-    if output_format == "json":
-        print(json.dumps({"prompts": rows}, ensure_ascii=False, indent=2))
-        return
-    for row in rows:
-        suffix = f" -> {row['template_path']}" if row.get("template_path") else ""
-        print(f"{row['id']} [{row.get('type', '')}]: {row.get('purpose', '')}{suffix}")
-
-
-def print_prompt_text(result: dict[str, Any]) -> None:
-    prompt = result["prompt"]
-    budget = result["token_budget"]
-    print(f"Prompt: {prompt['id']}")
-    print(f"Purpose: {prompt.get('purpose', '')}")
-    if prompt.get("platform"):
-        print(f"Default exposure: {prompt['platform']}")
-    if prompt.get("exposures"):
-        print(f"Exposures: {', '.join(prompt['exposures'])}")
-    if prompt.get("template_path"):
-        print(f"Template: {prompt['template_path']}")
-    if prompt.get("prompt_frame"):
-        print("")
-        print("Prompt frame:")
-        for line in prompt["prompt_frame"]:
-            print(f"- {line}")
-    if prompt.get("template_content") is not None:
-        print("")
-        print("Resolved template:")
-        print(prompt["template_content"].rstrip())
-    print("")
-    print("Token estimate:")
-    print(f"- Method: {budget['method']}")
-    print(f"- Prompt frame: {budget['prompt_frame_tokens']}")
-    print(f"- Template: {budget['template_tokens']}")
-    print(f"- Total: {budget['total_tokens']}")
-    if result["errors"]:
-        print("")
-        print("Errors:")
-        for error in result["errors"]:
-            print(f"- {error}")
-
-
 def print_text(result: dict[str, Any]) -> None:
     task = result["task"]
     context = result["context"]
@@ -1173,12 +939,6 @@ def print_text(result: dict[str, Any]) -> None:
         print("External evidence or commands:")
         for item in context["external_evidence"]:
             print(f"- {item}")
-    print("")
-    print("Prompt guidance:")
-    for prompt in result["prompts"]:
-        print(f"- {prompt['id']}: {prompt.get('purpose', '')}")
-        for line in prompt.get("prompt_frame", []):
-            print(f"  - {line}")
     tool_policy = result["tool_policy"]
     print("")
     print(f"Tool policy: {tool_policy['profile']} ({tool_policy['enforcement']})")
@@ -1190,7 +950,6 @@ def print_text(result: dict[str, Any]) -> None:
     print(f"- Method: {budget['method']}")
     print(f"- Preloaded: {budget['preloaded_tokens']}")
     print(f"- Required files: {budget['required_file_tokens']}")
-    print(f"- Prompt frame: {budget['prompt_frame_tokens']}")
     print(f"- Initial total: {budget['initial_tokens']} / {budget['required_warn_tokens']}")
     if budget["optional_measured"]:
         print(f"- Optional: {budget['optional_tokens']}")
@@ -1253,7 +1012,6 @@ def record_routing_event(result: dict[str, Any]) -> None:
         "tokens_preloaded": budget.get("preloaded_tokens", 0),
         "tokens_required": budget.get("required_file_tokens", 0),
         "tokens_optional": budget.get("optional_tokens", 0),
-        "tokens_prompt": budget.get("prompt_frame_tokens", 0),
         "tokens_total_initial": budget.get("initial_tokens", 0),
         "tokens_total_expanded": budget.get("expanded_tokens", 0),
         "budget_status": budget.get("status", ""),
@@ -1278,13 +1036,10 @@ def main() -> int:
     )
     parser.add_argument("task", nargs="?", help="Exact task id from PROJECT_CONTEXT/tasks/registry/index.yaml.")
     parser.add_argument("--list", action="store_true", help="List registered task ids.")
-    parser.add_argument("--list-prompts", action="store_true", help="List registered prompt ids.")
-    parser.add_argument("--prompt-id", help="Resolve one prompt id directly.")
     parser.add_argument("--start", default=".", help="Workspace path or child path.")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument("--bind", action="append", default=[], metavar="NAME=VALUE")
     parser.add_argument("--include-optional", action="store_true")
-    parser.add_argument("--include-template", action="store_true")
     parser.add_argument("--no-token-count", action="store_true")
     parser.add_argument("--strict-budget", action="store_true")
     parser.add_argument("--encoding", help="Override token encoding, for example o200k_base.")
@@ -1305,40 +1060,14 @@ def main() -> int:
         if args.list:
             print_task_list(task_registry, args.format)
             return 0
-        if args.list_prompts:
-            prompt_registry_path = str(
-                task_registry.get("default_rules", {})
-                .get("prompt_registry", {})
-                .get("path", PROMPT_REGISTRY_PATH)
-            )
-            print_prompt_list(load_prompt_registry(workspace_root / prompt_registry_path), args.format)
-            return 0
-        if args.prompt_id:
-            if args.task:
-                parser.error("task id and --prompt-id are mutually exclusive")
-            result = resolve_prompt(
-                workspace_root=workspace_root,
-                prompt_id=args.prompt_id,
-                include_template=args.include_template,
-                count_tokens=not args.no_token_count,
-                encoding_override=args.encoding,
-            )
-            if args.format == "json":
-                print(json.dumps(result, ensure_ascii=False, indent=2))
-            else:
-                print_prompt_text(result)
-            return 1 if result["errors"] else 0
         if not args.task:
-            parser.error(
-                "task id is required unless --list, --list-prompts, or --prompt-id is used"
-            )
+            parser.error("task id is required unless --list is used")
         bindings = parse_bindings(args.bind)
         result = resolve_task(
             workspace_root=workspace_root,
             task_id=args.task,
             bindings=bindings,
             include_optional=args.include_optional,
-            include_template=args.include_template,
             count_tokens=not args.no_token_count,
             encoding_override=args.encoding,
         )

@@ -8,9 +8,13 @@ the manifest and governance YAML.
 
 `workspace_manifest.yaml -> workspace.source_of_truth` is the source center.
 Make source changes there, never through a platform projection. Workspace-native
-standalone skills belong in `skills/`; related skills may use a package-local
-shared layer under `packages/`. Source paths are workspace-relative and do not
-encode platform ownership.
+standalone skills belong under `skills/<category>/`; reviewed external
+adaptations belong under `external-skills/<category>/`. Each root is indexed
+by `catalog.json`, and category registries own their skill records. Packages own
+local skill/tool records in `<package>/package_manifest.json`;
+`protocol_manifest.json` remains protocol-only. `workspace_manifest.yaml`
+points to these roots and packages but does not list individual skills.
+Source paths are workspace-relative and do not encode platform ownership.
 
 Raw external skill repositories are research inputs outside this Git source.
 `external-skills/` is only the tracked, reviewed adaptation layer declared by
@@ -28,7 +32,10 @@ their targets must remain workspace-relative. One source may have many
 projections. Do not copy source to achieve multi-platform exposure or edit a
 linked platform path as source.
 
-New readers resolve `skills[].exposures[]` through `projections[]`.
+Runtime consumers call `scripts.workspace.manifest_loader.load_manifest()` to
+obtain the aggregated `skills[]` compatibility view; do not scan catalogs or
+merge records locally. New readers resolve `skills[].exposures[]` through
+`projections[]`.
 `skills[].platform` and `skills[].projection_path` remain compatibility aliases
 for the first exposure until consumers migrate.
 

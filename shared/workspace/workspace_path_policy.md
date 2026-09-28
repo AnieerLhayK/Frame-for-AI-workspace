@@ -21,7 +21,8 @@ Use these forms instead:
 - workspace metadata
 - platform roots
 - shared root
-- skill registry
+- standalone and external skill catalog roots
+- package registrations and package catalog paths
 - projection definitions
 - protocol registry
 - bounded discovery rules
@@ -34,22 +35,26 @@ The manifest may also declare local external roots such as
 `output_roots.workspace`. Documentation should reference the manifest field
 instead of repeating the current machine path.
 
-External skill paths are resolved through `workspace_manifest.yaml`:
+External skill paths are resolved through the external-skill catalog root in
+`workspace_manifest.yaml`:
 
 - raw research inputs: `external_roots.raw_skills`;
-- curated adapted sources: `external_roots.adapted_skills`;
+- curated adapted sources: `external_roots.adapted_skills`, indexed by category
+  `catalog.json` and `registry.json` files;
 - native standalone sources: `skills/`.
 
 Raw research inputs are outside the workspace source tree and are never a
 platform projection target. An adapted external skill must be copied or
-transformed into the curated workspace path, then registered in the manifest
-before it can be exposed.
+transformed into the curated workspace path, then registered in its category
+registry before it can be exposed through the manifest loader.
 
 ## Projection Path Is Not Source Path
 
 Platform projection paths are compatibility surfaces for tools such as Codex and OpenCode. They may be junctions or symlinks.
 
-Do not treat a projection path as the editable source. Source edits belong in `skills[].source_path` resolved against `workspace.source_of_truth`.
+Do not treat a projection path as the editable source. Source paths are stored
+in owner-local skill catalogs and resolved against `workspace.source_of_truth`;
+runtime consumers use the manifest loader's `skills[].source_path` view.
 
 One source may have multiple platform projections. Do not duplicate skill source to achieve multi-platform exposure. Resolve each exposure through its referenced projection and verify that every projection target matches the same manifest-declared source path.
 

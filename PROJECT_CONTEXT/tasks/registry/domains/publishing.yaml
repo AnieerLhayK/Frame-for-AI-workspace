@@ -30,7 +30,6 @@ tasks:
     - platform loading surfaces
     - disposable staging checkout contents
     - unrelated package implementation
-    prompt:
     - task_routing
     tool_profile: platform_maintenance
     ledger: true
@@ -88,7 +87,6 @@ tasks:
     - generated public checkouts
     - unrelated package implementation
     - private corpus material
-    prompt:
     - skill_release
     tool_profile: platform_maintenance
     ledger: true
@@ -126,7 +124,6 @@ tasks:
     - packages/character-system/runtime/characters/zyc/references/
     - WORKSPACE_ENGINEERING/
     - unrelated historical reports
-    prompt:
     - report_refresh
     tool_profile: workspace_maintenance
     ledger: true
@@ -165,7 +162,6 @@ tasks:
     - report generators
     - historical reports
     - unrelated CLI behavior
-    prompt:
     - report_refresh
     tool_profile: workspace_maintenance
     ledger: true
@@ -200,7 +196,6 @@ tasks:
     - packages/character-system/engineering/generation/character-generator/characters/
     - packages/character-system/runtime/characters/zyc/references/
     - WORKSPACE_ENGINEERING/
-    prompt:
     - report_refresh
     tool_profile: workspace_maintenance
     ledger: true

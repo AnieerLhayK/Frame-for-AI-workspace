@@ -125,7 +125,7 @@ first requested action is only to inspect or explain.
 
 For this workspace, a long-lived branch merged into `main` with conflicts in
 `PROJECT_CONTEXT/tasks/ledger.md`, `PROJECT_CONTEXT/todo/README.md`, or
-`USAGE_GUIDES/prompt_registry.yaml` is explicitly Pro-class conflict planning.
+`PROJECT_CONTEXT/tasks/registry/index.yaml` are explicitly Pro-class routing conflicts.
 
 ## Decision Flow
 

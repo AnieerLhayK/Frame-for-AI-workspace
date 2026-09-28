@@ -45,7 +45,7 @@ When adding Claude Code as a new platform (2026-06-13), the workspace needed com
 3. `.claude/hooks/workspace_boundary_guard.ps1` prevents writes outside allowed layers.
 4. `.claude/rules/workspace-boundary.md` reminds agents to resolve tasks before broad discovery.
 
-The key insight: **Claude Code treats startup CWD as the project selector**. The workspace does not register Claude Code in `workspace_manifest.yaml`; instead, `project_roots.json` maps launcher aliases (`claude-workspace`, `claude-cnn`) to separate Git roots. This keeps the manifest as a skill registry rather than an external-project registry.
+The key insight: **Claude Code treats startup CWD as the project selector**. The workspace does not register Claude Code in `workspace_manifest.yaml`; instead, `project_roots.json` maps launcher aliases (`claude-workspace`, `claude-cnn`) to separate Git roots. This keeps the root manifest focused on workspace roots/catalog pointers rather than external-project registry data.
 
 ### Cross-Platform Path Detection
 

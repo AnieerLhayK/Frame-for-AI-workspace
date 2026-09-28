@@ -15,14 +15,11 @@ import yaml
 from scripts.workspace.resolve_task_context import (
     TokenCounter,
     budget_status,
-    extract_markdown_section,
     expand_placeholders,
-    load_prompt_registry,
     parse_bindings,
     print_task_list,
     print_text,
     routing_events_path,
-    resolve_prompt,
     resolve_task,
 )
 
@@ -39,7 +36,7 @@ class ResolverTests(unittest.TestCase):
         manifest.write_text(yaml.safe_dump({"workspace": {"name": "example"}, "unrelated": "x" * 12000}), encoding="utf-8")
 
         def resolve(optional=False):
-            return resolve_task(self.root, "demo", {"target": ["src"]}, optional, False, True, "missing-test-encoding")
+            return resolve_task(self.root, "demo", {"target": ["src"]}, optional, True, "missing-test-encoding")
 
         result = resolve()
         view = result["context"]["required_views"][0]
@@ -63,15 +60,6 @@ class ResolverTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "keys missing"):
             resolve(True)
 
-    def test_prompt_registry_rejects_duplicate_yaml_keys(self) -> None:
-        registry = self.root / "USAGE_GUIDES" / "duplicate-prompts.yaml"
-        registry.write_text(
-            "prompts:\n  duplicate: {purpose: first}\n  duplicate: {purpose: second}\n",
-            encoding="utf-8",
-        )
-        with self.assertRaisesRegex(ValueError, "duplicate key"):
-            load_prompt_registry(registry)
-
     def test_routing_events_fallback_uses_workspace_claude_directory(self) -> None:
         with patch.dict("os.environ", {}, clear=True):
             self.assertEqual(
@@ -90,12 +78,10 @@ class ResolverTests(unittest.TestCase):
         (self.root / "AGENTS.md").write_text("agent rules", encoding="utf-8")
         (self.root / "src" / "target.md").write_text("hello 世界", encoding="utf-8")
         (self.root / "src" / "optional.md").write_text("optional", encoding="utf-8")
-        (self.root / "USAGE_GUIDES" / "template.md").write_text("template body", encoding="utf-8")
 
         task_registry = {
             "default_rules": {
                 "default_ignore": [".git/"],
-                "prompt_registry": {"path": "USAGE_GUIDES/prompt_registry.yaml"},
                 "context_budget": {
                     "token_meter": {
                         "encoding": "missing-test-encoding",
@@ -110,7 +96,6 @@ class ResolverTests(unittest.TestCase):
                         "consumed_files": [
                             "PROJECT_CONTEXT/tasks/registry/index.yaml",
                             "PROJECT_CONTEXT/governance/context_budget.md",
-                            "USAGE_GUIDES/prompt_registry.yaml",
                         ],
                         "retain_consumed_for_tasks": ["registry_edit"],
                     },
@@ -154,27 +139,12 @@ class ResolverTests(unittest.TestCase):
                 },
             },
         }
-        prompt_registry = {
-            "prompts": {
-                "demo_prompt": {
-                    "type": "maintenance_meta",
-                    "purpose": "Demo",
-                    "prompt_frame": ["Read narrowly.", "Validate changes."],
-                    "template_path": "USAGE_GUIDES/template.md",
-                }
-            }
-        }
         (self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml").write_text(
-            yaml.safe_dump(task_registry, sort_keys=False),
-            encoding="utf-8",
+            yaml.safe_dump(task_registry, sort_keys=False), encoding="utf-8"
         )
-        (self.root / "PROJECT_CONTEXT" / "context_budget.md").write_text(
-            "budget policy",
-            encoding="utf-8",
-        )
-        (self.root / "USAGE_GUIDES" / "prompt_registry.yaml").write_text(
-            yaml.safe_dump(prompt_registry, sort_keys=False),
-            encoding="utf-8",
+        (self.root / "PROJECT_CONTEXT" / "governance").mkdir()
+        (self.root / "PROJECT_CONTEXT" / "governance" / "context_budget.md").write_text(
+            "budget policy", encoding="utf-8"
         )
 
     def tearDown(self) -> None:
@@ -214,7 +184,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertIn("src/target.md", result["context"]["required_paths"])
@@ -233,7 +202,6 @@ class ResolverTests(unittest.TestCase):
             "registry_edit",
             {},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertIn(
@@ -251,7 +219,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["tool_policy"]["enforcement"], "deny_unlisted")
@@ -270,24 +237,24 @@ class ResolverTests(unittest.TestCase):
                 "demo",
                 {"target": ["src"]},
                 include_optional=False,
-                include_template=False,
                 count_tokens=True,
             )
 
-    def test_optional_and_template_are_demand_loaded(self) -> None:
+    def test_optional_context_is_demand_loaded_without_template_injection(self) -> None:
         result = resolve_task(
             self.root,
             "demo",
             {"target": ["src"]},
             include_optional=True,
-            include_template=True,
             count_tokens=True,
         )
         self.assertGreater(result["token_budget"]["optional_tokens"], 0)
-        self.assertGreater(result["token_budget"]["template_tokens"], 0)
         sources = {item["source"] for item in result["token_budget"]["largest_files"]}
         self.assertIn("optional", sources)
-        self.assertIn("template", sources)
+        self.assertNotIn("template", sources)
+        self.assertNotIn("prompts", result)
+        self.assertNotIn("prompt_frame_tokens", result["token_budget"])
+        self.assertNotIn("template_tokens", result["token_budget"])
 
     def test_unresolved_placeholder_is_reported_without_search(self) -> None:
         result = resolve_task(
@@ -295,7 +262,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["context"]["unresolved_placeholders"], ["target"])
@@ -305,20 +271,17 @@ class ResolverTests(unittest.TestCase):
             any("Unresolved required placeholder" in item for item in result["errors"])
         )
 
-    def test_unknown_prompt_is_an_error(self) -> None:
-        registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
-        data = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
-        data["tasks"]["demo"]["prompt"] = ["missing"]
-        registry_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    def test_legacy_task_prompt_field_is_ignored(self) -> None:
         result = resolve_task(
             self.root,
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
-        self.assertIn("prompt id not found: missing", result["errors"])
+        self.assertEqual(result["status"], "PASS")
+        self.assertNotIn("prompts", result)
+        self.assertFalse(any("prompt" in key for key in result["token_budget"]))
 
     def test_heuristic_counts_non_ascii(self) -> None:
         counter = TokenCounter("missing-test-encoding")
@@ -353,42 +316,9 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         json.dumps(result)
-
-    def test_markdown_anchor_extracts_only_requested_section(self) -> None:
-        text = "# Top\n\nIntro\n\n## First\n\nOne\n\n## Second\n\nTwo\n"
-        self.assertEqual(
-            extract_markdown_section(text, "first"),
-            "## First\n\nOne\n",
-        )
-
-    def test_direct_prompt_resolution_uses_anchor(self) -> None:
-        prompt_path = self.root / "USAGE_GUIDES" / "prompt_registry.yaml"
-        data = yaml.safe_load(prompt_path.read_text(encoding="utf-8"))
-        (self.root / "USAGE_GUIDES" / "template.md").write_text(
-            "# Templates\n\n## Small Prompt\n\nUse only this.\n\n## Other\n\nIgnore this.\n",
-            encoding="utf-8",
-        )
-        data["prompts"]["anchored"] = {
-            "type": "copy_ready_template",
-            "purpose": "Anchored prompt",
-            "template_path": "USAGE_GUIDES/template.md#small-prompt",
-        }
-        prompt_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
-        result = resolve_prompt(
-            self.root,
-            "anchored",
-            include_template=True,
-            count_tokens=True,
-        )
-        self.assertEqual(
-            result["prompt"]["template_content"],
-            "## Small Prompt\n\nUse only this.\n",
-        )
-        self.assertNotIn("Ignore this.", result["prompt"]["template_content"])
 
     def test_path_escape_is_blocked(self) -> None:
         registry_path = self.root / "PROJECT_CONTEXT" / "tasks" / "registry" / "index.yaml"
@@ -400,7 +330,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["status"], "ERROR")
@@ -422,7 +351,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["token_budget"]["required_file_tokens"], 0)
@@ -447,34 +375,9 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["token_budget"]["required_file_tokens"], 0)
-
-    def test_missing_template_is_an_error_only_when_requested(self) -> None:
-        prompt_path = self.root / "USAGE_GUIDES" / "prompt_registry.yaml"
-        data = yaml.safe_load(prompt_path.read_text(encoding="utf-8"))
-        data["prompts"]["demo_prompt"]["template_path"] = "USAGE_GUIDES/missing.md"
-        prompt_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
-        result = resolve_task(
-            self.root,
-            "demo",
-            {"target": ["src"]},
-            include_optional=False,
-            include_template=False,
-            count_tokens=True,
-        )
-        self.assertFalse(result["errors"])
-        result = resolve_task(
-            self.root,
-            "demo",
-            {"target": ["src"]},
-            include_optional=False,
-            include_template=True,
-            count_tokens=True,
-        )
-        self.assertTrue(any("template path not found" in item for item in result["errors"]))
 
     def test_no_token_count_leaves_zero_measurements(self) -> None:
         result = resolve_task(
@@ -482,7 +385,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=False,
         )
         self.assertFalse(result["token_budget"]["enabled"])
@@ -498,7 +400,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["token_budget"]["status"], "WARN")
@@ -514,7 +415,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
 
@@ -543,7 +443,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["status"], "PASS")
@@ -554,7 +453,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=True,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["status"], "PASS")
@@ -581,7 +479,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["status"], "PASS")
@@ -592,7 +489,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=True,
-            include_template=False,
             count_tokens=True,
         )
         self.assertEqual(result["status"], "PASS")
@@ -641,7 +537,6 @@ class ResolverTests(unittest.TestCase):
             "demo",
             {"target": ["src"]},
             include_optional=False,
-            include_template=False,
             count_tokens=True,
         )
 

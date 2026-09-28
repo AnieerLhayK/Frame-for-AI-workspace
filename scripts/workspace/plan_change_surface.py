@@ -74,9 +74,9 @@ def is_absolute_path(value: str) -> bool:
 
 
 def load_skill_roots() -> tuple[str, ...]:
-    manifest = yaml.safe_load(
-        (WORKSPACE_ROOT / "workspace_manifest.yaml").read_text(encoding="utf-8-sig")
-    )
+    from scripts.workspace.manifest_loader import load_manifest
+
+    manifest = load_manifest(WORKSPACE_ROOT / "workspace_manifest.yaml")
     return tuple(
         normalize_path(str(skill["source_path"]))
         for skill in manifest.get("skills", [])
@@ -92,8 +92,6 @@ def classify_path(path: str, skill_roots: tuple[str, ...]) -> str:
         return "registry"
     if normalized in {
         "PROJECT_CONTEXT/tasks/registry/index.yaml",
-        "PROJECT_CONTEXT/tasks/registry/index.yaml",
-        "USAGE_GUIDES/prompt_registry.yaml",
     }:
         return "routing"
     if normalized == "reports" or normalized.startswith("reports/"):

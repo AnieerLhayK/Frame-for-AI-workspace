@@ -231,7 +231,6 @@ def resolve_tokens_estimated(task_type: str, bindings: list[str]) -> int:
         task_id=task_type,
         bindings=parse_bindings(bindings),
         include_optional=False,
-        include_template=False,
         count_tokens=True,
     )
     errors = resolved.get("errors", [])

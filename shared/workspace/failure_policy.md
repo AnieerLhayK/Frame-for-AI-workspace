@@ -8,10 +8,10 @@ Required resources include:
 
 - `workspace_manifest.yaml`
 - workspace protocols declared as required in the manifest
-- package protocols declared by `skills[].protocol_dependencies`
+- package protocols declared by the manifest loader's `skills[].protocol_dependencies` view
 - each skill `SKILL.md`
 - each skill `README.md`
-- critical prompts and references declared in `skills[].required_files`
+- critical prompts and references declared in the manifest loader's `skills[].required_files` view
 - required platform projections declared in `projections[]`
 
 Missing required resources must stop the workflow.

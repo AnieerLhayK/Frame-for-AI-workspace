@@ -16,6 +16,8 @@ WORKSPACE_ROOT = Path.cwd()
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
 REPORT_PATH = WORKSPACE_ROOT / "reports" / "current" / "manifest_validation_report.md"
 
+from scripts.workspace.manifest_loader import load_manifest as load_workspace_manifest
+
 
 @dataclass
 class Finding:
@@ -48,11 +50,11 @@ def load_manifest(state: State) -> dict[str, Any] | None:
         state.add("ERROR", "workspace_manifest.yaml is missing")
         return None
     try:
-        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8-sig"))
-    except json.JSONDecodeError as exc:
-        state.add("ERROR", f"workspace_manifest.yaml is not parseable JSON-compatible YAML: {exc}")
+        manifest = load_workspace_manifest(MANIFEST_PATH)
+    except (ValueError, OSError, json.JSONDecodeError) as exc:
+        state.add("ERROR", f"workspace manifest or skill catalog is invalid: {exc}")
         return None
-    state.add("INFO", "workspace_manifest.yaml parsed")
+    state.add("INFO", "workspace manifest and skill catalogs parsed")
     return manifest
 
 
@@ -206,7 +208,7 @@ def check_required_fields(manifest: dict[str, Any], state: State) -> None:
         profile = package.get("protocol_profile")
         if profile not in valid_protocol_profiles:
             state.add("ERROR", f"packages[{package_id}].protocol_profile is missing or invalid: {profile}")
-        for field in ("source_path", "shared_path", "protocol_manifest"):
+        for field in ("source_path", "shared_path", "protocol_manifest", "package_catalog"):
             if not str(package.get(field, "")).strip():
                 state.add("ERROR", f"packages[{package_id}].{field} is required")
 
@@ -387,6 +389,16 @@ def check_paths(manifest: dict[str, Any], state: State) -> None:
                     f"package protocol manifest is not valid JSON: {package_id}: {exc}",
                 )
         package_protocol_ids[package_id] = protocol_ids
+        package_catalog_value = str(package.get("package_catalog", ""))
+        package_catalog_path = resolve_path(workspace_root, package_catalog_value)
+        record_path_check(
+            state,
+            f"packages[{package_id}].package_catalog",
+            package_catalog_value,
+            package_catalog_path,
+            False,
+            True,
+        )
 
     for skill in manifest.get("skills", []):
         skill_id = str(skill.get("id", ""))

@@ -16,7 +16,7 @@ topics:
       purpose: Supported workspace CLI examples.
     - path: scripts/workspace/workspace_cli.py
       layer: tooling
-      purpose: Unified task, prompt, report, change, and knowledge command entry.
+      purpose: Unified task, report, change, and knowledge command entry.
     - path: USAGE_GUIDES/QUICK_START/workspace_cli.md
       layer: usage_guides
       purpose: Beginner-facing guide to the supported workspace CLI commands.

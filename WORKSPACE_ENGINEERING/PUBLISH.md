@@ -82,7 +82,7 @@ python -m scripts.publishing.sync_public_repo --push --skip-tests
 - `scripts/` 核心脚本变更（非 skill 相关）
 - `.claude/` 边界配置变更（rules、project-boundary）
 - `AGENTS.md` / `ARCHITECTURE.md` 变更
-- `tasks/registry/index.yaml` / `prompt_registry.yaml` 变更
+- `tasks/registry/index.yaml` 变更
 - `.github/workflows/` CI 配置变更
 
 ### 不触发同步的变更
@@ -105,7 +105,8 @@ python -m scripts.publishing.sync_public_repo --push --skip-tests
 | `<drive>:\ztemp` | `${SCRATCH_ROOT}` |
 | `<drive>:\Users\<user>` | `${USER_HOME}` |
 
-完整规则见 `PATH_MAPPING_REFERENCE.md`。
+完整规则见[路径映射参考](../USAGE_GUIDES/QUICK_START/path_mapping_reference.md)。
+公开生成版本仍位于输出仓库根目录。
 
 ## 目录骨架化
 
@@ -125,7 +126,9 @@ python -m scripts.publishing.sync_public_repo --push --skip-tests
 - [ ] 无 `<drive>:\Users\<user>` 硬编码路径
 - [ ] `skills/` 目录不存在
 - [ ] 模板文件（`.template`）齐全
-- [ ] 自动化文档（`BEGINNER_GUIDE.md`, `PATH_MAPPING_REFERENCE.md`, `ONBOARDING.md`）存在
+- [ ] 自动化文档（`BEGINNER_GUIDE.md`, `PATH_MAPPING_REFERENCE.md`,
+      `ONBOARDING.md`）存在于公开输出仓库根目录；其源文档位于
+      `USAGE_GUIDES/QUICK_START/`
 - [ ] 新手初始化脚本 `scripts/setup_public_workspace.py` 存在
 - [ ] 核心脚本可运行（task list, explain mechanism, agent list, health）
 - [ ] 核心测试通过（193+ 项）

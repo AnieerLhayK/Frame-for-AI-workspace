@@ -29,7 +29,7 @@ The planner does not decide behavior from filenames alone. It combines:
 - `behavior`: skill source first.
 - `metadata`: skill source metadata or the canonical registry.
 - `exposure`: manifest and projection tooling, with external changes separately authorized.
-- `routing`: task or prompt registries.
+- `routing`: task registry.
 - `tooling`: scripts and their focused tests.
 - `policy`: the narrowest owning shared policy or canonical registry.
 - `documentation`: user-facing guides first.

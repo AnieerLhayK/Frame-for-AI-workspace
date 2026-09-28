@@ -26,7 +26,6 @@ MECHANISMS: dict[str, dict[str, Any]] = {
         "sources": [
             "PROJECT_CONTEXT/tasks/registry/index.yaml",
             "PROJECT_CONTEXT/governance/context_budget.md",
-            "USAGE_GUIDES/prompt_registry.yaml",
             "scripts/workspace/resolve_task_context.py",
         ],
         "checks": [
@@ -224,7 +223,9 @@ def test_candidates(path: str) -> list[str]:
 
 def explain_path(path: str) -> dict[str, Any]:
     normalized = normalize_path(path)
-    manifest = load_yaml(MANIFEST_PATH)
+    from scripts.workspace.manifest_loader import load_manifest
+
+    manifest = load_manifest(MANIFEST_PATH)
     tasks = load_task_registry()
     knowledge = load_knowledge_registry()
     exists = (WORKSPACE_ROOT / normalized).exists()

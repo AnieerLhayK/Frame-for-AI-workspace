@@ -32,7 +32,7 @@ in older ledgers remain unchanged and are explained by the context index.
 
 ## Recently Completed Work
 
-- Task and prompt registries, context budgets, and exact token measurement.
+- Task routing, context budgets, and exact token measurement.
 - Change-surface planning and bounded knowledge lookup.
 - Report freshness, failure diagnostics, health checks, and governance summaries.
 - A user-level `workspace` launcher for the developer interface.
@@ -84,7 +84,7 @@ Before adding a new skill, decide whether it belongs in the current character-sy
 
 If context conflicts:
 
-1. Prefer `workspace_manifest.yaml` for paths, registry, projections, and portability metadata.
+1. Prefer `workspace_manifest.yaml` for root paths, catalog pointers, projections, and portability metadata; use the manifest loader for the aggregated skill registry.
 2. Prefer `shared/` for protocols and policies.
 3. Prefer current Git state for actual repository contents.
 4. Prefer current generated reports only after checking their snapshot headers.
