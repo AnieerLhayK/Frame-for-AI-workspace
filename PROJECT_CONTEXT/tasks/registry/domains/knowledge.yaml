@@ -41,13 +41,14 @@ tasks:
     - git diff --check
   knowledge_interface_tooling:
     use_when:
-    - Changing the bounded knowledge registry or read-only topic discovery interface.
+    - Changing the bounded knowledge registry list, validation, or path explanation interface.
     use_when_zh:
-    - 修改有边界的知识注册表或只读主题发现接口
+    - 修改有边界的知识注册表列表、校验或路径说明接口
     required:
     - PROJECT_CONTEXT/knowledge/index.yaml
-    - scripts/workspace/find_knowledge.py
-    - scripts/tests/workspace/test_find_knowledge.py
+    - scripts/workspace/knowledge_registry.py
+    - scripts/tests/workspace/test_knowledge_registry.py
+    - scripts/tests/validation/test_validate_project_context.py
     optional:
     - PROJECT_CONTEXT/README.md
     - WORKSPACE_ENGINEERING/README.md
@@ -70,18 +71,16 @@ tasks:
     - PROJECT_CONTEXT/knowledge/index.yaml
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/tasks/ledger/README.md
-    - scripts/workspace/find_knowledge.py
-    - scripts/tests/workspace/test_find_knowledge.py
+    - scripts/workspace/knowledge_registry.py
+    - scripts/tests/workspace/test_knowledge_registry.py
     - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/tests/validation/test_validate_project_context.py
     validation:
-    - python -m unittest scripts.tests.workspace.test_find_knowledge scripts.tests.workspace.test_workspace_cli
+    - python -m unittest scripts.tests.workspace.test_knowledge_registry scripts.tests.workspace.test_workspace_cli
+    - python -m unittest scripts.tests.validation.test_validate_project_context
     - python -m scripts.workspace.workspace_cli knowledge list
     - python -m scripts.workspace.workspace_cli knowledge validate
-    - python -m scripts.workspace.workspace_cli knowledge find "skill 开发"
-    - python -m scripts.workspace.workspace_cli knowledge find "运行时 skill"
-    - python -m scripts.workspace.workspace_cli knowledge find "character generator"
-    - python -m scripts.workspace.workspace_cli knowledge find "OpenCode loading"
     - python -m scripts.workspace.resolve_task_context knowledge_interface_tooling --format
       json
     - git diff --check
@@ -116,6 +115,7 @@ tasks:
     ledger: true
     write_scope:
     - PROJECT_CONTEXT/continuity/current_status.md
+    - PROJECT_CONTEXT/memory/decisions.md
     - PROJECT_CONTEXT/todo/README.md
     - PROJECT_CONTEXT/todo/external-skills.md
     - PROJECT_CONTEXT/todo/workspace-optimization.md
@@ -339,15 +339,14 @@ tasks:
     - ARCHITECTURE.md
     - AGENTS.md
     - .claude/project-boundary.json
-    - scripts/workspace/find_knowledge.py
+    - scripts/workspace/knowledge_registry.py
     - scripts/workspace/plan_change_surface.py
     - scripts/workspace/workspace_cli.py
     - scripts/tests/
     validation:
-    - python -m unittest scripts.tests.workspace.test_find_knowledge scripts.tests.workspace.test_workspace_cli
+    - python -m unittest scripts.tests.workspace.test_knowledge_registry scripts.tests.workspace.test_workspace_cli
     - python -m scripts.workspace.workspace_cli knowledge validate
-    - python -m scripts.workspace.workspace_cli knowledge find "workspace engineering"
-    - python -m scripts.workspace.workspace_cli knowledge find "skill 开发"
+    - python -m scripts.workspace.workspace_cli knowledge list
     - python -m scripts.workspace.resolve_task_context workspace_engineering_knowledge --format
       json
     - git diff --check

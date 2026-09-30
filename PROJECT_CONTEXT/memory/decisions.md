@@ -140,8 +140,9 @@ manifest-declared workspace output root and never changes source material.
 - reason: The prompt registry duplicated task and skill guidance, expanded the
   resolver/CLI surface, and created another path inventory to maintain.
 - date if known: 2026-09-27 USAGE_GUIDES simplification.
-- consequence: Retire prompt list/show and prompt-token reporting. Use bounded
-  knowledge lookup when task intent is uncertain, then resolve one exact task id.
+- consequence: Retire prompt list/show and prompt-token reporting. The former
+  knowledge lookup recommendation was superseded on 2026-09-29; use
+  `workspace task list`, then resolve one exact task id.
 
 ## Full-Drive Discovery Is Forbidden
 

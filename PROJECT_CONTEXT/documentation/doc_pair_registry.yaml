@@ -65,6 +65,10 @@ directories:
     note: "Tracked adapted external-skill landing area with bilingual entry documentation."
 
 pairs:
+  - primary: "scripts/publishing/readme_templates/frame/README.md"
+    companion: "scripts/publishing/readme_templates/frame/README.zh-CN.md"
+    sync_level: "semantic"
+    note: "Bilingual README templates for the public Frame projection."
   - primary: "WORKSPACE_ENGINEERING/methods/skill_engineering/skill_catalog_partitioning.md"
     companion: "WORKSPACE_ENGINEERING/methods/skill_engineering/skill_catalog_partitioning.zh-CN.md"
     sync_level: "semantic"

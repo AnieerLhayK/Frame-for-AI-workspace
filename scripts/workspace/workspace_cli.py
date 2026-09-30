@@ -86,8 +86,8 @@ def build_parser() -> argparse.ArgumentParser:
             "      Resolve a task and fail when the required context budget is too high.\n"
             "  workspace records start --task-type <task-id> --operation workspace_write\n"
             "      Register a task before its first workspace mutation.\n"
-            "  workspace knowledge find \"topic\"\n"
-            "      Find the smallest registered reading entry points.\n"
+            "  workspace knowledge list\n"
+            "      List registered knowledge topics.\n"
             "  workspace explain path scripts/workspace/workspace_cli.py\n"
             "      Explain a path's layer, related tasks, topics, and likely tests.\n"
             "  workspace workflow check <task-id> --record-id TASK-YYYYMMDD-001\n"
@@ -282,7 +282,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_links.add_argument("--manifest-path")
 
-    knowledge = commands.add_parser("knowledge", help="Find bounded knowledge entry points.")
+    knowledge = commands.add_parser("knowledge", help="Inspect the bounded knowledge registry.")
     knowledge_commands = knowledge.add_subparsers(dest="action", required=True)
     knowledge_list = knowledge_commands.add_parser("list", help="List knowledge topics.")
     knowledge_list.add_argument("--format", choices=("text", "json"), default="text")
@@ -291,23 +291,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="Check every indexed knowledge path.",
     )
     knowledge_validate.add_argument("--format", choices=("text", "json"), default="text")
-    knowledge_find = knowledge_commands.add_parser("find", help="Find topics by phrase or alias.")
-    knowledge_find.add_argument("query")
-    knowledge_find.add_argument("--limit", type=int, default=3)
-    knowledge_find.add_argument(
-        "--layer",
-        choices=(
-            "project_context",
-            "shared",
-            "workspace_engineering",
-            "skill_engineering",
-            "usage_guides",
-            "manifest",
-            "tooling",
-            "documentation",
-        ),
-    )
-    knowledge_find.add_argument("--format", choices=("text", "json"), default="text")
 
     changes = commands.add_parser("changes", help="Plan or verify task change surfaces.")
     change_commands = changes.add_subparsers(dest="action", required=True)
@@ -414,17 +397,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     explain = commands.add_parser(
         "explain",
-        help="Explain workspace paths, topics, or mechanisms.",
+        help="Explain workspace paths or mechanisms.",
     )
     explain.add_argument("--format", dest="global_format", choices=("text", "json"))
     explain_commands = explain.add_subparsers(dest="action", required=True)
     explain_path = explain_commands.add_parser("path", help="Explain one workspace-relative path.")
     explain_path.add_argument("path")
     explain_path.add_argument("--format", choices=("text", "json"))
-    explain_topic = explain_commands.add_parser("topic", help="Explain matching knowledge topics.")
-    explain_topic.add_argument("query")
-    explain_topic.add_argument("--limit", type=int, default=3)
-    explain_topic.add_argument("--format", choices=("text", "json"))
     explain_mechanism = explain_commands.add_parser("mechanism", help="Explain a named workspace mechanism.")
     explain_mechanism.add_argument("name")
     explain_mechanism.add_argument("--format", choices=("text", "json"))
@@ -611,15 +590,11 @@ def dispatch(args: argparse.Namespace) -> int:
             command.extend(["-ManifestPath", args.manifest_path])
         return run_command(command)
     if args.command == "knowledge":
-        command = [sys.executable, "-m", "scripts.workspace.find_knowledge"]
+        command = [sys.executable, "-m", "scripts.workspace.knowledge_registry"]
         if args.action == "list":
             command.append("--list")
         elif args.action == "validate":
             command.append("--validate")
-        else:
-            command.extend(["--query", args.query, "--limit", str(args.limit)])
-            if args.layer:
-                command.extend(["--layer", args.layer])
         command.extend(["--format", args.format])
         return run_command(command)
     if args.command == "records":
@@ -751,9 +726,6 @@ def dispatch(args: argparse.Namespace) -> int:
         ]
         if args.action == "path":
             command.append(args.path)
-        elif args.action == "topic":
-            command.append(args.query)
-            command.extend(["--limit", str(max(1, args.limit))])
         else:
             command.append(args.name)
         return run_command(command)

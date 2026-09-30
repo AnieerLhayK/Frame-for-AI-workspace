@@ -1,0 +1,30 @@
+{
+  "project_type": "governed-skill-workspace",
+  "allowed_top_level": [
+    ".claude",
+    ".github",
+    "mcp",
+    "packages",
+    "PROJECT_CONTEXT",
+    "reports",
+    "scripts",
+    "shared",
+    "skills",
+    "WORKSPACE_ENGINEERING",
+    "USAGE_GUIDES"
+  ],
+  "allowed_root_files": [
+    ".gitattributes",
+    ".gitignore",
+    "AGENTS.md",
+    "ARCHITECTURE.md",
+    "CLAUDE.md",
+    "README.md",
+    "pytest.ini",
+    "workspace_manifest.yaml"
+  ],
+  "external_project_aliases": {
+    "cnn": "Resolve through the machine-local Claude project registry.",
+    "ztemp": "Resolve through the machine-local Claude project registry."
+  }
+}

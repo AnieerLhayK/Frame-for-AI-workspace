@@ -134,7 +134,7 @@
   - bounded task routing;
   - context-budget preflight;
   - change-surface planning;
-  - knowledge lookup;
+  - knowledge registry validation and listing;
   - report freshness checks;
   - failure diagnostics;
   - live health and governance summaries;
@@ -256,21 +256,6 @@
   and local contracts rather than parallel path registries.
 - `scripts/validation/check_links.ps1`: validate all manifest projections and shared
   uniqueness after each exposure change.
-
-## External Knowledge / RAG Planning
-
-A bounded planning evaluation of whether future external RAG / knowledge base
-would improve workspace maintenance is recorded under
-`WORKSPACE_ENGINEERING/proposals/external_rag_planning.md`.
-
-- **Current phase:** P0 complete. `use_when_zh` summaries and ten unique Chinese
-  operational aliases are present, and uncertain natural language falls back
-  through `workspace knowledge find`. No retrieval implementation exists.
-- **Decision rule:** complete P0, observe 5–10 tasks, then decide whether
-  P2–P5 (directory, BM25, CLI) are justified.
-- **Boundary:** No external directories, indexes, databases, vector stores,
-  or retrieval services will be created until P0 effectiveness is measured.
-- `knowledge/index.yaml` has a new `external_knowledge_planning` topic.
 
 ## Current Unfinished Or Open Work
 

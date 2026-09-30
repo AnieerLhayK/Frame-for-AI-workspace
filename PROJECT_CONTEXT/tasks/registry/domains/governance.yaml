@@ -327,8 +327,8 @@ tasks:
     - scripts/validation/validate_runtime_loop.py
     - scripts/tests/validation/
     - scripts/requirements-context-tools.txt
-    - scripts/workspace/find_knowledge.py
-    - scripts/tests/workspace/test_find_knowledge.py
+    - scripts/workspace/knowledge_registry.py
+    - scripts/tests/workspace/test_knowledge_registry.py
     - scripts/tests/workspace/test_resolve_task_context.py
     - reports/current/manifest_validation_report.md
     - reports/current/protocol_validation_report.md

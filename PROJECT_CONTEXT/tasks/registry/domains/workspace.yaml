@@ -333,7 +333,7 @@ tasks:
     - scripts/workspace/workspace_health.py
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - scripts/workspace/bootstrap_workspace.py
-    - scripts/workspace/find_knowledge.py
+    - scripts/workspace/knowledge_registry.py
     - scripts/reporting/report_status.py
     - scripts/validation/check_links.ps1
     ignore:

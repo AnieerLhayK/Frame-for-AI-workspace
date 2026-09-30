@@ -33,7 +33,7 @@ in older ledgers remain unchanged and are explained by the context index.
 ## Recently Completed Work
 
 - Task routing, context budgets, and exact token measurement.
-- Change-surface planning and bounded knowledge lookup.
+- Change-surface planning and exact task routing.
 - Report freshness, failure diagnostics, health checks, and governance summaries.
 - A user-level `workspace` launcher for the developer interface.
 - Claude Code startup compatibility through root `CLAUDE.md -> AGENTS.md`.

@@ -21,7 +21,8 @@ tasks:
     - scripts/publishing/sync_public_repo.py
     - scripts/publishing/sync_chatty_ch_system_repo.py
     - scripts/publishing/sync_qq_raw_filter_repo.py
-    - scripts/tests/publishing/
+    - scripts/tests/publishing/test_sync_public_projections.py
+    - scripts/tests/publishing/test_registered_repo_sync.py
     optional:
     - selected publisher contract evidence
     - selected public source surface resolved by its narrow route

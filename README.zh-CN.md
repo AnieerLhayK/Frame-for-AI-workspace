@@ -23,4 +23,3 @@ python -m pytest scripts/tests -q
 
 请先阅读 `BEGINNER_GUIDE.md` 和 `PATH_MAPPING_REFERENCE.md`，再添加本地
 skill 或平台集成。凭据和私有源文件应放在仓库之外。
-

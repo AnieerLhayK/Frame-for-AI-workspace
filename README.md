@@ -25,4 +25,3 @@ python -m pytest scripts/tests -q
 Read `BEGINNER_GUIDE.md` and `PATH_MAPPING_REFERENCE.md` before adding local
 skills or platform integrations. Keep credentials and private source outside
 this repository.
-

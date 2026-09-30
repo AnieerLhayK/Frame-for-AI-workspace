@@ -12,7 +12,6 @@ topic_files:
   agent_governance: topics/agent_governance.yaml
   current_status: topics/current_status.yaml
   developer_interfaces: topics/developer_interfaces.yaml
-  external_knowledge_planning: topics/external_knowledge_planning.yaml
   failure_and_discovery: topics/failure_and_discovery.yaml
   governance: topics/governance.yaml
   personal_corpus_preparation: topics/personal_corpus_preparation.yaml

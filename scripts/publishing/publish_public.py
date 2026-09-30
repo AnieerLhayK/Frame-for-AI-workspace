@@ -21,6 +21,7 @@ import sys
 from pathlib import Path
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.publishing.readme_templates import load_template, render_template
 
 # ── Path-substitution rules (ordered: longest literal match first) ──────────
 SUBSTITUTIONS: list[tuple[re.Pattern[str], str]] = [
@@ -140,6 +141,7 @@ EXCLUDED_PATHS = {
     "scripts/tests/publishing/test_publish_chatty_ch_system.py",
     "scripts/tests/publishing/test_publish_qq_raw_filter.py",
     "scripts/tests/publishing/test_sync_qq_raw_filter_repo.py",
+    "scripts/tests/publishing/test_registered_repo_sync.py",
     # The public skill-collection publisher depends on the private skills
     # source, which Frame intentionally excludes.
     "scripts/publishing/publish_skill_collection.py",
@@ -164,7 +166,7 @@ EXCLUDED_PATHS = {
     "scripts/tests/workspace/test_startup_context_policy.py",
     "scripts/tests/workspace/test_workspace_cli.py",
     "scripts/tests/workspace/test_plan_change_surface.py",
-    "scripts/tests/workspace/test_find_knowledge.py",
+    "scripts/tests/workspace/test_knowledge_registry.py",
     "scripts/tests/workspace/test_workspace_explain.py",
     "reports",
     "reasonix.toml",
@@ -217,7 +219,6 @@ SCRUB_FILES: set[str] = {
     "PROJECT_CONTEXT/tasks/ledger/README.md",
     "PROJECT_CONTEXT/continuity/current_status.md",
     "PROJECT_CONTEXT/governance/context_budget.md",
-    "WORKSPACE_ENGINEERING/external_knowledge/external_rag_planning.md",
     "USAGE_GUIDES/QUICK_START/claude_code.md",
     "scripts/start_hermes_gateway.ps1",
     "scripts/stop_hermes_gateway.ps1",
@@ -298,43 +299,13 @@ SKELETON_DIRS = []
 PUBLIC_EXTENSION_LAYERS = ("skills", "external-skills", "packages")
 
 EXTENSION_LAYER_READMES: dict[str, str] = {
-    "skills": """# Local Skills
-
-Add skills developed for your workspace in this directory.
-
-Before adding a skill, define its source boundary, authority, validation, and
-registration in the downstream workspace. Keep private corpora, credentials,
-and provider state outside the repository.
-""",
-    "external-skills": """# External Skills
-
-Add reviewed third-party skills in this directory.
-
-Before importing a skill, review provenance, license, privacy implications,
-maintenance ownership, and the permissions it would receive in the downstream
-workspace.
-""",
-    "packages": """# Packages
-
-Add a domain package here when related skills, policies, and implementation
-need to be maintained together.
-
-Register package content and its authority in the downstream workspace before
-making it available to agents.
-""",
+    "skills": load_template("frame/skills.md"),
+    "external-skills": load_template("frame/external-skills.md"),
+    "packages": load_template("frame/packages.md"),
 }
 
 SKELETON_STUB: dict[str, str] = {
-    "README.md": """# {dir_name}
-
-This is a structural skeleton. See the workspace architecture documentation
-for how to implement a skill in this category.
-
-Related:
-- `skills/<category>/registry.json` or package `package_manifest.json` for registration
-- shared/governance/agent_governance.yaml → surface class conventions
-- ARCHITECTURE.md → layer hierarchy
-""",
+    "README.md": load_template("frame/category-readme.md"),
     "SKILL.md": """---
 id: {dir_name}
 description: Template skill scaffold (replace with actual skill)
@@ -509,66 +480,12 @@ def generate_public_manifest(source_manifest: Path) -> str:
 
 def generate_public_readme(repo_name: str) -> str:
     """Return the public Frame README with its framework-only boundary explicit."""
-    return f"""# {repo_name}
-
-This repository is a deployable framework template for a governed AI workspace.
-It contains architecture, policies, routing tools, and portable setup helpers.
-Use `workspace_manifest.yaml` to configure paths and authority.
-
-## Extensions
-
-- `skills/`: add skills developed for your workspace.
-- `external-skills/`: add reviewed third-party skills.
-- `mcp/`: keep reusable configuration templates for MCP connections.
-- `packages/`: organize related skills, policies, and implementation by domain.
-
-The extension directories contain guidance or configuration templates for the
-components you choose to add.
-
-## Start
-
-```bash
-python scripts/setup_public_workspace.py
-python -m scripts.workspace.workspace_cli health
-python -m pytest scripts/tests -q
-```
-
-Read `BEGINNER_GUIDE.md` and `PATH_MAPPING_REFERENCE.md` before adding local
-skills or platform integrations. Keep credentials and private source outside
-this repository.
-
-"""
+    return render_template("frame/README.md", repo_name=repo_name)
 
 
 def generate_public_readme_zh(repo_name: str) -> str:
     """Return the paired generic Chinese README for the public template."""
-    return f"""# {repo_name}
-
-这是一个可部署的受治理 AI 工作区框架模板，包含架构、策略、路由工具和
-便携式初始化脚本。
-使用 `workspace_manifest.yaml` 配置路径和权限。
-
-## 扩展
-
-- `skills/`：添加为当前工作区开发的技能。
-- `external-skills/`：添加经过审查的第三方技能。
-- `mcp/`：保存 MCP 连接所需的可复用配置模板。
-- `packages/`：按领域组织相关的技能、策略和实现代码。
-
-扩展目录提供添加所需组件的说明或配置模板。
-
-## 开始使用
-
-```bash
-python scripts/setup_public_workspace.py
-python -m scripts.workspace.workspace_cli health
-python -m pytest scripts/tests -q
-```
-
-请先阅读 `BEGINNER_GUIDE.md` 和 `PATH_MAPPING_REFERENCE.md`，再添加本地
-skill 或平台集成。凭据和私有源文件应放在仓库之外。
-
-"""
+    return render_template("frame/README.zh-CN.md", repo_name=repo_name)
 
 
 def generate_public_architecture_md() -> str:

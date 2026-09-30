@@ -125,7 +125,7 @@ def check_knowledge(
     result = runner(
         [
             sys.executable,
-            "-m", "scripts.workspace.find_knowledge",
+            "-m", "scripts.workspace.knowledge_registry",
             "--validate",
             "--format",
             "json",

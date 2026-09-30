@@ -25,21 +25,13 @@ from __future__ import annotations
 
 import argparse
 import os
-import shutil
-import stat
 import subprocess
 import sys
 from pathlib import Path
 
-from scripts.workspace.agent_governance import (
-    POLICY_PATH,
-    check_managed_platform_publish,
-    load_manifest,
-    load_registry,
-    load_yaml,
-)
 from scripts.workspace.runtime import WORKSPACE_ROOT
 from scripts.publishing.workspace_state import workspace_clean_for_record
+from scripts.publishing import registered_repo_sync
 PUBLISHER_ID = "frame_for_ai_workspace"
 PUBLISHER_SCRIPT = "scripts/publishing/sync_public_repo.py"
 DEFAULT_STAGING_ROOT = Path(r"${DATA_ROOT}/codex\cache\staging")
@@ -57,11 +49,9 @@ REMOTE_URL = os.environ.get(
 
 def _is_managed_staging_path(staging_path: Path) -> bool:
     """Return True only for the script-managed disposable staging checkout."""
-    try:
-        staging_path.resolve().relative_to(DEFAULT_STAGING_ROOT.resolve())
-    except ValueError:
-        return False
-    return staging_path.name == "Frame-for-AI-workspace"
+    return registered_repo_sync.is_managed_staging_path(
+        staging_path, DEFAULT_STAGING_ROOT, "Frame-for-AI-workspace"
+    )
 
 
 def cleanup_staging(staging: str, keep_staging: bool = False) -> None:
@@ -78,12 +68,10 @@ def cleanup_staging(staging: str, keep_staging: bool = False) -> None:
         print(f"       {staging_path}")
         print("       Remove it manually after use; do not maintain it as a local repo.")
         return
-    def remove_readonly(function, path, _exc_info):
-        os.chmod(path, stat.S_IWRITE)
-        function(path)
-
-    shutil.rmtree(staging_path, onerror=remove_readonly)
-    print(f"[OK] Removed disposable staging checkout: {staging_path}")
+    if registered_repo_sync.cleanup_staging(
+        staging_path, DEFAULT_STAGING_ROOT / "Frame-for-AI-workspace"
+    ):
+        print(f"[OK] Removed disposable staging checkout: {staging_path}")
 
 
 def check_workspace_clean(record_id: str) -> bool:
@@ -130,45 +118,11 @@ def run_git(staging_path: Path, args: list[str]) -> subprocess.CompletedProcess:
 
 def prepare_staging_repo(staging: str, remote_url: str) -> bool:
     """Ensure staging is a clean clone of the public repository."""
-    staging_path = Path(staging).resolve()
-    if not (staging_path / ".git").is_dir():
-        if staging_path.exists() and any(staging_path.iterdir()):
-            print(
-                f"[FAIL] {staging_path} exists but is not a git repository.",
-                file=sys.stderr,
-            )
-            return False
-        staging_path.parent.mkdir(parents=True, exist_ok=True)
-        result = subprocess.run(
-            ["git", "clone", "--branch", REMOTE_BRANCH, remote_url, str(staging_path)],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            print(f"[FAIL] git clone failed: {result.stderr.strip()}", file=sys.stderr)
-            return False
-
-    remote = run_git(staging_path, ["remote", "get-url", REMOTE_NAME])
-    if remote.returncode != 0:
-        remote = run_git(staging_path, ["remote", "add", REMOTE_NAME, remote_url])
-        if remote.returncode != 0:
-            print(f"[FAIL] git remote add failed: {remote.stderr.strip()}", file=sys.stderr)
-            return False
-
-    for args in (
-        ["fetch", REMOTE_NAME, REMOTE_BRANCH],
-        ["checkout", REMOTE_BRANCH],
-        ["reset", "--hard", f"{REMOTE_NAME}/{REMOTE_BRANCH}"],
-        ["clean", "-fdx"],
-        ["rm", "-r", "--ignore-unmatch", "."],
-    ):
-        result = run_git(staging_path, args)
-        if result.returncode != 0:
-            print(
-                f"[FAIL] git {' '.join(args)} failed: {result.stderr.strip()}",
-                file=sys.stderr,
-            )
-            return False
+    try:
+        registered_repo_sync.prepare_staging(Path(staging), remote_url, REMOTE_BRANCH)
+    except RuntimeError as error:
+        print(f"[FAIL] {error}", file=sys.stderr)
+        return False
     return True
 
 
@@ -189,53 +143,13 @@ def verify(staging: str, skip_tests: bool = False) -> bool:
 
 def push_to_remote(staging: str) -> bool:
     """Commit (if dirty) and push the staging repo. Return True on success."""
-    staging_path = Path(staging)
-    if not (staging_path / ".git").is_dir():
-        print(f"[FAIL] {staging} is not a git repository", file=sys.stderr)
-        return False
-
-    # Check if there are changes to commit
-    result = subprocess.run(
-        ["git", "status", "--porcelain"],
-        capture_output=True, text=True, cwd=staging_path,
-    )
-    has_changes = bool(result.stdout.strip())
-
-    if has_changes:
-        result = subprocess.run(
-            ["git", "add", "-A"],
-            capture_output=True, text=True, cwd=staging_path,
+    try:
+        registered_repo_sync.commit_and_push(
+            Path(staging), "sync: regenerate public workspace skeleton", REMOTE_BRANCH
         )
-        if result.returncode != 0:
-            print(f"[FAIL] git add failed: {result.stderr.strip()}", file=sys.stderr)
-            return False
-
-        has_changes = subprocess.run(
-            ["git", "status", "--porcelain"],
-            capture_output=True, text=True, cwd=staging_path,
-        )
-        if not has_changes.stdout.strip():
-            print("[INFO] No remote changes to commit.")
-        else:
-            result = subprocess.run(
-                ["git", "commit", "-m", "sync: regenerate public workspace skeleton"],
-                capture_output=True, text=True, cwd=staging_path,
-            )
-            if result.returncode != 0:
-                print(f"[FAIL] git commit failed: {result.stderr.strip()}", file=sys.stderr)
-                return False
-            print(f"[INFO] Commit: {result.stdout.strip()}")
-    else:
-        print("[INFO] No changes — nothing to commit.")
-
-    result = subprocess.run(
-        ["git", "push", REMOTE_NAME, REMOTE_BRANCH],
-        capture_output=True, text=True, cwd=staging_path,
-    )
-    if result.returncode != 0:
-        print(f"[FAIL] git push failed: {result.stderr.strip()}", file=sys.stderr)
+    except RuntimeError as error:
+        print(f"[FAIL] {error}", file=sys.stderr)
         return False
-
     print(f"[OK] Push successful ({REMOTE_NAME}/{REMOTE_BRANCH}).")
     return True
 
@@ -246,19 +160,14 @@ def require_managed_publish_authorization(
     remote_url: str,
     agent: str,
 ) -> None:
-    authorization = check_managed_platform_publish(
-        load_yaml(POLICY_PATH),
-        load_manifest(),
-        registry=load_registry(),
+    registered_repo_sync.require_managed_publish_authorization(
         publisher_id=PUBLISHER_ID,
         publisher_script=PUBLISHER_SCRIPT,
-        agent_name=agent,
         record_id=record_id,
         staging_path=staging,
         remote_url=remote_url,
+        agent=agent,
     )
-    if authorization["status"] != "ALLOW":
-        raise ValueError(authorization["reason"])
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -268,6 +177,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--push", action="store_true",
         help="Actually push to remote (default: dry-run only).",
+    )
+    parser.add_argument(
+        "--preview", action="store_true",
+        help="Preview generated files on a temporary branch in the registered remote, then delete it.",
     )
     parser.add_argument(
         "--dry-run", action="store_true", dest="dry_run",
@@ -289,7 +202,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--agent", default="codex", help="Registered publishing agent.")
     parser.add_argument(
         "--force-dirty", action="store_true",
-        help="Allow sync even with uncommitted workspace changes.",
+        help="Allow a preview from an uncommitted workspace.",
     )
     parser.add_argument(
         "--keep-staging", action="store_true",
@@ -303,6 +216,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.push and args.preview:
+        raise SystemExit("--push and --preview are mutually exclusive")
+    if args.force_dirty and not args.preview:
+        raise SystemExit("--force-dirty is available only for a preview")
 
     try:
         require_managed_publish_authorization(
@@ -321,7 +238,7 @@ def main() -> int:
     print("[1/5] Checking workspace git status ...")
     if not args.force_dirty and not check_workspace_clean(args.record_id):
         print("[ABORT] Workspace has uncommitted changes.", file=sys.stderr)
-        print("        Commit or stash them first, or use --force-dirty.", file=sys.stderr)
+        print("        Commit or stash them first, or use --force-dirty with --preview.", file=sys.stderr)
         return 1
     print("  [OK]")
     print()
@@ -359,7 +276,16 @@ def main() -> int:
 
     # Step 5: Push
     print("[5/5] Publishing ...")
-    if args.push:
+    if args.preview:
+        try:
+            registered_repo_sync.preview_staging_remotely(
+                Path(args.staging_dir), "preview: regenerate public workspace skeleton"
+            )
+        except (RuntimeError, ValueError) as error:
+            print(f"[ABORT] Preview failed: {error}", file=sys.stderr)
+            return 1
+        print("[OK] Remote preview inspected and temporary branch deleted.")
+    elif args.push:
         if not push_to_remote(args.staging_dir):
             return 1
     else:

@@ -181,6 +181,26 @@ def check_required_paths(root: Path) -> list[str]:
     return issues
 
 
+def check_no_python_bytecode(root: Path) -> list[str]:
+    """Reject interpreter caches that tests or functional checks may create."""
+    issues: list[str] = []
+    for path in root.rglob("*"):
+        if ".git" in path.relative_to(root).parts:
+            continue
+        if path.is_dir() and path.name == "__pycache__":
+            issues.append(f"  Python bytecode cache exists: {path.relative_to(root).as_posix()}/")
+        elif path.is_file() and path.suffix == ".pyc":
+            issues.append(f"  Python bytecode file exists: {path.relative_to(root).as_posix()}")
+    return issues
+
+
+def _python_check_env() -> dict[str, str]:
+    """Keep Python subprocesses from writing bytecode into the projection."""
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    return env
+
+
 def check_templates(root: Path) -> list[str]:
     """Check that expected template files exist."""
     issues: list[str] = []
@@ -233,7 +253,7 @@ def run_functional_checks(root: Path) -> list[str]:
         # 1. Task resolver
         result = subprocess.run(
             [sys.executable, "-m", "scripts.workspace.resolve_task_context", "--list"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, text=True, timeout=30, env=_python_check_env(),
         )
         if result.returncode != 0:
             issues.append(
@@ -244,7 +264,7 @@ def run_functional_checks(root: Path) -> list[str]:
         # 2. workspace CLI agent list
         result = subprocess.run(
             [sys.executable, "-m", "scripts.workspace.workspace_cli", "agent", "list"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, text=True, timeout=30, env=_python_check_env(),
         )
         if result.returncode != 0:
             issues.append(
@@ -262,7 +282,7 @@ def run_functional_checks(root: Path) -> list[str]:
                 "mechanism",
                 "task-routing",
             ],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, text=True, timeout=30, env=_python_check_env(),
         )
         if result.returncode != 0:
             issues.append(
@@ -274,7 +294,7 @@ def run_functional_checks(root: Path) -> list[str]:
         # rc=0 clean, rc=1 issues found, rc=2 infrastructure not fully set up
         result = subprocess.run(
             [sys.executable, "-m", "scripts.workspace.workspace_cli", "health"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, text=True, timeout=30, env=_python_check_env(),
         )
         if result.returncode not in (0, 1, 2):
             issues.append(
@@ -302,7 +322,7 @@ def run_tests(root: Path) -> list[str]:
         os.chdir(root)
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "scripts/tests", "-q"],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=120, env=_python_check_env(),
         )
         if result.returncode != 0:
             lines = result.stdout.strip().split("\n")
@@ -391,6 +411,8 @@ def main() -> int:
 
     if not args.skip_tests:
         checks.append(("Test suite", run_tests(root)))
+
+    checks.append(("Python bytecode artifacts", check_no_python_bytecode(root)))
 
     total_issues = 0
     for name, issues in checks:

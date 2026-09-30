@@ -79,7 +79,10 @@ MECHANISMS: dict[str, dict[str, Any]] = {
             "packages/character-system/reports/runtime-loop/",
             "WORKSPACE_ENGINEERING/skill_engineering/runtime_loop_patterns.md",
         ],
-        "checks": ["workspace knowledge find \"runtime drift\""],
+        "checks": [
+            "workspace task resolve runtime_drift_fix "
+            "--bind target-character=packages/character-system/runtime/characters/zyc"
+        ],
     },
 }
 
@@ -178,7 +181,7 @@ def test_candidates(path: str) -> list[str]:
         test_groups = {
             "agent_governance": "workspace",
             "failure_check": "workspace",
-            "find_knowledge": "workspace",
+            "knowledge_registry": "workspace",
             "hermes_workspace_guard": "workspace",
             "merge_safety": "workspace",
             "plan_change_surface": "workspace",
@@ -228,43 +231,7 @@ def explain_path(path: str) -> dict[str, Any]:
         "test_candidates": test_candidates(normalized),
         "next_commands": [
             f"workspace changes verify <task-id> --agent codex",
-            f"workspace knowledge find \"{Path(normalized).stem}\"",
-        ],
-    }
-
-
-def score_topic(query: str, topic_id: str, topic: dict[str, Any]) -> int:
-    haystack = " ".join(
-        [
-            topic_id,
-            str(topic.get("title", "")),
-            " ".join(str(alias) for alias in topic.get("aliases", []) or []),
-            " ".join(
-                str(entry.get("path", "")) + " " + str(entry.get("purpose", ""))
-                for entry in topic.get("entries", []) or []
-                if isinstance(entry, dict)
-            ),
-        ]
-    ).casefold()
-    terms = [term for term in query.casefold().split() if term]
-    return sum(1 for term in terms if term in haystack)
-
-
-def explain_topic(query: str, limit: int) -> dict[str, Any]:
-    registry = load_knowledge_registry()
-    matches = []
-    for topic_id, topic in (registry.get("topics") or {}).items():
-        score = score_topic(query, topic_id, topic)
-        if score:
-            matches.append({"id": topic_id, "score": score, **topic})
-    matches.sort(key=lambda row: (-int(row["score"]), str(row["id"])))
-    return {
-        "mode": "topic",
-        "query": query,
-        "matches": matches[:limit],
-        "next_commands": [
-            f"workspace knowledge find \"{query}\"",
-            "workspace explain path <returned-path>",
+            "workspace task list",
         ],
     }
 
@@ -311,19 +278,6 @@ def render_path(result: dict[str, Any]) -> None:
     print_list("Next commands:", result["next_commands"])
 
 
-def render_topic(result: dict[str, Any]) -> None:
-    print(f"Topic query: {result['query']}")
-    if not result["matches"]:
-        print("No registered knowledge topics matched.")
-    for match in result["matches"]:
-        print(f"\n{match['id']}: {match.get('title', '')} (score {match['score']})")
-        for entry in match.get("entries", []) or []:
-            print(f"  - {entry.get('path')} [{entry.get('layer', '')}]")
-            print(f"    {entry.get('purpose', '')}")
-    print("")
-    print_list("Next commands:", result["next_commands"])
-
-
 def render_mechanism(result: dict[str, Any]) -> None:
     if result.get("error"):
         print(f"Unknown mechanism: {result['name']}")
@@ -337,16 +291,12 @@ def render_mechanism(result: dict[str, Any]) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Explain workspace paths, topics, and mechanisms.")
+    parser = argparse.ArgumentParser(description="Explain workspace paths and mechanisms.")
     parser.add_argument("--format", dest="global_format", choices=("text", "json"))
     commands = parser.add_subparsers(dest="command", required=True)
     path = commands.add_parser("path", help="Explain one workspace-relative path.")
     path.add_argument("path")
     path.add_argument("--format", choices=("text", "json"))
-    topic = commands.add_parser("topic", help="Explain registered knowledge topics matching a query.")
-    topic.add_argument("query")
-    topic.add_argument("--limit", type=int, default=3)
-    topic.add_argument("--format", choices=("text", "json"))
     mechanism = commands.add_parser("mechanism", help="Explain a named workspace mechanism.")
     mechanism.add_argument("name")
     mechanism.add_argument("--format", choices=("text", "json"))
@@ -358,9 +308,6 @@ def main() -> int:
     if args.command == "path":
         result = explain_path(args.path)
         renderer = render_path
-    elif args.command == "topic":
-        result = explain_topic(args.query, max(1, args.limit))
-        renderer = render_topic
     else:
         result = explain_mechanism(args.name)
         renderer = render_mechanism
