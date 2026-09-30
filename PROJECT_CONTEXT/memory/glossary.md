@@ -113,10 +113,6 @@ The process of promoting a validated lesson from character maintenance into gene
 
 A `PLAN-…` record that describes prospective work, its dependencies, acceptance criteria, claim, and execution links. It coordinates work but grants no write authority.
 
-## decision map
-
-A `MAP-…` record for a multi-session destination, its associated planning records, settled decisions, unresolved matters, and explicit scope boundaries.
-
 ## execution record
 
 A `TASK-…` outcome record created when work actually begins. It is the only planning-domain record that can carry active write authorization.

@@ -184,7 +184,6 @@ def initial_record(
         "tokens": {
             "estimated": tokens_estimated,
             "actual": None,
-            "saved": None,
             "currency_cost": None,
         },
         "usage": {
@@ -749,8 +748,6 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
         }
     elif usage["status"] == "recorded":
         record["tokens"]["actual"] = usage["total_tokens"]
-    if args.tokens_saved is not None:
-        record["tokens"]["saved"] = args.tokens_saved
     if args.currency_cost is not None:
         record["tokens"]["currency_cost"] = args.currency_cost
     elif usage["status"] == "recorded" and usage["currency_cost"] is not None:
@@ -877,7 +874,6 @@ def main() -> int:
     p.add_argument("--command", action="append", default=[])
     p.add_argument("--ended-at")
     p.add_argument("--tokens-actual", type=int)
-    p.add_argument("--tokens-saved", type=int)
     p.add_argument("--currency-cost", type=float)
     p = sub.add_parser("report-usage", help="Write verified external-host usage into an active external task.")
     p.add_argument("task_id")
@@ -948,7 +944,6 @@ def main() -> int:
                 ),
                 "token_estimated": sum(item["tokens"]["estimated"] or 0 for item in items),
                 "token_actual": sum(item["tokens"]["actual"] or 0 for item in items),
-                "token_saved": sum(item["tokens"]["saved"] or 0 for item in items),
                 "usage_recorded": sum(item.get("usage", {}).get("status") == "recorded" for item in items),
                 "usage_unavailable": sum(item.get("usage", {}).get("status") == "unavailable" for item in items),
             }

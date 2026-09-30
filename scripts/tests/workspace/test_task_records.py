@@ -101,13 +101,36 @@ class TaskRecordsTests(unittest.TestCase):
                         "human_edit_rounds": 0,
                         "command": [],
                         "tokens_actual": None,
-                        "tokens_saved": None,
                         "currency_cost": None,
                     },
                 )()
             )
         self.assertEqual(final["schema_version"], "1.4")
         self.assertEqual(final["git_baseline"], baseline)
+
+
+    def test_legacy_saved_tokens_validate_but_finalize_does_not_write_them(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(task_records, "RECORD_ROOT", root / "records"), patch.object(
+                task_ledger, "DESTINATION", root / "ledger"
+            ):
+                record = task_records.initial_record(
+                    "TASK-20260716-001", task_type="demo",
+                    started_at="2026-07-16T00:00:00Z", tokens_estimated=10,
+                    operations=["workspace_write"],
+                )
+                record["tokens"]["saved"] = 4929
+                path = task_records.record_path(record["task_id"], record["started_at"])
+                task_records.create_record(path, record)
+                self.assertFalse(task_records.validate_record(record))
+                final = task_records.finalize(type("Args", (), {
+                    "task_id": record["task_id"], "ended_at": "2026-07-16T00:01:00Z",
+                    "status": "successful", "validation": "passed", "usability": "usable",
+                    "human_edit_rounds": 0, "command": [], "tokens_actual": None,
+                    "currency_cost": None,
+                })())
+        self.assertEqual(final["tokens"]["saved"], 4929)
 
     def test_ledger_receipt_requires_all_migrated_task_ids(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -467,7 +490,7 @@ class TaskRecordsTests(unittest.TestCase):
                     "task_id": record["task_id"], "ended_at": "2026-07-16T00:10:00Z",
                     "status": "successful", "validation": "passed", "usability": "usable",
                     "human_edit_rounds": 0, "command": [], "tokens_actual": None,
-                    "tokens_saved": None, "currency_cost": None,
+                    "currency_cost": None,
                 })())
         self.assertEqual(final["tokens"]["actual"], 150)
         self.assertEqual(final["usage"]["status"], "recorded")
@@ -551,7 +574,7 @@ class TaskRecordsTests(unittest.TestCase):
                         "task_id": record["task_id"], "ended_at": "2026-07-16T00:10:00Z",
                         "status": "successful", "validation": "passed", "usability": "usable",
                         "human_edit_rounds": 0, "command": [], "tokens_actual": None,
-                        "tokens_saved": None, "currency_cost": None,
+                        "currency_cost": None,
                     })()
                 )
         self.assertEqual(result["tokens"]["actual"], 150)
@@ -597,7 +620,6 @@ class TaskRecordsTests(unittest.TestCase):
                         "human_edit_rounds": 0,
                         "command": ["python -m unittest"],
                         "tokens_actual": None,
-                        "tokens_saved": None,
                         "currency_cost": None,
                     },
                 )()

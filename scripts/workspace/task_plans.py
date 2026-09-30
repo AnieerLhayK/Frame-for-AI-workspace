@@ -15,10 +15,8 @@ from scripts.workspace.runtime import WORKSPACE_ROOT as ROOT
 
 RECORD_ROOT = TASK_RECORDS_ROOT
 PLAN_ID = re.compile(r"^PLAN-\d{8}-\d{3}$")
-MAP_ID = re.compile(r"^MAP-\d{8}-\d{3}$")
 PLAN_KINDS = {"spec", "ticket", "triage", "decision"}
 PLAN_STATUSES = {"draft", "ready", "claimed", "in_progress", "completed", "cancelled"}
-MAP_STATUSES = {"active", "completed", "archived"}
 
 
 def timestamp(value: str | None = None) -> str:
@@ -44,12 +42,6 @@ def read_plan(plan_id: str) -> tuple[Path, dict[str, Any]]:
     if not PLAN_ID.match(plan_id):
         raise ValueError("plan id must use PLAN-YYYYMMDD-NNN")
     return _read(plan_id)
-
-
-def read_map(map_id: str) -> tuple[Path, dict[str, Any]]:
-    if not MAP_ID.match(map_id):
-        raise ValueError("map id must use MAP-YYYYMMDD-NNN")
-    return _read(map_id)
 
 
 def write(path: Path, record: dict[str, Any]) -> None:
@@ -78,11 +70,6 @@ def _next_id(prefix: str, created_at: str) -> str:
 def plans() -> list[dict[str, Any]]:
     result = [json.loads(path.read_text(encoding="utf-8")) for path in RECORD_ROOT.glob("*/*/*/PLAN-*.json")]
     return sorted(result, key=lambda item: (item["created_at"], item["plan_id"]), reverse=True)
-
-
-def maps() -> list[dict[str, Any]]:
-    result = [json.loads(path.read_text(encoding="utf-8")) for path in RECORD_ROOT.glob("*/*/*/MAP-*.json")]
-    return sorted(result, key=lambda item: (item["created_at"], item["map_id"]), reverse=True)
 
 
 def _as_string_list(value: Any, field: str) -> list[str]:
@@ -148,45 +135,6 @@ def validate_plan(record: dict[str, Any], *, known_ids: set[str] | None = None) 
     return errors
 
 
-def validate_map(record: dict[str, Any], *, known_plan_ids: set[str] | None = None) -> list[str]:
-    errors: list[str] = []
-    required = ("schema_version", "record_kind", "map_id", "created_at", "updated_at", "title", "destination", "status", "plan_ids", "decisions", "not_yet_specified", "out_of_scope")
-    for key in required:
-        if key not in record:
-            errors.append(f"missing {key}")
-    if record.get("schema_version") != "1.0" or record.get("record_kind") != "map":
-        errors.append("map must use record_kind map and schema_version 1.0")
-    if not MAP_ID.match(str(record.get("map_id", ""))):
-        errors.append("invalid map_id")
-    if not isinstance(record.get("title"), str) or not record.get("title").strip():
-        errors.append("map title must be non-empty")
-    if not isinstance(record.get("destination"), str) or not record.get("destination").strip():
-        errors.append("map destination must be non-empty")
-    if record.get("status") not in MAP_STATUSES:
-        errors.append("invalid map status")
-    for key in ("plan_ids", "not_yet_specified", "out_of_scope"):
-        try:
-            values = _as_string_list(record.get(key), key)
-            if len(values) != len(set(values)):
-                errors.append(f"duplicate {key} entry")
-        except ValueError as error:
-            errors.append(str(error))
-    if any(not PLAN_ID.match(value) for value in record.get("plan_ids", []) if isinstance(value, str)):
-        errors.append("map plan_ids must contain PLAN ids")
-    if known_plan_ids is not None:
-        for plan_id in record.get("plan_ids", []):
-            if plan_id not in known_plan_ids:
-                errors.append(f"map references missing plan {plan_id}")
-    decisions = record.get("decisions")
-    if not isinstance(decisions, list):
-        errors.append("decisions must be a list")
-    else:
-        for item in decisions:
-            if not isinstance(item, dict) or not PLAN_ID.match(str(item.get("plan_id", ""))) or not isinstance(item.get("summary"), str) or not item["summary"].strip():
-                errors.append("decisions entries require a plan_id and summary")
-    return errors
-
-
 def _cycle_errors(records: list[dict[str, Any]]) -> list[str]:
     by_id = {item["plan_id"]: item for item in records}
     visiting: set[str] = set()
@@ -222,11 +170,7 @@ def validate_all() -> dict[str, Any]:
     cycles = _cycle_errors(plan_records)
     if cycles:
         failures["dependencies"] = cycles
-    for item in maps():
-        errors = validate_map(item, known_plan_ids=plan_ids)
-        if errors:
-            failures[item.get("map_id", "(unknown)")] = errors
-    return {"valid": not failures, "failures": failures, "plans": len(plan_records), "maps": len(maps())}
+    return {"valid": not failures, "failures": failures, "plans": len(plan_records)}
 
 
 def _dependencies_complete(record: dict[str, Any]) -> bool:
@@ -255,22 +199,6 @@ def create_plan(args: argparse.Namespace) -> dict[str, Any]:
     if errors:
         raise ValueError("; ".join(errors))
     create(record_path(plan_id, created_at), record)
-    return record
-
-
-def create_map(args: argparse.Namespace) -> dict[str, Any]:
-    created_at = timestamp(args.created_at)
-    map_id = _next_id("MAP", created_at)
-    record = {
-        "schema_version": "1.0", "record_kind": "map", "map_id": map_id,
-        "created_at": created_at, "updated_at": created_at, "title": args.title,
-        "destination": args.destination, "status": "active", "plan_ids": [], "decisions": [],
-        "not_yet_specified": args.not_yet_specified, "out_of_scope": args.out_of_scope,
-    }
-    errors = validate_map(record, known_plan_ids={item["plan_id"] for item in plans()})
-    if errors:
-        raise ValueError("; ".join(errors))
-    create(record_path(map_id, created_at), record)
     return record
 
 
@@ -377,29 +305,8 @@ def record_execution_outcome(plan_id: str, task_id: str, task_status: str) -> di
     return record
 
 
-def add_map_plan(args: argparse.Namespace) -> dict[str, Any]:
-    path, record = read_map(args.map_id)
-    read_plan(args.plan_id)
-    if args.plan_id not in record["plan_ids"]:
-        record["plan_ids"].append(args.plan_id)
-    record["updated_at"] = timestamp(args.updated_at)
-    write(path, record)
-    return record
-
-
-def add_map_decision(args: argparse.Namespace) -> dict[str, Any]:
-    path, record = read_map(args.map_id)
-    _, plan = read_plan(args.plan_id)
-    if plan.get("status") != "completed":
-        raise ValueError("only a completed plan can be recorded as a map decision")
-    record["decisions"].append({"plan_id": args.plan_id, "summary": args.summary})
-    record["updated_at"] = timestamp(args.updated_at)
-    write(path, record)
-    return record
-
-
 def require_write_authorization(record_id: str) -> None:
-    """PLAN/MAP mutations share the normal TASK write gate; plans grant nothing."""
+    """PLAN mutations share the normal TASK write gate; plans grant nothing."""
     from scripts.workspace import task_records
 
     task_records.active_registration(record_id, "workspace_write")
@@ -427,15 +334,10 @@ def main() -> int:
         else:
             command.add_argument("--updated-at")
         command.add_argument("--record-id", required=True)
-    map_create = sub.add_parser("map-create"); map_create.add_argument("--title", required=True); map_create.add_argument("--destination", required=True); map_create.add_argument("--not-yet-specified", action="append", default=[]); map_create.add_argument("--out-of-scope", action="append", default=[]); map_create.add_argument("--created-at"); map_create.add_argument("--record-id", required=True)
-    map_show = sub.add_parser("map-show"); map_show.add_argument("map_id")
-    sub.add_parser("map-list")
-    map_plan = sub.add_parser("map-add-plan"); map_plan.add_argument("map_id"); map_plan.add_argument("plan_id"); map_plan.add_argument("--updated-at"); map_plan.add_argument("--record-id", required=True)
-    map_decision = sub.add_parser("map-add-decision"); map_decision.add_argument("map_id"); map_decision.add_argument("plan_id"); map_decision.add_argument("--summary", required=True); map_decision.add_argument("--updated-at"); map_decision.add_argument("--record-id", required=True)
     sub.add_parser("validate")
     args = parser.parse_args()
     try:
-        if args.action in {"create", "set-status", "claim", "renew", "release", "map-create", "map-add-plan", "map-add-decision"}:
+        if args.action in {"create", "set-status", "claim", "renew", "release"}:
             require_write_authorization(args.record_id)
         if args.action == "create": output = create_plan(args)
         elif args.action == "show": _, output = read_plan(args.plan_id)
@@ -444,11 +346,6 @@ def main() -> int:
         elif args.action == "claim": output = claim_plan(args)
         elif args.action == "renew": output = renew_claim(args)
         elif args.action == "release": output = release_claim(args)
-        elif args.action == "map-create": output = create_map(args)
-        elif args.action == "map-show": _, output = read_map(args.map_id)
-        elif args.action == "map-list": output = maps()
-        elif args.action == "map-add-plan": output = add_map_plan(args)
-        elif args.action == "map-add-decision": output = add_map_decision(args)
         else:
             output = validate_all()
             if not output["valid"]:

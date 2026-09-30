@@ -202,7 +202,6 @@ task_files:
   public_projection_synchronization: domains/publishing.yaml
   public_projection_publisher_update: domains/publishing.yaml
   raw_material_filter_tooling: domains/skills.yaml
-  root_script_adapter_removal: domains/workspace.yaml
   report_freshness_tooling: domains/publishing.yaml
   report_freshness_status_update: domains/publishing.yaml
   report_regeneration: domains/publishing.yaml

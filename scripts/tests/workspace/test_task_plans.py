@@ -60,7 +60,7 @@ class TaskPlansTests(unittest.TestCase):
             _, unchanged = task_plans.read_plan(plan["plan_id"])
             self.assertEqual(unchanged["execution_task_ids"], [])
 
-    def test_validation_rejects_dependency_cycles_and_map_missing_plans(self) -> None:
+    def test_validation_rejects_dependency_cycles(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.object(task_plans, "RECORD_ROOT", Path(directory)):
             plan = self._create(Path(directory))
             path, payload = task_plans.read_plan(plan["plan_id"])
@@ -87,7 +87,7 @@ class TaskPlansTests(unittest.TestCase):
                 _, linked = task_plans.read_plan(plan["plan_id"])
                 self.assertEqual(linked["status"], "in_progress")
                 self.assertEqual(linked["execution_task_ids"], [task["task_id"]])
-                task_records.finalize(SimpleNamespace(task_id=task["task_id"], ended_at="2026-09-01T00:00:04Z", status="successful", validation="passed", usability="usable", human_edit_rounds=0, command=[], tokens_actual=None, tokens_saved=None, currency_cost=None))
+                task_records.finalize(SimpleNamespace(task_id=task["task_id"], ended_at="2026-09-01T00:00:04Z", status="successful", validation="passed", usability="usable", human_edit_rounds=0, command=[], tokens_actual=None, currency_cost=None))
                 _, completed = task_plans.read_plan(plan["plan_id"])
         self.assertEqual(completed["status"], "completed")
 

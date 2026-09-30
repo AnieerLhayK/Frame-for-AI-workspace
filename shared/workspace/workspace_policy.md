@@ -18,11 +18,12 @@ Source paths are workspace-relative and do not encode platform ownership.
 
 Raw external skill repositories are research inputs outside this Git source.
 `external-skills/` is only the tracked, reviewed adaptation layer declared by
-`external_roots.adapted_skills`. Record a new raw skill in
-`PROJECT_CONTEXT/todo/external-skills.md`; before exposure, record provenance,
-license, applicability, adaptation, validation, manifest registration, and
-exposure. Do not place raw clones in either source layer. Discovery alone
-grants no runtime exposure.
+`external_roots.adapted_skills`. Add a raw skill source to
+`PROJECT_CONTEXT/todo/external-skills.md` only after selecting it for evaluation
+or adaptation; discoveries and bookmarks alone do not need queue entries.
+Before exposure, record provenance, license, applicability, adaptation,
+validation, manifest registration, and exposure. Do not place raw clones in
+either source layer. Discovery alone grants no runtime exposure.
 
 ## Paths and projections
 

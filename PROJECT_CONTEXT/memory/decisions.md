@@ -158,20 +158,20 @@ manifest-declared workspace output root and never changes source material.
 - date if known: 2026-06-04 ZYC validation case review.
 - consequence: Validation notes should separate user aesthetic judgment from agent checks and record disagreement when needed.
 
-## Scripts Use Deep Responsibility Packages With Legacy Adapters
+## Script Implementations Live In Responsibility Packages
 
 - decision: Keep script implementations in responsibility packages under
   `scripts/workspace/`, `scripts/validation/`, `scripts/publishing/`,
-  `scripts/platform/`, and `scripts/reporting/`; retain root entry points as
-  thin compatibility adapters.
+  `scripts/platform/`, and `scripts/reporting/`.
 - reason: The root scripts directory had high coupling and repeated path and
   subprocess setup, while existing callers depend on legacy command and import
   paths.
 - date if known: 2026-07-16 scripts governance migration.
+- superseded: The root compatibility adapters were retired on 2026-07-27 by
+  commit `3527b27`; no legacy root command or import adapter is maintained.
 - consequence: Internal code imports package implementations and shared runtime
-  helpers. Root `python scripts/<name>.py`, `from scripts.<name> import ...`,
-  and platform entry points remain supported; no new public module CLI is
-  introduced. Tests mirror the package domains under `scripts/tests/`.
+  helpers. `scripts/` remains a Python package marker, and tests mirror package
+  domains under `scripts/tests/`.
 
 ## README Layers Are Navigation, Not Parallel Authority
 
@@ -196,12 +196,12 @@ manifest-declared workspace output root and never changes source material.
   content stay aligned with their publisher; root workspace documentation is
   not copied wholesale into every remote.
 
-## Planning Records Do Not Authorize Execution
+## PLAN Records Do Not Authorize Execution
 
-- decision: Store local planning and decision-map records beside task outcome records, but keep PLAN/MAP records non-authorizing and link them one-way to a TASK only when execution starts.
+- decision: Keep local PLAN records beside task outcome records as optional prospective-work coordination; PLANs never grant authority and may link to a TASK only when execution starts.
 - reason: Open work can outlive a Git baseline and must not silently gain workspace or external write authority.
-- date if known: 2026-09-01 local tracker migration.
-- consequence: Every PLAN/MAP change and every execution still requires its own active TASK record; claims only coordinate ownership and expire after 24 hours.
+- date if known: 2026-09-01 local tracker migration; persistence scope reviewed 2026-09-30.
+- consequence: PLAN mutation and execution each require their own active TASK record; claims only coordinate ownership and expire after 24 hours. Cross-session MAP persistence is retired; Wayfinder is conversation-only.
 
 ## Remote-Only Repositories Use A Separate Registry And Explicit Retirement Gate
 

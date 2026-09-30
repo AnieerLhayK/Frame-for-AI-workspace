@@ -112,7 +112,7 @@ class MergeSafetyTests(unittest.TestCase):
         self.record = task_records.finalize(Namespace(
             task_id=self.record["task_id"], status="successful", validation="passed",
             usability="usable", human_edit_rounds=0, command=["tests"], ended_at=None,
-            tokens_actual=None, tokens_saved=None, currency_cost=None))
+            tokens_actual=None, currency_cost=None))
         self.git("add", "."); self.git("commit", "-m", "final audit")
 
     def closure_receipt(self):

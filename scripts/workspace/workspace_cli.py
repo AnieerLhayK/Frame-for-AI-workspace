@@ -147,7 +147,7 @@ def build_parser() -> argparse.ArgumentParser:
     records = commands.add_parser("records", help="Create, finalize, inspect, and summarize task outcomes.")
     records.add_argument("args", nargs=argparse.REMAINDER)
 
-    plans = commands.add_parser("plans", help="Create and coordinate local PLAN/MAP records.")
+    plans = commands.add_parser("plans", help="Manage local PLAN records.")
     plans.add_argument("args", nargs=argparse.REMAINDER)
 
     sessions = commands.add_parser("sessions", help="Audit conversation continuity after path migrations.")
