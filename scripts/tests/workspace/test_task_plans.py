@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from scripts.workspace import task_ledger, task_plans, task_records
+from scripts.workspace import task_ledger, task_plans, task_records, task_record_store
 
 
 class TaskPlansTests(unittest.TestCase):
@@ -79,7 +79,7 @@ class TaskPlansTests(unittest.TestCase):
         baseline = {"branch": "codex/test", "head_commit": "a" * 40, "captured_at": "2026-09-01T00:00:00Z", "paths": []}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            with patch.object(task_plans, "RECORD_ROOT", root / "records"), patch.object(task_records, "RECORD_ROOT", root / "records"), patch.object(task_ledger, "DESTINATION", root / "ledger"), patch.object(task_records, "capture_git_baseline", return_value=baseline):
+            with patch.object(task_plans, "RECORD_ROOT", root / "records"), patch.object(task_record_store, "RECORD_ROOT", root / "records"), patch.object(task_ledger, "DESTINATION", root / "ledger"), patch.object(task_records, "capture_git_baseline", return_value=baseline):
                 plan = self._create(root)
                 task_plans.set_plan_status(SimpleNamespace(plan_id=plan["plan_id"], status="ready", updated_at="2026-09-01T00:00:01Z"))
                 task_plans.claim_plan(SimpleNamespace(plan_id=plan["plan_id"], actor="codex", hours=24, now="2026-09-01T00:00:02Z"))

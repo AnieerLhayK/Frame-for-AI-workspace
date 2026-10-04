@@ -1,4 +1,5 @@
-﻿from __future__ import annotations
+from __future__ import annotations
+from scripts.workspace import task_record_store
 
 import tempfile
 import unittest
@@ -44,7 +45,7 @@ class TaskRecordsTests(unittest.TestCase):
                          operation=["workspace_write"], started_at="2026-09-08T00:00:00Z",
                          owner_agent="codex", owner_session="one")
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory)
+            task_record_store, "RECORD_ROOT", Path(directory)
         ), patch.object(task_records, "capture_git_baseline", return_value=None):
             first = task_records.start(args)
             args.owner_session = "two"
@@ -109,7 +110,7 @@ class TaskRecordsTests(unittest.TestCase):
             },
         )()
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory) / "records"
+            task_record_store, "RECORD_ROOT", Path(directory) / "records"
         ), patch.object(
             task_ledger, "DESTINATION", Path(directory) / "ledger"
         ), patch.object(task_records, "capture_git_baseline", return_value=baseline):
@@ -138,7 +139,7 @@ class TaskRecordsTests(unittest.TestCase):
     def test_legacy_saved_tokens_validate_but_finalize_does_not_write_them(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            with patch.object(task_records, "RECORD_ROOT", root / "records"), patch.object(
+            with patch.object(task_record_store, "RECORD_ROOT", root / "records"), patch.object(
                 task_ledger, "DESTINATION", root / "ledger"
             ):
                 record = task_records.initial_record(
@@ -199,13 +200,13 @@ class TaskRecordsTests(unittest.TestCase):
         self.assertIn("successful records require validation", task_records.validate_record(record))
 
     def test_record_path_is_year_month_day_partitioned(self) -> None:
-        with tempfile.TemporaryDirectory() as directory, patch.object(task_records, "RECORD_ROOT", Path(directory)):
+        with tempfile.TemporaryDirectory() as directory, patch.object(task_record_store, "RECORD_ROOT", Path(directory)):
             path = task_records.record_path("TASK-20260715-001", "2026-07-15T00:00:00Z")
         self.assertEqual(path.parts[-4:], ("2026", "07", "15", "TASK-20260715-001.json"))
 
     def test_active_registration_requires_declared_operation(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory)
+            task_record_store, "RECORD_ROOT", Path(directory)
         ):
             record = task_records.initial_record(
                 "TASK-20260715-001",
@@ -226,7 +227,7 @@ class TaskRecordsTests(unittest.TestCase):
                 )
 
     def test_active_registration_can_require_task_type_and_exact_binding(self) -> None:
-        with tempfile.TemporaryDirectory() as directory, patch.object(task_records, "RECORD_ROOT", Path(directory)):
+        with tempfile.TemporaryDirectory() as directory, patch.object(task_record_store, "RECORD_ROOT", Path(directory)):
             binding = "retirement-target=D:\\repos\\demo"
             record = task_records.initial_record(
                 "TASK-20260715-001", task_type="cleanup_migration", started_at="2026-07-15T00:00:00Z",
@@ -248,7 +249,7 @@ class TaskRecordsTests(unittest.TestCase):
 
     def test_active_registration_rejects_historical_unregistered_record(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory)
+            task_record_store, "RECORD_ROOT", Path(directory)
         ):
             record = {
                 "schema_version": "1.0",
@@ -280,7 +281,7 @@ class TaskRecordsTests(unittest.TestCase):
             },
         )()
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory)
+            task_record_store, "RECORD_ROOT", Path(directory)
         ), patch.object(task_records, "resolve_tokens_estimated", return_value=321) as resolve:
             record = task_records.start(args)
         self.assertEqual(record["tokens"]["estimated"], 321)
@@ -307,7 +308,7 @@ class TaskRecordsTests(unittest.TestCase):
             },
         )()
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory)
+            task_record_store, "RECORD_ROOT", Path(directory)
         ), patch.object(
             task_records, "capture_git_baseline", return_value=baseline
         ):
@@ -365,7 +366,7 @@ class TaskRecordsTests(unittest.TestCase):
             },
         )()
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory)
+            task_record_store, "RECORD_ROOT", Path(directory)
         ), patch.object(task_records, "external_agent_id", return_value="opencode"), patch.object(
             task_records, "external_client_root", return_value="/external-host"
         ), patch.object(
@@ -405,7 +406,7 @@ class TaskRecordsTests(unittest.TestCase):
             client_root = root / "client"
             workspace_root.mkdir()
             client_root.mkdir()
-            with patch.object(task_records, "ROOT", workspace_root):
+            with patch.object(task_record_store, "ROOT", workspace_root):
                 self.assertEqual(task_records.external_client_root(str(client_root)), str(client_root))
                 with self.assertRaisesRegex(ValueError, "outside"):
                     task_records.external_client_root(str(workspace_root / "nested"))
@@ -414,7 +415,7 @@ class TaskRecordsTests(unittest.TestCase):
 
     def test_report_usage_updates_active_external_task_and_rejects_other_actor(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory)
+            task_record_store, "RECORD_ROOT", Path(directory)
         ), patch.object(task_records, "external_agent_id", side_effect=lambda value: value):
             record = task_records.initial_record(
                 "TASK-20260716-001",
@@ -453,7 +454,7 @@ class TaskRecordsTests(unittest.TestCase):
             workspace_root.mkdir()
             client_root.mkdir()
             other_root.mkdir()
-            with patch.object(task_records, "RECORD_ROOT", root / "task_records"), patch.object(
+            with patch.object(task_record_store, "RECORD_ROOT", root / "task_records"), patch.object(
                 task_records, "ROOT", workspace_root
             ), patch.object(task_records, "external_agent_id", side_effect=lambda value: value):
                 record = task_records.initial_record(
@@ -490,7 +491,7 @@ class TaskRecordsTests(unittest.TestCase):
     def test_finalize_preserves_usage_reported_during_external_task(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            with patch.object(task_records, "RECORD_ROOT", root / "task_records"), patch.object(
+            with patch.object(task_record_store, "RECORD_ROOT", root / "task_records"), patch.object(
                 task_ledger, "DESTINATION", root / "task_ledger"
             ), patch.object(task_records, "external_agent_id", side_effect=lambda value: value):
                 record = task_records.initial_record(
@@ -530,7 +531,7 @@ class TaskRecordsTests(unittest.TestCase):
             allowed.write_text('{"source":"external_host","total_tokens":5}', encoding="utf-8")
             outside = root / "outside.json"
             outside.write_text('{"source":"external_host","total_tokens":5}', encoding="utf-8")
-            with patch.object(task_records, "RECORD_ROOT", root / "task_records"), patch.object(
+            with patch.object(task_record_store, "RECORD_ROOT", root / "task_records"), patch.object(
                 task_records, "external_agent_id", side_effect=lambda value: value
             ):
                 record = task_records.initial_record(
@@ -554,7 +555,7 @@ class TaskRecordsTests(unittest.TestCase):
 
     def test_merge_review_skip_requires_reason_and_is_structured(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.object(
-            task_records, "RECORD_ROOT", Path(directory)
+            task_record_store, "RECORD_ROOT", Path(directory)
         ):
             record = task_records.initial_record(
                 "TASK-20260716-001", task_type="demo", started_at="2026-07-16T00:00:00Z",
@@ -574,7 +575,7 @@ class TaskRecordsTests(unittest.TestCase):
     def test_finalize_collects_explicit_host_usage_without_provider_call(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            with patch.object(task_records, "RECORD_ROOT", root / "task_records"), patch.object(
+            with patch.object(task_record_store, "RECORD_ROOT", root / "task_records"), patch.object(
                 task_ledger, "DESTINATION", root / "task_ledger"
             ), patch.dict(
                 "os.environ",
@@ -622,7 +623,7 @@ class TaskRecordsTests(unittest.TestCase):
             root = Path(directory)
             record_root = root / "task_records"
             ledger_root = root / "task_ledger"
-            with patch.object(task_records, "RECORD_ROOT", record_root), patch.object(
+            with patch.object(task_record_store, "RECORD_ROOT", record_root), patch.object(
                 task_ledger, "DESTINATION", ledger_root
             ):
                 record = task_records.initial_record(

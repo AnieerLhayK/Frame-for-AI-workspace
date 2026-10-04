@@ -217,6 +217,7 @@ task_files:
   skill_release_packaging: domains/skills.yaml
   source_of_truth_dedup: domains/knowledge.yaml
   startup_context_optimization: domains/knowledge.yaml
+  task_record_storage_refactor: domains/workspace.yaml
   task_outcome_records: domains/continuity.yaml
   task_registry_update: domains/knowledge.yaml
   workspace_developer_experience: domains/workspace.yaml

@@ -341,3 +341,39 @@ tasks:
     - python -m scripts.workspace.workspace_cli launcher status
     - python -m scripts.workspace.resolve_task_context workspace_launcher_tooling --format json
     - git diff --check
+
+  task_record_storage_refactor:
+    use_when:
+    - Refactoring TASK storage and validation while preserving lifecycle, CLI and the sole governance authorization entry.
+    use_when_zh:
+    - 重构 TASK 存储与校验，同时保留生命周期、CLI 与唯一治理授权入口。
+    required:
+    - PROJECT_CONTEXT/tasks/records/schema.json
+    - scripts/workspace/task_records.py
+    - scripts/workspace/task_record_store.py
+    - scripts/tests/workspace/test_task_records.py
+    optional:
+    - scripts/workspace/agent_governance.py
+    - scripts/tests/workspace/test_agent_governance.py
+    ignore:
+    - reports/
+    - external-skills/
+    - mcp/
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 24000
+      expanded_warn_tokens: 30000
+    write_scope:
+    - scripts/workspace/task_records.py
+    - scripts/workspace/task_record_store.py
+    - scripts/workspace/agent_governance.py
+    - scripts/tests/workspace/test_task_records.py
+    - scripts/tests/workspace/test_task_record_store.py
+    - scripts/tests/workspace/test_agent_governance.py
+    - scripts/tests/workspace/test_merge_safety.py
+    - scripts/tests/workspace/test_task_plans.py
+    validation:
+    - python -m unittest scripts.tests.workspace.test_task_records scripts.tests.workspace.test_task_record_store scripts.tests.workspace.test_agent_governance scripts.tests.workspace.test_merge_safety scripts.tests.workspace.test_task_plans
+    - workspace records validate
+    - git diff --check

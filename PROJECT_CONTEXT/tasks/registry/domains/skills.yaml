@@ -407,7 +407,7 @@ tasks:
     - isolated OpenCode junction, copy, discovery, and smoke checks
     - python -m scripts.validation.validate_manifest
     - python -m scripts.validation.validate_protocols
-    - python -m pytest -q scripts/tests/publishing/test_publish_public.py
+    - python -m pytest -q scripts/tests/publishing/test_publish_policy.py scripts/tests/publishing/test_publish_rendering.py scripts/tests/publishing/test_publish_projection.py
     - publish_public.py explicit staging-dir smoke check under the tool staging directory
     - publish_check.py verification against the generated staging directory
     - python -m scripts.publishing.sync_public_repo --dry-run --skip-tests

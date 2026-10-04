@@ -41,7 +41,7 @@ def _workspace_source_path(*parts: str) -> str:
     return "\\".join((root, *parts))
 
 
-HERMES_REQUIRED_READ_ROOTS = {
+REQUIRED_AGENT_READ_ROOTS = {
     _workspace_source_path("packages", "character-system", "shared").casefold(),
     _workspace_source_path(
         "packages", "character-system", "reports", "runtime-loop"
@@ -52,12 +52,7 @@ OPENCODE_CONFIG = WORKSPACE_ROOT / "opencode.json"
 OPENCODE_GUARD = WORKSPACE_ROOT / ".opencode" / "plugins" / "workspace-governance.js"
 AGENT_REGISTRY = WORKSPACE_ROOT / "shared" / "governance" / "agent_registry.yaml"
 DSH_GOVERNANCE_ROOT = WORKSPACE_ROOT / "scripts" / "platform" / "deepseek-harness-governance"
-PLATFORM_REQUIRED_READ_ROOTS = {
-    _workspace_source_path("packages", "character-system", "shared").casefold(),
-    _workspace_source_path(
-        "packages", "character-system", "reports", "runtime-loop"
-    ).casefold(),
-}
+
 
 
 @dataclass
@@ -298,7 +293,7 @@ def check_hermes_guard(
     }
     if {r"d:\ai", r"d:\dev"} & roots:
         findings.append("Hermes filesystem MCP still exposes a broad drive root")
-    if not HERMES_REQUIRED_READ_ROOTS.issubset(roots):
+    if not REQUIRED_AGENT_READ_ROOTS.issubset(roots):
         findings.append(
             "Hermes filesystem MCP is missing character runtime-loop read roots"
         )
@@ -400,7 +395,7 @@ def check_platform_agent_guards(
     )
     if {r"d:\ai", r"d:\dev"} & reasonix_roots:
         findings.append("Reasonix filesystem MCP exposes a broad drive root")
-    if not PLATFORM_REQUIRED_READ_ROOTS.issubset(reasonix_roots):
+    if not REQUIRED_AGENT_READ_ROOTS.issubset(reasonix_roots):
         findings.append("Reasonix filesystem MCP is missing canonical read roots")
 
     if "./.opencode/plugins/workspace-governance.js" not in opencode.get("plugin", []):

@@ -92,6 +92,9 @@ REQUIRED_PATHS: set[str] = {
 # as substitution targets in the publish tooling itself.
 ALLOWLISTED_PATHS: set[str] = {
     "scripts/publishing/publish_public.py",
+    "scripts/publishing/publish_policy.py",
+    "scripts/publishing/public_workspace_renderer.py",
+    "scripts/workspace/task_record_store.py",
     "scripts/publishing/publish_check.py",
 }
 

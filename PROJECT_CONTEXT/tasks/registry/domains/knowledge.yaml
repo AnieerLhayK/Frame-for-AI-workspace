@@ -316,6 +316,7 @@ tasks:
     - WORKSPACE_ENGINEERING/README.md
     - WORKSPACE_ENGINEERING/methods/knowledge_provenance.md
     - PROJECT_CONTEXT/knowledge/index.yaml
+    - PROJECT_CONTEXT/knowledge/topics/governance.yaml
     optional:
     - WORKSPACE_ENGINEERING/methods/architecture_patterns.md
     - WORKSPACE_ENGINEERING/methods/workspace_patterns.md
@@ -335,6 +336,7 @@ tasks:
     write_scope:
     - WORKSPACE_ENGINEERING/
     - PROJECT_CONTEXT/knowledge/index.yaml
+    - PROJECT_CONTEXT/knowledge/topics/governance.yaml
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - PROJECT_CONTEXT/continuity/current_status.md

@@ -13,7 +13,8 @@ import yaml
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
 from scripts.workspace.manifest_loader import load_manifest as load_workspace_manifest
-from scripts.workspace.task_records import active_external_registration, active_registration, read_record
+from scripts.workspace.task_record_store import active_registration, read_record
+from scripts.workspace import task_record_store
 from scripts.workspace.governance.hermes_approval import (
     HERMES_GUARD_EVENTS,
     approve_hermes_guard as _approve_hermes_guard,
@@ -27,6 +28,20 @@ HERMES_HOME = Path(os.environ.get("HERMES_HOME", r"${DATA_ROOT}/hermes"))
 HERMES_CONFIG_PATH = HERMES_HOME / "config.yaml"
 HERMES_ALLOWLIST_PATH = HERMES_HOME / "shell-hooks-allowlist.json"
 HERMES_GUARD_SCRIPT = WORKSPACE_ROOT / "scripts" / "workspace" / "hermes_workspace_guard.py"
+
+
+def external_agent_id(agent: str) -> str:
+    """Resolve a registered external actor through the sole authority module."""
+    resolved = effective_registration(load_yaml(POLICY_PATH), load_registry(), load_manifest(), agent)
+    if not resolved['registered'] or resolved['registration_status'] != 'active' or resolved['degraded']:
+        raise ValueError('external task callers must be active registered agents')
+    return str(resolved['agent'])
+
+
+def active_external_registration(task_id: str, *, agent: str, client_root: str) -> dict[str, Any]:
+    return task_record_store.active_external_registration(
+        task_id, agent=external_agent_id(agent), client_root=client_root
+    )
 
 
 def current_git_branch() -> str:
