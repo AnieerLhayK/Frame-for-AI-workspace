@@ -249,3 +249,10 @@ manifest-declared workspace output root and never changes source material.
 - consequence: Pin DSH and adapter versions, use local JSONL only, deny web,
   MCP, dynamic Cordis, subagents, remote Git, credential tools, and telemetry
   export. A separate reviewed TASK is required for permanent promotion.
+
+## Codex Owns Core Governance; Claude Retains Development Delivery
+
+- decision: Codex owns core governance. Claude is a development maintainer and can independently deliver ordinary batches. A mixed governance batch requires Codex or explicit user approval bound to source and target commits; approval permits integration and registered publication, not governance editing. Claude is no longer a structural reviewer or lease issuer.
+- reason: Preserve ordinary development autonomy while removing equal governance authority. One shared authorization interface keeps runtime, workflow and delivery decisions consistent.
+- date if known: 2026-10-02, user-confirmed specification PLAN-20261002-001.
+- consequence: Protect core controls before ordinary path rules; deny unclassified writes; retain owned TASK and whole-batch checks. Retire both project CLAUDE.md imports only after npm upgrade and fresh root/nested AGENTS.md loading verification. This is cooperative workflow enforcement, not hostile-process isolation.

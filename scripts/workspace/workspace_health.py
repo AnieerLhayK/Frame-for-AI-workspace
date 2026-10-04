@@ -26,7 +26,7 @@ FORBIDDEN_ROOT_RUNTIME_PATHS = (
 )
 FORBIDDEN_ROOT_PROJECT_PATHS = ("claude",)
 REQUIRED_CLAUDE_BOUNDARY_PATHS = (
-    "CLAUDE.md",
+    "AGENTS.md",
     ".claude/project-boundary.json",
     ".claude/rules/workspace-boundary.md",
     ".claude/settings.json",
@@ -420,10 +420,10 @@ def check_platform_agent_guards(
         entry = agents.get(agent_id, {})
         if entry.get("status") != "active" or entry.get("role") != "record_producer":
             findings.append(f"{agent_id} is not an active record_producer")
-    for agent_id in ("codex", "claude"):
+    for agent_id, role in (("codex", "structural_maintainer"), ("claude", "development_maintainer")):
         entry = agents.get(agent_id, {})
-        if entry.get("status") != "active" or entry.get("role") != "structural_maintainer":
-            findings.append(f"{agent_id} is not an active structural_maintainer")
+        if entry.get("status") != "active" or entry.get("role") != role:
+            findings.append(f"{agent_id} is not an active {role}")
     if findings:
         return CheckResult(
             "platform-agent-guards",

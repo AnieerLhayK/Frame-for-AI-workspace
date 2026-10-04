@@ -12,6 +12,16 @@ roles:
       - source_write
       - structural_write
       - platform_write
+      - delivery
+  development_maintainer:
+    capabilities:
+      - read
+      - invoke
+      - proposal_write
+      - record_write
+      - report_write
+      - source_write
+      - delivery
   record_producer:
     capabilities:
       - read
@@ -34,6 +44,7 @@ registration_policy:
   testing_max_duration_hours: 168
   experimental_max_duration_hours: 720
   high_risk_capabilities:
+    - delivery
     - report_write
     - source_write
     - structural_write
@@ -44,6 +55,64 @@ registration_policy:
     - retired
 
 surface_classes:
+  # Core controls precede ordinary source and record directories, including
+  # nested instruction entrypoints. Mixed files remain core controls.
+  - id: governance_structure
+    required_capability: structural_write
+    path_patterns:
+      - AGENTS.md
+      - "**/AGENTS.md"
+      - "**/AGENTS.override.md"
+      - AGENTS.override.md
+      - CLAUDE.md
+      - "**/CLAUDE.md"
+      - "**/CLAUDE.local.md"
+      - CLAUDE.local.md
+      - workspace_manifest.yaml
+      - .github/**
+      - .claude/hooks/**
+      - .claude/rules/**
+      - .claude/settings*.json
+      - .claude/project-boundary.json
+      - .opencode/**
+      - .hermes/**
+      - shared/governance/**
+      - shared/schemas/**
+      - PROJECT_CONTEXT/context_index.yaml
+      - PROJECT_CONTEXT/tasks/registry/**
+      - PROJECT_CONTEXT/governance/**
+      - PROJECT_CONTEXT/documentation/**
+      - PROJECT_CONTEXT/memory/decisions*
+      - scripts/__init__.py
+      - scripts/workspace/__init__.py
+      - scripts/workspace/agent_governance.py
+      - scripts/workspace/governance/**
+      - scripts/workspace/*guard*.py
+      - scripts/workspace/merge_safety.py
+      - scripts/workspace/task_records.py
+      - scripts/workspace/task_plans.py
+      - scripts/workspace/task_ledger.py
+      - scripts/workspace/workspace_cli.py
+      - scripts/workspace/workspace_launcher.py
+      - scripts/workspace/bootstrap_workspace.py
+      - scripts/workspace/skill_lifecycle.py
+      - scripts/workspace/verify_change_scope.py
+      - scripts/workspace/workflow_check.py
+      - scripts/workspace/resolve_task_context.py
+      - scripts/workspace/plan_change_surface.py
+      - scripts/workspace/runtime.py
+      - scripts/workspace/manifest_loader.py
+      - scripts/workspace/project_context.py
+      - scripts/publishing/**
+      - scripts/platform/**
+      - scripts/validation/**
+      - skills/governance/far-repo-governor/**
+      - .gitignore
+      - .gitattributes
+      - pytest.ini
+      - pyproject.toml
+      - conftest.py
+      - "**/conftest.py"
   - id: platform_projection
     required_capability: platform_write
     path_patterns:
@@ -52,6 +121,11 @@ surface_classes:
     required_capability: proposal_write
     path_patterns:
       - reports/agent-requests/**
+  - id: workflow_record
+    required_capability: record_write
+    path_patterns:
+      - PROJECT_CONTEXT/tasks/records/**
+      - PROJECT_CONTEXT/tasks/ledger/**
   - id: runtime_record
     required_capability: record_write
     path_patterns:
@@ -76,22 +150,20 @@ surface_classes:
     path_patterns:
       - skills/**
       - packages/**
-  - id: governance_structure
-    required_capability: structural_write
+  - id: development_source
+    required_capability: source_write
     path_patterns:
-      - workspace_manifest.yaml
-      - AGENTS.md
-      - CLAUDE.md
       - ARCHITECTURE.md
       - README.md
-      - .gitignore
-      - .gitattributes
-      - .github/**
-      - .claude/**
-      - PROJECT_CONTEXT/**
+      - README.zh-CN.md
+      - external-skills/**
+      - PROJECT_CONTEXT/memory/**
+      - PROJECT_CONTEXT/reports/**
+      - PROJECT_CONTEXT/knowledge/**
       - shared/**
       - scripts/**
       - USAGE_GUIDES/**
+      - WORKSPACE_ENGINEERING/**
   - id: workspace_other
     required_capability: structural_write
     path_patterns:
@@ -166,7 +238,6 @@ lease_policy:
   trusted_issuers:
     - user
     - codex
-    - claude
   external_store: "${DATA_ROOT}/workspace-governance/leases"
   allowed_capabilities:
     - environment_write
@@ -187,9 +258,9 @@ request_policy:
     - worktree
   structural_reviewers:
     - codex
-    - claude
 
 git_branch_governance:
+  governance_approvers: [codex, user]
   development_branch: dev
   integration_branch: main
   default_strategy: ff-only

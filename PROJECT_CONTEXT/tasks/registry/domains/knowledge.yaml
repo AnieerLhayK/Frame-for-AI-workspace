@@ -117,6 +117,10 @@ tasks:
     - PROJECT_CONTEXT/continuity/current_status.md
     - PROJECT_CONTEXT/memory/decisions.md
     - PROJECT_CONTEXT/todo/README.md
+    - PROJECT_CONTEXT/todo/pi-codex-experiment.md
+    - PROJECT_CONTEXT/todo/pi-codex-experiment.zh-CN.md
+    - PROJECT_CONTEXT/todo/desktop-commander.md
+    - PROJECT_CONTEXT/todo/desktop-commander.zh-CN.md
     - PROJECT_CONTEXT/todo/external-skills.md
     - PROJECT_CONTEXT/todo/workspace-optimization.md
     - PROJECT_CONTEXT/todo/package-development.md

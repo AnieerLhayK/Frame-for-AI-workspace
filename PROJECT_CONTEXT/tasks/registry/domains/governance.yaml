@@ -12,17 +12,16 @@ tasks:
     - shared/governance/agent_registry.yaml
     - shared/schemas/agent_registration.schema.json
     - scripts/workspace/agent_governance.py
-    - scripts/workspace/agent_governance.py
     - scripts/workspace/governance/
     - scripts/workspace/merge_safety.py
     - scripts/workspace/task_records.py
-    - scripts/workspace/workspace_cli.py
     - scripts/workspace/verify_change_scope.py
     - scripts/workspace/workflow_check.py
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_merge_safety.py
     - scripts/tests/workspace/test_task_records.py
     optional:
+    - scripts/workspace/workspace_cli.py
     - explicitly selected reporting policy when changing report production
     - shared/schemas/package_protocol_manifest.schema.json
     - selected registry, guard, or publisher route evidence
@@ -46,6 +45,7 @@ tasks:
     - PROJECT_CONTEXT/
     - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - README.md
+    - README.zh-CN.md
     - ARCHITECTURE.md
     - scripts/workspace/agent_governance.py
     - scripts/workspace/agent_governance.py
@@ -71,6 +71,16 @@ tasks:
     - scripts/tests/publishing/test_publish_chatty_ch_system.py
     - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - AGENTS.md
+    - .claude/hooks/workspace_boundary_guard.ps1
+    - .claude/project-boundary.json
+    - .claude/rules/workspace-boundary.md
+    - CLAUDE.md
+    - packages/character-system/engineering/generation/character-generator/CLAUDE.md
+    - scripts/workspace/workspace_health.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - USAGE_GUIDES/QUICK_START/claude_code.md
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
     validation:
     - python -m unittest scripts.tests.workspace.test_agent_governance scripts.tests.workspace.test_merge_safety
       scripts.tests.workspace.test_task_records scripts.tests.workspace.test_workspace_cli

@@ -160,6 +160,10 @@ EXCLUDED_PATHS = {
     # governance registrations that are intentionally absent from Frame.
     "scripts/tests/workspace/test_agent_governance.py",
     "scripts/tests/workspace/test_hermes_workspace_guard.py",
+    # These project-private tests rely on governance capabilities and TASK
+    # records that the public projection intentionally scrubs.
+    "scripts/tests/workspace/test_merge_safety.py",
+    "scripts/tests/workspace/test_workflow_check.py",
     "scripts/tests/platform/test_platform_agent_guards.py",
     "scripts/tests/workspace/test_verify_change_scope.py",
     "scripts/tests/workspace/test_workspace_health.py",

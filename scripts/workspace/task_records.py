@@ -439,6 +439,17 @@ def validate_record(record: dict[str, Any]) -> list[str]:
                     errors.append(f"merge_review note missing {key}")
             if note.get("status") == "skipped_user_approved" and not note.get("reason"):
                 errors.append("skipped merge_review note requires reason")
+            approval = note.get("governance_approval")
+            if approval is not None:
+                if not isinstance(approval, dict):
+                    errors.append("governance_approval must be an object")
+                elif (approval.get("approver") not in {"codex", "user"}
+                      or not str(approval.get("evidence", "")).strip()
+                      or approval.get("scope") != "integrate_and_publish"
+                      or any(not approval.get(key) or approval.get(key) != note.get(key)
+                             for key in ("source_commit", "target_commit"))
+                      or (approval.get("approver") == "codex" and not approval.get("record_id"))):
+                    errors.append("invalid governance delivery approval")
     registration = record.get("registration")
     if registration is not None:
         operations = registration.get("operations") if isinstance(registration, dict) else None
@@ -807,6 +818,22 @@ def add_merge_review_note(args: argparse.Namespace) -> dict[str, Any]:
             "ready_tasks": sorted(set(getattr(args, "ready_task", []))),
             "audit_close": audit_close,
         })
+    approver = getattr(args, "governance_approver", None)
+    if approver:
+        if args.status != "completed" or not getattr(args, "approval_evidence", None):
+            raise ValueError("governance approval requires completed review and --approval-evidence")
+        approving_task = getattr(args, "approver_record_id", None)
+        if approver == "codex":
+            from scripts.workspace.agent_governance import require_task_actor
+            if not approving_task:
+                raise ValueError("Codex approval requires --approver-record-id")
+            require_task_actor(approving_task, "codex", "workspace_write")
+        note["governance_approval"] = {
+            "approver": approver, "record_id": approving_task,
+            "evidence": args.approval_evidence,
+            "scope": "integrate_and_publish",
+            "source_commit": note["source_commit"], "target_commit": note["target_commit"],
+        }
     record.setdefault("notes", []).append(note)
     errors = validate_record(record)
     if errors:
@@ -892,6 +919,9 @@ def main() -> int:
     p.add_argument("--validation-command", action="append", default=[])
     p.add_argument("--ready-task", action="append", default=[], help="Other active TASK whose owner confirmed this complete batch is ready.")
     p.add_argument("--audit-close", action="store_true", help="Review only final audit files of a successfully finalized TASK.")
+    p.add_argument("--governance-approver", choices=("codex", "user"))
+    p.add_argument("--approval-evidence", help="Reference to the explicit approval of this exact batch.")
+    p.add_argument("--approver-record-id", help="Active Codex-owned TASK for Codex approval.")
     p = sub.add_parser("show")
     p.add_argument("task_id")
     p = sub.add_parser("sync-ledger", help="Backfill finalized records into the task ledger.")
@@ -913,6 +943,9 @@ def main() -> int:
                     raise ValueError("--external-client-root requires --agent")
                 active_external_registration(args.task_id, agent=args.agent, client_root=args.external_client_root)
             output = active_registration(args.task_id, args.operation, expected_task_type=args.task_type, expected_bindings=args.bind, allow_external_origin=bool(args.external_client_root))
+            if args.agent and not args.external_client_root:
+                from scripts.workspace.agent_governance import require_task_actor
+                require_task_actor(args.task_id, args.agent, args.operation)
         elif args.action == "finalize":
             output = finalize(args)
         elif args.action == "report-usage":

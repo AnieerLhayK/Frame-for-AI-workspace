@@ -70,7 +70,7 @@ agents:
       kind: cli_and_ide_extension
     status: active
     registration_type: permanent
-    role: structural_maintainer
+    role: development_maintainer
     trust_source: user_approved
     capabilities:
       inherit_role: true

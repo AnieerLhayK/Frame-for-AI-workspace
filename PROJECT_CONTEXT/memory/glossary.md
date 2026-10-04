@@ -185,3 +185,15 @@ A stable, Claude Code-facing model name declared in LiteLLM `model_list`. It map
 The workspace's invocation layer for platform skill loading, workspace CLI
 onboarding, and the three public template guides. Skill roles and workflows are
 authoritative in their owning `packages/` or `skills/` instructions.
+
+## core governance
+
+Instructions and executable controls that decide agent authority, task scope,
+runtime enforcement, integration approval and publication configuration. Codex
+owns this authority; ordinary development does not confer it.
+
+## governance delivery approval
+
+An explicit Codex or user decision permitting delivery of a reviewed governance
+batch, bound to source and target commits. It covers integration and registered
+publication, never editing governance. Changed commits require renewed approval.

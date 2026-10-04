@@ -116,6 +116,29 @@ integration. Preserve commits for human arbitration. Publication failure stops
 delivery without resetting accepted history. Main audit paths retain their
 limited existing exception; ordinary source writes on main remain denied.
 
+## Development delivery and governance approval
+
+Codex maintains core governance. Claude may edit ordinary source and independently
+deliver a fully reviewed ordinary batch. The shared path classifier determines
+whether a batch includes core governance, including deleted and renamed paths.
+Mixed batches remain whole; do not cherry-pick around governance.
+
+Claude may deliver a governance batch only after Codex or the user explicitly
+approves the exact reviewed source and target. Record approval in the existing
+merge review note using `--governance-approver codex --approver-record-id <Codex-TASK>
+--approval-evidence <review-reference>`, or `--governance-approver user
+--approval-evidence <explicit-user-instruction-reference>`. A Codex approval needs
+an active Codex-owned TASK; Claude cannot issue it. User evidence must point to
+an actual explicit instruction, not the standing ordinary-delivery permission.
+
+Approval covers integration and registered publication only. It never permits
+Claude to edit controls. Changed source or target commits invalidate it; the
+existing strictly checked single receipt-only successor remains allowed. The
+same note authorizes publishing the integrated revision after main is pushed.
+Normal final audit closure remains finite and needs no new governance approval
+when it contains only the allowed audit files. Approval records are workflow
+attribution, not cryptographic proof of process identity.
+
 ## Retiring agent branches
 
 After dev/main delivery, fetch the exact old codex/claude refs. Verify each local

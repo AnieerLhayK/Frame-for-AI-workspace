@@ -10,7 +10,7 @@ import argparse, json, subprocess
 from pathlib import Path
 
 from scripts.workspace.runtime import WORKSPACE_ROOT as ROOT
-from scripts.workspace.agent_governance import check_access, load_manifest, load_yaml
+from scripts.workspace.agent_governance import check_delivery_access, load_manifest, load_yaml, require_task_actor
 from scripts.workspace.task_records import active_registration, read_record, records, validate_record
 STRUCTURED = (".json", ".yaml", ".yml")
 POLICY_PATH = ROOT / "shared" / "governance" / "agent_governance.yaml"
@@ -93,11 +93,9 @@ def review_coverage(record_id: str, note: dict, source: str, target: str) -> dic
     return {"source_commit": source_tip, "target_commit": target_tip, "reviewed_commit": reviewed}
 
 
-def audit_closure_scope(record_id: str, source: str, target: str) -> None:
-    """Permit a finite final audit batch, never a new source development batch."""
+def audit_paths(record_id: str) -> set[str]:
+    """The only paths a successful TASK may change during final closure."""
     from scripts.workspace import task_ledger, task_plans
-    from scripts.workspace.task_records import ensure_audit_not_delivered
-    ensure_audit_not_delivered(record_id, target)
     path, record = read_record(record_id)
     if validate_record(record) or record.get("status") != "successful" or record.get("validation", {}).get("status") != "passed":
         raise ValueError("audit closure requires a successfully finalized, validated task")
@@ -109,9 +107,58 @@ def audit_closure_scope(record_id: str, source: str, target: str) -> None:
         if plan.get("status") != "completed" or record_id not in plan.get("execution_task_ids", []):
             raise ValueError("audit closure plan is not completed and linked")
         allowed.add(plan_path.relative_to(ROOT).as_posix())
+    return allowed
+
+
+def audit_closure_scope(record_id: str, source: str, target: str) -> None:
+    """Permit a finite final audit batch, never a new source development batch."""
+    from scripts.workspace.task_records import ensure_audit_not_delivered
+    ensure_audit_not_delivered(record_id, target)
+    allowed = audit_paths(record_id)
     changed = set(git("diff", "--name-only", f"{target}...{source}").splitlines())
     if not changed or changed - allowed:
         raise ValueError("audit closure may change only this TASK, its linked PLAN and day ledger")
+
+
+def audit_worktree_scope(record_id: str, *, allow_integrated: bool = False) -> None:
+    """Shared runtime gate for staging the finite audit or pushing its receipt."""
+    from scripts.workspace.task_records import ensure_audit_not_delivered
+    allowed = audit_paths(record_id)
+    if allow_integrated and git("rev-parse", "dev") == git("rev-parse", "main"):
+        note = merge_review_note(record_id, "dev", "main", "ff-only")
+        if not note or not note.get("audit_close"):
+            raise ValueError("integrated audit push requires an audit-close receipt")
+        review_coverage(record_id, note, "HEAD", note["target_commit"])
+        changed = set(git("diff", "--name-only", "--no-renames", note["target_commit"], "HEAD").splitlines())
+        if git("status", "--porcelain"):
+            raise ValueError("integrated audit push requires a clean tree")
+    else:
+        ensure_audit_not_delivered(record_id, "main")
+        changed = set(git("diff", "--name-only", "--no-renames", "main").splitlines())
+        changed.update(git("diff", "--cached", "--name-only", "--no-renames", "main").splitlines())
+        changed.update(git("ls-files", "--others", "--exclude-standard").splitlines())
+    if not changed or changed - allowed:
+        raise ValueError("audit closure may change only this TASK, its linked PLAN and day ledger")
+
+
+def delivery_access(policy: dict, manifest: dict, agent: str, note: dict) -> dict:
+    # No rename folding: both the removed and added names affect authority.
+    paths = git("diff", "--name-only", "--no-renames", note["target_commit"], note["source_commit"]).splitlines()
+    return check_delivery_access(policy, manifest, agent_name=agent, paths=paths, note=note)
+
+
+def publication_access(policy: dict, manifest: dict, agent: str, record_id: str, *, require_remote: bool = True) -> dict:
+    """Validate the integrated source using the original pre-integration target."""
+    if git("status", "--porcelain"):
+        raise ValueError("publication requires a clean reviewed source tree")
+    head = git("rev-parse", "HEAD")
+    if head != git("rev-parse", "main") or (require_remote and head != git("rev-parse", "origin/main")):
+        raise ValueError("publication requires HEAD = main = origin/main")
+    note = merge_review_note(record_id, "dev", "main", "ff-only")
+    if not note or (require_remote and note.get("audit_close")):
+        raise ValueError("publication requires the source batch review")
+    review_coverage(record_id, note, "HEAD", note["target_commit"])
+    return delivery_access(policy, manifest, agent, note)
 
 
 def governed_assess(source: str, target: str, *, agent: str | None, record_id: str | None, strategy: str) -> dict:
@@ -135,11 +182,6 @@ def governed_assess(source: str, target: str, *, agent: str | None, record_id: s
         errors.append("managed integration source must be the development branch")
     if not agent or not record_id:
         errors.append("--agent and --record-id are required for managed integration")
-    if agent:
-        access = check_access(policy, load_manifest(), agent_name=agent, operation="write",
-                              raw_path="shared/governance/git_integration_policy.md", branch=source)
-        if access["status"] != "ALLOW":
-            errors.append("agent lacks workspace integration authority")
     if git("status", "--porcelain"):
         errors.append("working tree must be clean before merge preflight")
     if strategy == "ff-only" and git_returncode("merge-base", "--is-ancestor", target, source) != 0:
@@ -153,6 +195,12 @@ def governed_assess(source: str, target: str, *, agent: str | None, record_id: s
                 audit_closure_scope(record_id, source, target)
             else:
                 active_registration(record_id, "workspace_write")
+                if agent:
+                    require_task_actor(record_id, agent, "workspace_write")
+            if agent and note.get("audit_close"):
+                _, closing_record = read_record(record_id)
+                if closing_record.get("owner", {}).get("agent") != agent:
+                    raise ValueError("audit closure requires the TASK owner")
             unfinished = [r["task_id"] for r in records()
                           if r["task_id"] != record_id and r.get("status") == "in_progress"
                           and "workspace_write" in r.get("registration", {}).get("operations", [])
@@ -160,6 +208,10 @@ def governed_assess(source: str, target: str, *, agent: str | None, record_id: s
             if unfinished:
                 raise ValueError("other development tasks are unfinished: " + ", ".join(unfinished))
             review.update(review_coverage(record_id, note, source, target))
+            if agent:
+                access = delivery_access(policy, load_manifest(), agent, note)
+                if access["status"] != "ALLOW":
+                    raise ValueError(access["reason"])
             review.update({"status": note["status"], "note": note})
         except (ValueError, RuntimeError) as error:
             errors.append(str(error))
@@ -175,9 +227,18 @@ def main() -> int:
     parser.add_argument("--agent")
     parser.add_argument("--record-id")
     parser.add_argument("--strategy", choices=("ff-only", "merge-commit"), default="ff-only")
+    parser.add_argument("--for-push", action="store_true", help="Also accept the exact already-integrated reviewed batch.")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args()
-    try: payload = governed_assess(args.head, args.target, agent=args.agent, record_id=args.record_id, strategy=args.strategy)
+    try:
+        if args.for_push and git("rev-parse", args.head) == git("rev-parse", args.target):
+            _, record = read_record(args.record_id)
+            if record.get("owner", {}).get("agent") != args.agent:
+                raise ValueError("push requires the TASK owner")
+            access = publication_access(load_yaml(POLICY_PATH), load_manifest(), args.agent, args.record_id, require_remote=False)
+            payload = {"status": "SAFE_TO_CONTINUE" if access["status"] == "ALLOW" else "STOP", "errors": [] if access["status"] == "ALLOW" else [access["reason"]]}
+        else:
+            payload = governed_assess(args.head, args.target, agent=args.agent, record_id=args.record_id, strategy=args.strategy)
     except (RuntimeError, ValueError) as error: payload = {"status": "ERROR", "error": str(error)}
     if args.format == "json": print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:

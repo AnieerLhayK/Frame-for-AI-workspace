@@ -48,8 +48,17 @@ def check_workflow(
     if record_id:
         try:
             registration = active_registration(
-                record_id, "workspace_write", allow_external_origin=True
+                record_id, "workspace_write", allow_external_origin=True,
+                expected_task_type=task_id, expected_bindings=bindings,
             )
+            from scripts.workspace.task_records import read_record
+            from scripts.workspace.agent_governance import find_registration, load_registry
+            _, owned_record = read_record(record_id)
+            owner_agent = (owned_record.get("owner") or owned_record.get("origin") or {}).get("agent")
+            if owner_agent:
+                if agent_id and find_registration(load_registry(), agent_id)[0] != owner_agent:
+                    raise ValueError("workflow actor does not match TASK owner")
+                agent_id = owner_agent
             origin = registration.get("origin")
             if isinstance(origin, dict) and origin.get("kind") == "external_workspace":
                 if not agent_id or not external_client_root:

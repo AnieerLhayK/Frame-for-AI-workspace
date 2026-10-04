@@ -13,9 +13,23 @@ edit workspace structure, or change a platform projection.
 | Runtime record | diagnosis, handoff, approved runtime-loop records | `record_write` |
 | Generated snapshot | `reports/current/` | `report_write` |
 | Skill source | `skills/`, package runtime and engineering source | `source_write` |
-| Governance structure | manifest, `shared/`, `scripts/`, `PROJECT_CONTEXT/`, root governance files | `structural_write` |
+| Core governance | instructions, authority and scope rules, guards, integration and publishing controls | `structural_write` |
+| Development source | ordinary tools, skills, tests and usage documentation | `source_write` |
+| Workflow records | TASK, PLAN and task ledger | `record_write` |
 
 The ordered machine-readable form is `shared/governance/agent_governance.yaml`.
+Core controls match before ordinary directories, including nested instruction files.
+Mixed files stay protected; unclassified paths require structural authority.
+Claude does not issue leases or review structural change requests. Delivery
+approval is separate from editing authority; use the Git integration policy.
+
+All runtime adapters use the shared authorization interface. Claude native writes
+resolve an owned TASK by Claude session ID (or an explicit matching prelaunch
+selection) and check its scope before writing. Shell execution requires an owned
+TASK except for simple read-only commands and task creation; successful TASKs
+permit only the finite audit-close commands and exact audit paths;
+whole-batch workflow checks catch writes made through interpreters. These are
+cooperative workflow controls, not isolation against hostile same-account processes.
 
 `reports/agent-requests/` is a durable proposal surface and may be empty when
 there are no pending requests. `reports/agent-experiments/<agent-id>/` is an
@@ -32,7 +46,8 @@ staging path, and approved Git remote URL. Every publisher invocation must satis
 all of the following before it creates a checkout, commits, or sends data:
 
 1. the staging path and remote URL exactly match its declared publisher;
-2. the invoking agent has `platform_write` and the path is inside its scope;
+2. the invoking agent has scoped `platform_write`, or `delivery` with an owned
+   TASK and the exact clean, integrated batch review and governance approval;
 3. an active task record declares `external_write` for the external release;
 4. the publisher's normal projection checks pass.
 
@@ -65,7 +80,8 @@ Agent Registration Contract
 
 | Agent class | Default agents | Allowed durable effects |
 | --- | --- | --- |
-| Structural maintainer | Codex, Claude Code | Records, skill source, workspace structure, reviewed platform deployment |
+| Structural maintainer | Codex | Records, source, core governance and reviewed platform deployment |
+| Development maintainer | Claude Code | Ordinary source and records, reviewed delivery through registered publishers |
 | Record producer | DeepSeek Harness, Hermes, OpenCode, Reasonix | Scoped diagnosis, handoff, agent report, and change request records |
 | Consumer | Unregistered agents | Read, temporary invocation, and change requests only |
 
@@ -143,7 +159,7 @@ When an agent cannot discover a needed skill:
      --path workspace_manifest.yaml
    ```
 
-4. Codex, Claude Code, or the user reviews and performs the structural change.
+4. Codex or the user reviews and performs the structural change.
 
 ## Temporary Leases
 
@@ -176,7 +192,7 @@ Change risk is derived from the machine-readable `change_risk_policy` and
 existing `surface_classes` in `shared/governance/agent_governance.yaml`. Do not maintain a
 second path list in this document.
 
-A high-risk path remains editable by Codex or Claude Code when the resolved
+A high-risk path remains editable by an agent with the required capability when the resolved
 task declares it and routed validation passes. Explicit user confirmation is
 still required for destructive or externally visible operations outside the
 standing Git delivery authority in `git_integration_policy.md`, such as Skill
@@ -220,7 +236,7 @@ boundary.
 ## Lifecycle
 
 1. **Request**: the agent writes only a proposal record.
-2. **Review**: Codex, Claude Code, or the user selects review-only, temporary
+2. **Review**: Codex or the user selects review-only, temporary
    lease, or isolated worktree execution.
 3. **Execute**: the agent stays inside the approved capabilities and paths.
 4. **Validate**: normal task, test, and Git validation still applies.

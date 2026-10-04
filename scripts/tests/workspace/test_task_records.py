@@ -12,6 +12,32 @@ from scripts.workspace import task_ledger, task_records
 
 
 class TaskRecordsTests(unittest.TestCase):
+    def test_governance_approval_requires_evidence_and_codex_owned_task(self):
+        from argparse import Namespace
+        record = task_records.initial_record("TASK-20261002-001", task_type="demo",
+                    started_at="2026-10-02T00:00:00Z", tokens_estimated=1,
+                    operations=["workspace_write"])
+        args = Namespace(task_id=record["task_id"], status="completed", source_branch="dev",
+            target_branch="main", strategy="ff-only", review_base="main", reason=None,
+            validation_command=["tests passed"], ready_task=[], audit_close=False,
+            governance_approver="user", approval_evidence="", approver_record_id=None)
+        with patch.object(task_records, "read_record", return_value=(Path("unused"), record)), \
+             patch.object(task_records, "git_text", return_value="a"*40), \
+             patch.object(task_records, "write_record") as write:
+            with self.assertRaisesRegex(ValueError, "evidence"):
+                task_records.add_merge_review_note(args)
+            write.assert_not_called()
+            args.approval_evidence = "chat:explicit-batch-approval"
+            args.governance_approver = "codex"
+            args.approver_record_id = "TASK-20261002-002"
+            with patch("scripts.workspace.agent_governance.require_task_actor", side_effect=ValueError("task owner mismatch")):
+                with self.assertRaisesRegex(ValueError, "owner"):
+                    task_records.add_merge_review_note(args)
+            write.assert_not_called()
+            args.governance_approver = "user"; args.approver_record_id = None
+            saved = task_records.add_merge_review_note(args)
+            self.assertEqual(saved["notes"][-1]["governance_approval"]["evidence"], args.approval_evidence)
+
     def test_concurrent_sessions_can_hold_write_registrations(self) -> None:
         from argparse import Namespace
         args = Namespace(task_type="demo", tokens_estimated=1, bind=[],

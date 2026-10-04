@@ -367,7 +367,7 @@ def verify_changes(
             if agent_id and manifest is not None and registry is not None
             else None
         )
-        if authorization and authorization["status"] != "ALLOW":
+        if authorization and authorization["status"] != "ALLOW" and not covering_tasks:
             authorization_denied.append(change.path)
         entry = {
             "path": change.path,

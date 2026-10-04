@@ -108,8 +108,8 @@ def path_matches(value: str, pattern: str) -> bool:
     if expected == "**":
         return True
     if expected.endswith("/**"):
-        prefix = expected[:-3].rstrip("/")
-        return normalized == prefix or normalized.startswith(prefix + "/")
+        prefix = expected[:-3].rstrip("/").casefold()
+        return normalized.casefold() == prefix or normalized.casefold().startswith(prefix + "/")
     return fnmatch.fnmatchcase(normalized.casefold(), expected.casefold())
 
 
@@ -375,13 +375,13 @@ def validate_registration(
                 )
             )
         if normalized == "**" and not (
-            status == "active" and role == "structural_maintainer"
+            status == "active" and role in {"structural_maintainer", "development_maintainer"}
         ):
             diagnostics.append(
                 diagnostic(
                     "ERROR",
                     "overbroad_scope",
-                    f"{agent_id}: only active structural maintainers may use **",
+                    f"{agent_id}: only active maintainers may use **",
                 )
             )
 
@@ -737,6 +737,74 @@ def classify_path(
     raise ValueError(f"No surface classification for {relative}")
 
 
+def require_task_actor(record_id: str, agent_name: str, operation: str) -> dict[str, Any]:
+    """Check attribution as well as liveness; a TASK is not a bearer grant."""
+    registration = active_registration(record_id, operation)
+    _, record = read_record(record_id)
+    actor = find_registration(load_registry(), agent_name)
+    owner = record.get("owner", {})
+    if not actor[0] or owner.get("agent") != actor[0]:
+        raise ValueError("task owner does not match the acting agent")
+    return registration
+
+
+def check_task_write(policy: dict, manifest: dict, *, agent_name: str,
+                     record_id: str, raw_path: str, **kwargs: Any) -> dict:
+    """The runtime write seam: actor, task scope, then shared path authority."""
+    from scripts.workspace.plan_change_surface import resolve_task
+    from scripts.workspace.verify_change_scope import scope_matches
+
+    target = classify_path(policy, manifest, raw_path)
+    operation = "external_write" if target["surface"] == "external_environment" or target.get("requires_external_write") else "workspace_write"
+    registration = require_task_actor(record_id, agent_name, operation)
+    _, record = read_record(record_id)
+    task = resolve_task(registration["task_type"], record["owner"].get("bindings", []))
+    path = target["workspace_relative"] or target["path"]
+    scopes = [*task["context"]["write_scope"], registration["path"]]
+    if not any(scope_matches(path, scope) for scope in scopes):
+        raise ValueError("target is outside the task write scope")
+    result = check_access(policy, manifest, agent_name=agent_name, operation="write", raw_path=raw_path, **kwargs)
+    result["task_registration"] = registration
+    return result
+
+
+def check_delivery_access(policy: dict, manifest: dict, *, agent_name: str,
+                          paths: list[str], note: dict, registry: dict | None = None) -> dict:
+    """Authorize delivery of a reviewed batch, never editing its controls."""
+    resolved = effective_registration(policy, registry or load_registry(), manifest, agent_name)
+    denial = {"status": "DENY", "reason": "agent lacks delivery authority"}
+    if "delivery" not in resolved["capabilities"]:
+        return denial
+    core = []
+    for path in paths:
+        target = classify_path(policy, manifest, path)
+        if not any(path_matches(path, scope) for scope in resolved["path_scopes"]):
+            return {**denial, "reason": "delivery path is outside agent scope"}
+        required = target["required_capability"]
+        if required not in resolved["capabilities"]:
+            if required not in {"structural_write", "platform_write"}:
+                return {**denial, "reason": "batch contains an unauthorized surface"}
+            core.append(path)
+    if core:
+        approval = note.get("governance_approval", {})
+        allowed = policy.get("git_branch_governance", {}).get("governance_approvers", [])
+        if approval.get("approver") not in allowed or not str(approval.get("evidence", "")).strip():
+            return {**denial, "reason": "governance batch requires Codex or explicit user approval"}
+        if approval.get("scope") != "integrate_and_publish" or any(
+            approval.get(key) != note.get(key) or not approval.get(key)
+            for key in ("source_commit", "target_commit")
+        ):
+            return {**denial, "reason": "governance approval scope or commits do not match review"}
+        if approval["approver"] == "codex":
+            try:
+                _, approving_record = read_record(approval.get("record_id", ""))
+                if approving_record.get("owner", {}).get("agent") != "codex":
+                    raise ValueError("approval TASK is not owned by Codex")
+            except (ValueError, OSError):
+                return {**denial, "reason": "governance approval requires a Codex-owned TASK"}
+    return {"status": "ALLOW", "reason": "reviewed delivery authorized", "governance_paths": core}
+
+
 def check_managed_platform_publish(
     policy: dict[str, Any],
     manifest: dict[str, Any],
@@ -802,8 +870,18 @@ def check_managed_platform_publish(
     authorization["publisher"] = publisher_id
     authorization["task_registration"] = registration
     if authorization["status"] != "ALLOW":
+        # Delivery is narrower than platform_write: exact registered publisher,
+        # owned TASK, integrated clean revision and the same review/approval.
+        from scripts.workspace.merge_safety import publication_access
+        try:
+            require_task_actor(record_id, agent_name, "external_write")
+            delivery = publication_access(policy, manifest, agent_name, record_id)
+        except (ValueError, RuntimeError, OSError) as error:
+            delivery = {"status": "DENY", "reason": str(error)}
+        if delivery["status"] == "ALLOW":
+            return {**authorization, **delivery, "publisher": publisher_id}
         authorization["reason"] = (
-            "managed publisher authorization denied: " + authorization["reason"]
+            "managed publisher authorization denied: " + delivery["reason"]
         )
     return authorization
 
@@ -1091,6 +1169,8 @@ def check_access(
                 "platform_projection": "source_patch",
                 "governance_structure": "source_patch",
                 "workspace_other": "source_patch",
+                "development_source": "source_patch",
+                "workflow_record": "record_write",
             }.get(target["surface"])
             allowed_modes = {
                 str(value)
@@ -1707,6 +1787,16 @@ def main() -> int:
             )
             if registration:
                 payload["task_registration"] = registration
+                if not args.external_client_root:
+                    try:
+                        payload = check_task_write(
+                            policy, manifest, agent_name=args.agent,
+                            record_id=args.record_id, raw_path=args.path,
+                            acting_skill=args.skill, lease=lease, registry=registry,
+                            integration=args.integration,
+                        )
+                    except ValueError as error:
+                        registration_error = str(error)
             if registration_error:
                 payload["status"] = "DENY"
                 payload["reason"] = f"task registration denied: {registration_error}"

@@ -20,10 +20,31 @@ claude-workspace
 ```
 
 This opens the Git root registered for the `workspace` alias, loads its tracked
-`CLAUDE.md` and `.claude/` boundary rules, and treats the repository as a
+`AGENTS.md` and `.claude/` boundary rules, and treats the repository as a
 governed skill workspace.
 
 Do not create unrelated business projects inside this workspace.
+
+## Instruction loading and authority
+
+Use Claude Code 2.1.281 or later. Both Workspace and character-generator load
+`AGENTS.md` directly; there is no project `CLAUDE.md` import shim. In a new session,
+check `/memory` for the root instructions and read a character-generator file to
+load its nested instructions. The built-in agents-md plugin must be enabled and
+Project instructions must allow AGENTS.md. A project or ancestor CLAUDE.md or
+CLAUDE.local.md can suppress the default fallback; inspect settings before
+reintroducing compatibility files. Global instructions and other projects are
+not changed by this policy.
+
+Claude is a development maintainer. Create a TASK with `--owner-agent claude`
+and `--owner-session` equal to the Claude session ID. The hook discovers that
+record automatically; it reports the session ID when a TASK is missing. A
+prelaunch `WORKSPACE_TASK_RECORD` is optional and must match the same session.
+Successful TASKs retain only the finite audit-close command/path exception.
+Use an owned active TASK for ordinary development;
+Codex owns core governance. Ordinary reviewed batches can be delivered without
+extra approval; mixed governance batches need a commit-bound Codex/user approval
+as described in `shared/governance/git_integration_policy.md`.
 
 ## Start In The CNN Project
 
