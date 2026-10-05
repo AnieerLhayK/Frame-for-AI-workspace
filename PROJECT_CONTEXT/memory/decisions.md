@@ -1,5 +1,19 @@
 # Decisions
 
+## muti-ai Uses One Desktop Entry And Independent Real Controls
+
+- decision: Keep source in ai-workbench; expose one muti-ai desktop entry and
+  one Qt window with both tool switches visible. Each Controller owns its own
+  state, backed by detached local workers. Closing UI preserves operations.
+- date: 2026-10-06, accepted implementation plan and theme-settings amendment.
+- reason: Make personal local operation usable before installer/public release.
+- consequence: Settings select persisted light/dark theme without a shortcut;
+  Commander uses @latest. Process state and connection health stay distinct.
+  Archive old desktop entries reversibly after verification. Credentials,
+  private local config and runtime data are never part of portable projection.
+- supersedes: the initial simulation-only presentation below; the first-stage
+  record remains historical. Classification UI and public repository are later work.
+
 ## ai-workbench Starts With Local Simulation And Explicit Export
 
 - decision: Keep ai-workbench source under packages/ai-workbench, use the existing

@@ -2,10 +2,17 @@
 
 ## ai-workbench
 
-A personal helper-tool source package in the authoritative Workspace. Its first
-stage is a native Qt simulation with separate Commander and Hermes controllers;
-portable local previews are independent of private host governance. Real service
-control and public release are separately scoped later stages.
+A personal helper-tool source package in the authoritative Workspace. Its
+muti-ai desktop entry opens a native Qt window containing independent Commander
+and Hermes controls. Real local operations use detached per-tool workers;
+explicit demo and portable previews remain independent of private host governance.
+Public release is separately scoped work.
+
+## muti-ai
+
+The personal desktop control surface of ai-workbench, spelled muti-ai. One entry,
+two visible independent switches, and persisted light/dark settings. Closing
+the window preserves actual services and submitted operations.
 
 ## lifecycle completion seam
 

@@ -1,4 +1,48 @@
 tasks:
+  ai_workbench_service_integration:
+    use_when:
+    - Implementing and verifying the user-approved muti-ai desktop entry and real Commander/Hermes controls.
+    use_when_zh:
+    - 实施并验证用户批准的 muti-ai 桌面入口与 Commander/Hermes 真实控制
+    required:
+    - packages/ai-workbench/AGENTS.md
+    - packages/ai-workbench/shared/maintenance.md
+    - shared/governance/git_integration_policy.md
+    optional: []
+    ignore:
+    - account credentials and private service configuration
+    tool_profile: cleanup_migration
+    ledger: true
+    budget: {required_warn_tokens: 10000, expanded_warn_tokens: 16000}
+    write_scope:
+    - packages/ai-workbench/
+    - PROJECT_CONTEXT/memory/decisions.md
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/todo/desktop-commander.md
+    - PROJECT_CONTEXT/todo/desktop-commander.zh-CN.md
+    - PROJECT_CONTEXT/todo/README.md
+    - PROJECT_CONTEXT/todo/README.zh-CN.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - reports/agent-requests/REQ-muti-ai-local.md
+    - ${DATA_ROOT}/ai-workbench/
+    - ${DATA_ROOT}/codex/cache/staging/muti-ai-implementation/
+    - ${DATA_ROOT}/workspace-governance/leases/muti-ai-local.json
+    - ${USER_HOME}/Desktop/muti-ai.lnk
+    - ${USER_HOME}/Desktop/GPT?Commander.lnk
+    - ${USER_HOME}/Desktop/停止?GPT?Commander.lnk
+    - ${USER_HOME}/Desktop/启动?Hermes?Gateway.lnk
+    - ${USER_HOME}/Desktop/停止?Hermes?Gateway.lnk
+    - ${USER_HOME}/Desktop/.gpt-commander/
+    validation:
+    - python -B -m pytest -q -p no:cacheprovider packages/ai-workbench/tests
+    - python -B -m pytest -q -p no:cacheprovider scripts/tests/publishing/test_publish_policy.py
+    - python -B -m scripts.validation.validate_manifest
+    - python -B -m scripts.validation.validate_protocols
+    - python -B -m scripts.validation.check_doc_pairs --validate-coverage
+    - git diff --check
   ai_workbench_bootstrap:
     use_when:
     - Registering the ai-workbench package and its first simulated Qt application and local projection boundary.
@@ -48,9 +92,9 @@ tasks:
     - git diff --check
   ai_workbench_development:
     use_when:
-    - Maintaining ai-workbench simulated application, tests, portable maintenance documents or local projection tools.
+    - Maintaining ai-workbench application source, simulation tests, portable maintenance documents or local projection tools.
     use_when_zh:
-    - 维护 ai-workbench 模拟应用、测试、可移植维护文档或本地投影工具
+    - 维护 ai-workbench 应用源码、模拟测试、可移植维护文档或本地投影工具
     required:
     - packages/ai-workbench/AGENTS.md
     - packages/ai-workbench/README.md
