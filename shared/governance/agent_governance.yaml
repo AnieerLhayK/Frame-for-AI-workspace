@@ -181,13 +181,9 @@ managed_platform_publishers:
   chatty_ch_system:
     publisher_script: scripts/publishing/sync_chatty_ch_system_repo.py
     staging_path: ${DATA_ROOT}/codex/cache/staging/Chatty-Ch-System
+    contract_file: packages/character-system/distribution/public-projection/public_contract.json
     remote_urls:
       - git@github.com:AnieerLhayK/Chatty-Ch-System.git
-  qq_chat_raw_filter:
-    publisher_script: scripts/publishing/sync_qq_raw_filter_repo.py
-    staging_path: ${DATA_ROOT}/codex/cache/staging/qq-chat-raw-filter
-    remote_urls:
-      - git@github.com:AnieerLhayK/qq-chat-raw-filter.git
   anieer_skills:
     publisher_script: scripts/publishing/sync_skill_collection_repo.py
     staging_path: ${DATA_ROOT}/codex/cache/staging/Anieer_skills

@@ -1,5 +1,18 @@
 # Glossary
 
+## ai-workbench
+
+A personal helper-tool source package in the authoritative Workspace. Its first
+stage is a native Qt simulation with separate Commander and Hermes controllers;
+portable local previews are independent of private host governance. Real service
+control and public release are separately scoped later stages.
+
+## lifecycle completion seam
+
+The callback interface between a tool controller and its adapter. Pending states
+remain pending until completion; failure retains the last confirmed running
+state. Simulation success does not prove real service readiness.
+
 ## Sci-system
 
 A generic workspace package for staged scientific data processing, analysis,

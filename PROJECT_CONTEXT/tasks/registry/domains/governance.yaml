@@ -66,10 +66,8 @@ tasks:
     - scripts/tests/workspace/test_workflow_check.py
     - scripts/publishing/sync_public_repo.py
     - scripts/publishing/sync_chatty_ch_system_repo.py
-    - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/test_publish_public.py
     - scripts/tests/publishing/test_publish_chatty_ch_system.py
-    - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - AGENTS.md
     - .claude/hooks/workspace_boundary_guard.ps1
     - .claude/project-boundary.json
@@ -85,7 +83,6 @@ tasks:
     - python -m unittest scripts.tests.workspace.test_agent_governance scripts.tests.workspace.test_merge_safety
       scripts.tests.workspace.test_task_records scripts.tests.workspace.test_workspace_cli
     - python -m pytest -q scripts/tests/publishing/test_publish_policy.py scripts/tests/publishing/test_publish_rendering.py scripts/tests/publishing/test_publish_projection.py scripts/tests/publishing/test_publish_chatty_ch_system.py
-      scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - python -m scripts.workspace.workspace_cli agent status
     - python -m scripts.workspace.workspace_cli agent list
     - python -m scripts.workspace.workspace_cli agent validate codex

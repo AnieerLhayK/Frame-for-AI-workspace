@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "source_revision": "d5080e26395445c9715c7843c9695571224fa6e4",
+  "source_revision": "6da2b1fe5d8b1a6844d53b7c2e5786ed8a24d646",
   "publisher": "scripts/publishing/sync_public_repo.py",
   "generator": "scripts/publishing/publish_public.py"
 }

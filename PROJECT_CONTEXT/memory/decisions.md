@@ -1,5 +1,18 @@
 # Decisions
 
+## ai-workbench Starts With Local Simulation And Explicit Export
+
+- decision: Keep ai-workbench source under packages/ai-workbench, use the existing
+  Python 3.13.9 / PySide6 6.9.2 runtime and one Qt window with independent
+  simulated Commander/Hermes pages. Keep its maintenance skill development-only
+  and unexposed. Workspace remains authoritative.
+- reason: Verify personal local usability and lifecycle interaction before real
+  service control, installers or public distribution.
+- date if known: 2026-10-05, user-approved first-stage implementation plan.
+- consequence: Use explicit portable export files and a local staging preview;
+  exclude this package precisely from Frame. Real adapters, authorization,
+  desktop replacements, repository identity and licensing need later decisions.
+
 ## Sci-system expands by evidence-bearing stages
 
 Sci-system begins with a package-local scientific presentation contract and one
@@ -189,7 +202,7 @@ manifest-declared workspace output root and never changes source material.
 
 - decision: Map README facts to public repositories only through the registered
   publisher for that repository.
-- reason: Frame, Chatty Ch System, and qq-chat-raw-filter expose different
+- reason: Frame and Chatty Ch System expose different
   source surfaces and must not become copies of the private workspace.
 - date if known: 2026-07-16 README governance pass.
 - consequence: Generated public README templates and package-facing README
@@ -256,3 +269,19 @@ manifest-declared workspace output root and never changes source material.
 - reason: Preserve ordinary development autonomy while removing equal governance authority. One shared authorization interface keeps runtime, workflow and delivery decisions consistent.
 - date if known: 2026-10-02, user-confirmed specification PLAN-20261002-001.
 - consequence: Protect core controls before ordinary path rules; deny unclassified writes; retain owned TASK and whole-batch checks. Retire both project CLAUDE.md imports only after npm upgrade and fresh root/nested AGENTS.md loading verification. This is cooperative workflow enforcement, not hostile-process isolation.
+
+## Chatty Owns Corpus Preparation And Its Portable Public Toolchain
+
+- decision: Include the QQ raw material filter in Chatty Ch System. Keep portable
+  generation, content contract, checker, documentation, CI and tests in
+  character-system/distribution/public-projection. Workspace remains the sole
+  owner of host paths, remote registration, TASK authorization and synchronization.
+- reason: Corpus preparation is a stage of the same character engineering system;
+  separate public publishers duplicated maintenance without independent source ownership.
+- date if known: 2026-10-05, user-confirmed and implementation-authorized plan.
+- consequence: Preserve filter package and CLI identities and local data defaults
+  through host configuration. Review and convert JSONL before generator handoff.
+  Retire the separate filter publisher and annotate/archive its remote after Chatty
+  validation, preserving all history, branches and contributions; do not delete it.
+  Bilingual documentation incorporates useful ideas from both unmerged README PRs
+  with attribution, without making remote changes authoritative.

@@ -9,6 +9,12 @@ rules:
   - "Semantic sync is required, not literal translation parity."
 
 directories:
+  - path: "packages/ai-workbench"
+    pattern: "README.md"
+    recursive: true
+    companion_suffix: ".zh-CN.md"
+    sync_level: "semantic"
+    note: "Personal workbench portable README bilingual companion."
   - path: ""
     pattern: "README.md"
     recursive: false
@@ -77,3 +83,8 @@ pairs:
     companion: "WORKSPACE_ENGINEERING/methods/context_structure_refactoring.zh-CN.md"
     sync_level: "semantic"
     note: "Bilingual reusable method for PROJECT_CONTEXT and scripts structural migrations."
+
+  - primary: "packages/character-system/distribution/public-projection/templates/README.md"
+    companion: "packages/character-system/distribution/public-projection/templates/README.zh-CN.md"
+    sync_level: "semantic"
+    note: "Package-owned bilingual templates for the unified Chatty public projection."

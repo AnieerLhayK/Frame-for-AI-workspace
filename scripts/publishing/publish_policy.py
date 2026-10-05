@@ -102,6 +102,7 @@ EXCLUDED_PATHS = {
     # Frame exposes the public packages extension layer as a README-only
     # placeholder; private package implementations stay in their source repo.
     "packages/sci-system",
+    "packages/ai-workbench",
     # Local pilot deployment launchers and contract are not framework source.
     "scripts/platform/dsh-pilot.cmd",
     "scripts/platform/dsh.cmd",
@@ -110,14 +111,10 @@ EXCLUDED_PATHS = {
     "WORKSPACE_ENGINEERING/evidence",
     "WORKSPACE_ENGINEERING/proposals",
     "scripts/publishing/publish_chatty_ch_system.py",
+    "scripts/publishing/character_system_projection.py",
     "scripts/publishing/publish_check_chatty_ch_system.py",
     "scripts/publishing/sync_chatty_ch_system_repo.py",
-    "scripts/publishing/publish_qq_raw_filter.py",
-    "scripts/publishing/publish_check_qq_raw_filter.py",
-    "scripts/publishing/sync_qq_raw_filter_repo.py",
     "scripts/tests/publishing/test_publish_chatty_ch_system.py",
-    "scripts/tests/publishing/test_publish_qq_raw_filter.py",
-    "scripts/tests/publishing/test_sync_qq_raw_filter_repo.py",
     "scripts/tests/publishing/test_registered_repo_sync.py",
     # The public skill-collection publisher depends on the private skills
     # source, which Frame intentionally excludes.
@@ -220,7 +217,6 @@ SCRUB_FILES: set[str] = {
     "scripts/publishing/public_workspace_renderer.py",
     "scripts/publishing/sync_chatty_ch_system_repo.py",
     "scripts/publishing/sync_public_repo.py",
-    "scripts/publishing/sync_qq_raw_filter_repo.py",
     "scripts/workspace/hermes_workspace_guard.py",
     "scripts/workspace/agent_governance.py",
     "scripts/workspace/workspace_health.py",

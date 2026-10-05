@@ -125,13 +125,13 @@ tasks:
     - 'OpenCode: opencode debug skill'
   raw_material_filter_tooling:
     use_when:
-    - Changing qq-chat-raw-filter source, package metadata, tests, CI, README, or
+    - Changing the character-system QQ filter source, package metadata, tests, CI, README, or
       generated public-projection publishing support under packages/character-system/engineering/corpus-preparation/qq-raw-material-filter.
-    - Preparing the qq-chat-raw-filter public repository to install, test, or run
+    - Preparing the filter module to install, test, or run
       in GitHub Actions.
     use_when_zh:
     - 修改 packages/character-system/engineering/corpus-preparation/qq-raw-material-filter
-      下的 qq-chat-raw-filter 源码、包元数据、测试、CI、README 或公开投影发布支持
+      下的 QQ filter 源码、包元数据、测试、CI、README 或公开投影发布支持
     required:
     - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/README.md
     - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/pyproject.toml
@@ -141,12 +141,6 @@ tasks:
     optional:
     - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/.github/workflows/
     - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/requirements.txt
-    - scripts/publishing/publish_qq_raw_filter.py
-    - scripts/publishing/publish_check_qq_raw_filter.py
-    - scripts/publishing/qq_raw_filter_public_checks.py
-    - scripts/publishing/sync_qq_raw_filter_repo.py
-    - scripts/tests/publishing/test_publish_qq_raw_filter.py
-    - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - PROJECT_CONTEXT/tasks/records/2026/07/15/TASK-20260715-007.json
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     ignore:
@@ -161,12 +155,6 @@ tasks:
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/
-    - scripts/publishing/publish_qq_raw_filter.py
-    - scripts/publishing/publish_check_qq_raw_filter.py
-    - scripts/publishing/qq_raw_filter_public_checks.py
-    - scripts/publishing/sync_qq_raw_filter_repo.py
-    - scripts/tests/publishing/test_publish_qq_raw_filter.py
-    - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - PROJECT_CONTEXT/tasks/records/2026/07/15/TASK-20260715-007.json
     validation:
     - python -m scripts.workspace.resolve_task_context raw_material_filter_tooling
@@ -177,8 +165,6 @@ tasks:
     - python -m scripts.workspace.workspace_cli changes verify raw_material_filter_tooling --strict
     - python -m scripts.workspace.workspace_cli workflow check raw_material_filter_tooling --record-id
       TASK-YYYYMMDD-###
-    - python -m scripts.publishing.publish_qq_raw_filter --out-dir %AI_TOOL_STAGING_DIR%/qq-chat-raw-filter
-    - python -m scripts.publishing.publish_check_qq_raw_filter --dir %AI_TOOL_STAGING_DIR%/qq-chat-raw-filter
       --skip-tests
     - git diff --check
   runtime_drift_fix:

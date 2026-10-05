@@ -1,0 +1,71 @@
+tasks:
+  ai_workbench_bootstrap:
+    use_when:
+    - Registering the ai-workbench package and its first simulated Qt application and local projection boundary.
+    use_when_zh:
+    - 登记 ai-workbench 包、首个模拟 Qt 应用及本地投影边界
+    required:
+    - workspace_manifest.yaml
+    - shared/schemas/package_catalog.schema.json
+    - shared/schemas/package_protocol_manifest.schema.json
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - scripts/publishing/publish_policy.py
+    optional: []
+    ignore:
+    - private runtime data and credentials
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget: {required_warn_tokens: 16000, expanded_warn_tokens: 22000}
+    write_scope:
+    - packages/ai-workbench/
+    - workspace_manifest.yaml
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/glossary.zh-CN.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - PROJECT_CONTEXT/memory/decisions.zh-CN.md
+    - scripts/publishing/publish_policy.py
+    - scripts/tests/publishing/test_publish_policy.py
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - reports/agent-requests/REQ-ai-workbench-preview-007.md
+    - ${DATA_ROOT}/workspace-governance/leases/ai-workbench-preview-007.json
+    - ${DATA_ROOT}/codex/cache/staging/ai-workbench-preview/
+    - ${DATA_ROOT}/codex/cache/staging/ai-workbench-tests-007/
+    - ${DATA_ROOT}/codex/cache/staging/ai-workbench-tests-007b/
+    - ${DATA_ROOT}/codex/cache/staging/ai-workbench-tests-007d/
+    - ${DATA_ROOT}/codex/cache/staging/ai-workbench-tests-007e/
+    - ${DATA_ROOT}/codex/cache/staging/ai-workbench-projectiontests-007c/
+    - ${DATA_ROOT}/codex/cache/staging/ai-workbench-preview-tests-007/
+    validation:
+    - python -m pytest -q -p no:cacheprovider packages/ai-workbench/tests
+    - python -m pytest -q -p no:cacheprovider scripts/tests/publishing/test_publish_policy.py
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - git diff --check
+  ai_workbench_development:
+    use_when:
+    - Maintaining ai-workbench simulated application, tests, portable maintenance documents or local projection tools.
+    use_when_zh:
+    - 维护 ai-workbench 模拟应用、测试、可移植维护文档或本地投影工具
+    required:
+    - packages/ai-workbench/AGENTS.md
+    - packages/ai-workbench/README.md
+    - packages/ai-workbench/shared/maintenance.md
+    optional:
+    - packages/ai-workbench/skills/ai-workbench-maintainer/SKILL.md
+    ignore:
+    - real service processes, authorization and credentials
+    tool_profile: workspace_maintenance
+    ledger: true
+    budget: {required_warn_tokens: 6000, expanded_warn_tokens: 10000}
+    write_scope:
+    - packages/ai-workbench/
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m pytest -q -p no:cacheprovider packages/ai-workbench/tests
+    - git diff --check

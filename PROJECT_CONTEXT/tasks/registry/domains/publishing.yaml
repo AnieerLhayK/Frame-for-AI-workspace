@@ -1,5 +1,53 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  character_system_public_integration:
+    use_when:
+    - Consolidating character-system public engineering, portable projection tooling, host path adaptation, and retiring the separate filter projection.
+    use_when_zh:
+    - 合并 character-system 公开工程、可移植投影工具及本机路径适配，并退役独立 filter 投影。
+    required:
+    - packages/character-system/README.md
+    - shared/governance/git_integration_policy.md
+    - shared/governance/agent_governance.yaml
+    - scripts/publishing/sync_chatty_ch_system_repo.py
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    optional:
+    - packages/character-system/distribution/public-projection/
+    - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/
+    ignore:
+    - private corpus material
+    - runtime characters
+    tool_profile: platform_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 20000
+      expanded_warn_tokens: 28000
+      hard_max_tokens: 32000
+    write_scope:
+    - README.md
+    - README.zh-CN.md
+    - scripts/workspace/workspace_explain.py
+    - scripts/tests/workspace/test_agent_governance.py
+    - packages/character-system/distribution/public-projection/
+    - packages/character-system/engineering/corpus-preparation/qq-raw-material-filter/
+    - packages/character-system/README.md
+    - packages/character-system/README.zh-CN.md
+    - workspace_manifest.yaml
+    - scripts/publishing/
+    - scripts/tests/publishing/
+    - shared/governance/agent_governance.yaml
+    - skills/governance/far-repo-governor/references/workflows.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/memory/decisions.md
+    - PROJECT_CONTEXT/memory/decisions.zh-CN.md
+    - PROJECT_CONTEXT/tasks/registry/
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m pytest -q scripts/tests/publishing
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - python -m scripts.workspace.resolve_task_context character_system_public_integration --format json
+    - git diff --check
   public_projection_synchronization:
     use_when:
     - Changing the registered public-repository projection synchronization policy,
@@ -20,7 +68,6 @@ tasks:
     - scripts/publishing/sync_public_projections.py
     - scripts/publishing/sync_public_repo.py
     - scripts/publishing/sync_chatty_ch_system_repo.py
-    - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/test_sync_public_projections.py
     - scripts/tests/publishing/test_registered_repo_sync.py
     optional:
@@ -58,7 +105,6 @@ tasks:
     - scripts/publishing/publish_check.py
     - scripts/publishing/sync_public_repo.py
     - scripts/publishing/sync_chatty_ch_system_repo.py
-    - scripts/publishing/sync_qq_raw_filter_repo.py
     - scripts/publishing/publish_skill_collection.py
     - scripts/publishing/publish_check_skill_collection.py
     - scripts/publishing/sync_skill_collection_repo.py
@@ -67,7 +113,6 @@ tasks:
     - scripts/tests/publishing/test_publish_policy.py
     - scripts/tests/publishing/test_publish_rendering.py
     - scripts/tests/publishing/test_publish_projection.py
-    - scripts/tests/publishing/test_sync_qq_raw_filter_repo.py
     - scripts/tests/publishing/test_publish_skill_collection.py
     - scripts/tests/validation/test_validate_project_context.py
     validation:

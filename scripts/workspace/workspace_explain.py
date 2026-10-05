@@ -199,8 +199,6 @@ def test_candidates(path: str) -> list[str]:
             "check_doc_pairs": "validation",
             "publish_chatty_ch_system": "publishing",
             "publish_public": "publishing",
-            "publish_qq_raw_filter": "publishing",
-            "sync_qq_raw_filter_repo": "publishing",
             "report_status": "reporting",
             "platform_agent_guards": "platform",
         }
