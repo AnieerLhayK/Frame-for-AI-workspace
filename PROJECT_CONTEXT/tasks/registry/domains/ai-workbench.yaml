@@ -1,9 +1,9 @@
 tasks:
   ai_workbench_service_integration:
     use_when:
-    - Implementing and verifying the user-approved muti-ai desktop entry and real Commander/Hermes controls.
+    - Implementing and verifying user-approved muti-ai local service controls and project terminal launchers.
     use_when_zh:
-    - 实施并验证用户批准的 muti-ai 桌面入口与 Commander/Hermes 真实控制
+    - 实施并验证用户批准的 muti-ai 本机服务控制及项目终端入口
     required:
     - packages/ai-workbench/AGENTS.md
     - packages/ai-workbench/shared/maintenance.md
@@ -20,6 +20,8 @@ tasks:
     - PROJECT_CONTEXT/memory/glossary.md
     - PROJECT_CONTEXT/todo/desktop-commander.md
     - PROJECT_CONTEXT/todo/desktop-commander.zh-CN.md
+    - PROJECT_CONTEXT/todo/opencode-web.md
+    - PROJECT_CONTEXT/todo/opencode-web.zh-CN.md
     - PROJECT_CONTEXT/todo/README.md
     - PROJECT_CONTEXT/todo/README.zh-CN.md
     - PROJECT_CONTEXT/tasks/records/**
@@ -30,6 +32,7 @@ tasks:
     - ${DATA_ROOT}/ai-workbench/
     - ${DATA_ROOT}/codex/cache/staging/muti-ai-implementation/
     - ${DATA_ROOT}/workspace-governance/leases/muti-ai-local.json
+    - ${DATA_ROOT}/workspace-governance/leases/muti-ai-terminals.json
     - ${USER_HOME}/Desktop/muti-ai.lnk
     - ${USER_HOME}/Desktop/GPT?Commander.lnk
     - ${USER_HOME}/Desktop/停止?GPT?Commander.lnk

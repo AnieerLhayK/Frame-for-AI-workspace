@@ -14,7 +14,9 @@ the registered ai_workbench publisher. Workspace remains source authority.
 The personal desktop control surface of ai-workbench, spelled muti-ai. One entry,
 independent switches inside persisted collapsible AI categories, and persisted
 light/dark settings. ChatGPT contains Commander, Hermes contains Hermes Bot;
-Claude, Codex and OpenCode initially show no launcher. Closing
+Claude and Codex offer new/resume project terminal actions; OpenCode has no
+launcher. A shared project selector persists externally. Terminal dispatch
+confirms handoff, not Agent readiness, and has no stop switch. Closing
 the window preserves actual services and submitted operations.
 
 ## lifecycle completion seam

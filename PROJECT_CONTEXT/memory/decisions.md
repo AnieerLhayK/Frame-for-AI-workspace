@@ -1,5 +1,19 @@
 # Decisions
 
+## muti-ai Separates Service Controls From Project Terminal Dispatch
+
+- decision: Add Codex/Claude new and resume-latest terminal actions using a
+  shared explicit project selector; keep ten recent directories externally.
+  Catalog categories own launcher collections with service/terminal kinds.
+- date: 2026-10-06, user-confirmed terminal launcher plan.
+- consequence: Snapshot directories per dispatch, open Windows Terminal new
+  windows, preserve CLI permissions and project filtering. Each tool rejects
+  pending duplicates; deliberate subsequent windows are allowed. Handoff does
+  not claim Agent readiness, and closing GUI leaves terminals alive. No terminal
+  stop/session list. Claude Remote Control was withdrawn; OpenCode Web is todo.
+- supersedes: the initial empty Claude/Codex category contents; existing service
+  lifecycle and categorized presentation remain authoritative.
+
 ## ai-workbench Has A Registered MIT Public Projection
 
 - decision: Publish AnieerLhayK/ai-workbench as public, main, with independent
