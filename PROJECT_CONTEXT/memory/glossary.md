@@ -6,12 +6,15 @@ A personal helper-tool source package in the authoritative Workspace. Its
 muti-ai desktop entry opens a native Qt window containing independent Commander
 and Hermes controls. Real local operations use detached per-tool workers;
 explicit demo and portable previews remain independent of private host governance.
-Public release is separately scoped work.
+Its MIT public projection has independent history and is synchronized through
+the registered ai_workbench publisher. Workspace remains source authority.
 
 ## muti-ai
 
 The personal desktop control surface of ai-workbench, spelled muti-ai. One entry,
-two visible independent switches, and persisted light/dark settings. Closing
+independent switches inside persisted collapsible AI categories, and persisted
+light/dark settings. ChatGPT contains Commander, Hermes contains Hermes Bot;
+Claude, Codex and OpenCode initially show no launcher. Closing
 the window preserves actual services and submitted operations.
 
 ## lifecycle completion seam

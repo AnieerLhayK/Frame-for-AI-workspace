@@ -1,5 +1,27 @@
 # Decisions
 
+## ai-workbench Has A Registered MIT Public Projection
+
+- decision: Publish AnieerLhayK/ai-workbench as public, main, with independent
+  projection history and MIT for owned content. Workspace remains authoritative.
+- date: 2026-10-06, user-approved first public projection plan.
+- reason: Share limited personal helper applications and their maintenance methods.
+- consequence: Explicit package allowlist, generated package/path/commit marker,
+  no host/private/runtime data, registered aggregate publication only. External
+  PRs return to Workspace; Issues welcome feedback without general support promises.
+  README links Frame-for-AI-workspace. Credit Pi upstream/use/licenses when actual
+  Pi applications are added. No installer is part of this release.
+
+## muti-ai Groups Launchers In Collapsible AI Categories
+
+- decision: Order ChatGPT, Claude, Codex, Hermes, OpenCode in one scrollable Qt
+  window; ChatGPT contains Commander and Hermes contains Hermes Bot. Empty
+  categories show no launcher. Multiple categories can stay expanded.
+- date: 2026-10-06, accepted classification implementation plan.
+- consequence: Persist expansion with theme, default ChatGPT/Hermes expanded;
+  hidden controllers continue observation. Folding never sends service commands.
+- supersedes: the always-visible two-switch presentation below.
+
 ## muti-ai Uses One Desktop Entry And Independent Real Controls
 
 - decision: Keep source in ai-workbench; expose one muti-ai desktop entry and
@@ -12,7 +34,8 @@
   Archive old desktop entries reversibly after verification. Credentials,
   private local config and runtime data are never part of portable projection.
 - supersedes: the initial simulation-only presentation below; the first-stage
-  record remains historical. Classification UI and public repository are later work.
+  record remains historical. Classification and public projection decisions above
+  now define those later stages.
 
 ## ai-workbench Starts With Local Simulation And Explicit Export
 

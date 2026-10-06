@@ -173,6 +173,12 @@ surface_classes:
 # their publishers are narrower than general environment access. Any publisher
 # invocation must target one declared staging checkout and one declared remote.
 managed_platform_publishers:
+  ai_workbench:
+    publisher_script: scripts/publishing/sync_ai_workbench_repo.py
+    staging_path: ${DATA_ROOT}/codex/cache/staging/ai-workbench-public
+    contract_file: packages/ai-workbench/projection-contract.json
+    remote_urls:
+      - git@github.com:AnieerLhayK/ai-workbench.git
   frame_for_ai_workspace:
     publisher_script: scripts/publishing/sync_public_repo.py
     staging_path: ${DATA_ROOT}/codex/cache/staging/Frame-for-AI-workspace

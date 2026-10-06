@@ -1,5 +1,60 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  ai_workbench_public_projection:
+    use_when:
+    - Preparing, registering or synchronizing the authorized ai-workbench public projection.
+    use_when_zh:
+    - 准备、登记或同步已授权的 ai-workbench 公开投影。
+    required:
+    - packages/ai-workbench/AGENTS.md
+    - packages/ai-workbench/shared/maintenance.md
+    - packages/ai-workbench/projection-contract.json
+    - shared/governance/git_integration_policy.md
+    - shared/governance/agent_governance.yaml
+    - scripts/publishing/registered_repo_sync.py
+    - scripts/publishing/sync_public_projections.py
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    optional:
+    - packages/ai-workbench/skills/ai-workbench-maintainer/references/projection.md
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    ignore:
+    - provider credentials and runtime state
+    - unrelated package implementation
+    tool_profile: platform_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 20000
+      expanded_warn_tokens: 28000
+      hard_max_tokens: 32000
+    write_scope:
+    - ${DATA_ROOT}/workspace-governance/leases/ai-workbench-public.json
+    - ${DATA_ROOT}/codex/cache/staging/muti-ai-implementation/public-tests/**
+    - ${DATA_ROOT}/codex/cache/staging/muti-ai-implementation/publishing-tests/**
+    - ${DATA_ROOT}/codex/cache/staging/muti-ai-implementation/public-projection-20261006/**
+    - packages/ai-workbench/
+    - README.md
+    - README.zh-CN.md
+    - scripts/publishing/sync_ai_workbench_repo.py
+    - scripts/publishing/registered_repo_sync.py
+    - scripts/tests/publishing/test_sync_ai_workbench_repo.py
+    - scripts/tests/publishing/test_registered_repo_sync.py
+    - scripts/tests/publishing/test_sync_public_projections.py
+    - shared/governance/agent_governance.yaml
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/publishing.yaml
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/glossary.zh-CN.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - PROJECT_CONTEXT/memory/decisions.zh-CN.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m pytest -q packages/ai-workbench/tests scripts/tests/publishing
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
+    - git diff --check
   character_system_public_integration:
     use_when:
     - Consolidating character-system public engineering, portable projection tooling, host path adaptation, and retiring the separate filter projection.

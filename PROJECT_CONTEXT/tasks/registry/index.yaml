@@ -182,6 +182,7 @@ task_files:
   ai_workbench_bootstrap: domains/ai-workbench.yaml
   ai_workbench_development: domains/ai-workbench.yaml
   ai_workbench_service_integration: domains/ai-workbench.yaml
+  ai_workbench_public_projection: domains/publishing.yaml
   agent_registry_update: domains/governance.yaml
   agent_governance_update: domains/governance.yaml
   change_scope_verification: domains/governance.yaml

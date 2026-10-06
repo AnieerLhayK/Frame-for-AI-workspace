@@ -76,6 +76,60 @@ def prepare_staging(staging: Path, remote_url: str, branch: str = "main") -> Non
             raise RuntimeError(result.stderr.strip() or f"failed: {' '.join(command)}")
 
 
+def prepare_initializable_staging(staging: Path, remote_url: str, verify_baseline, branch: str = "main") -> None:
+    """Opt-in bootstrap after publisher authorization; reject unknown remote contents.
+
+    Existing publishers retain prepare_staging's behavior. The caller verifies the
+    fetched baseline before any destructive reset of this disposable checkout.
+    """
+    path = staging.absolute()
+    if any(part.is_symlink() or part.is_junction() for part in (path, *path.parents)):
+        raise RuntimeError("registered staging must not contain links")
+    path = path.resolve()
+    metadata = path / ".git"
+    if metadata.is_symlink() or metadata.is_junction() or (metadata.exists() and not metadata.is_dir()):
+        raise RuntimeError("registered staging requires ordinary Git metadata")
+    if (path / ".git").exists():
+        remote = run_git(["git", "remote", "get-url", "origin"], path)
+        if remote.returncode or remote.stdout.strip() != remote_url:
+            raise RuntimeError("staging origin does not match registered remote")
+    elif path.exists() and any(path.iterdir()):
+        raise RuntimeError("registered staging is not empty")
+    refs = run_git(["git", "ls-remote", remote_url])
+    if refs.returncode:
+        raise RuntimeError(refs.stderr.strip() or "remote inspection failed")
+    empty = not refs.stdout.strip()
+    if not empty and not any(line.split()[-1] == f"refs/heads/{branch}" for line in refs.stdout.splitlines() if line.split()):
+        raise RuntimeError("nonempty remote has no expected branch; audit required")
+    if not (path / ".git").exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        result = run_git(["git", "clone", remote_url, str(path)], timeout=240)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "git clone failed")
+    if empty:
+        head = run_git(["git", "rev-parse", "--verify", "HEAD"], path)
+        if head.returncode == 0 or any(item.name != ".git" for item in path.iterdir()):
+            raise RuntimeError("empty remote has local staging contents; audit required")
+        result = run_git(["git", "symbolic-ref", "HEAD", f"refs/heads/{branch}"], path)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "empty branch initialization failed")
+        return
+    fetched = run_git(["git", "fetch", "origin", branch], path)
+    if fetched.returncode:
+        raise RuntimeError(fetched.stderr.strip() or "baseline fetch failed")
+    verify_baseline(path, f"origin/{branch}")
+    # Avoid a second fetch between baseline verification and reset.
+    for command in (
+        ["git", "checkout", "-B", branch, f"origin/{branch}"],
+        ["git", "reset", "--hard", f"origin/{branch}"],
+        ["git", "clean", "-fdx"],
+        ["git", "rm", "-r", "--ignore-unmatch", "."],
+    ):
+        result = run_git(command, path)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or f"failed: {' '.join(command)}")
+
+
 def commit_and_push(staging: Path, message: str, branch: str = "main") -> None:
     path = staging.resolve()
     if not (path / ".git").is_dir():
