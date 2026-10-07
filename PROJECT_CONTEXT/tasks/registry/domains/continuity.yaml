@@ -1,5 +1,57 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  registered_ai_tool_update:
+    use_when:
+    - Updating explicitly authorized registered AI-tool installations in place and verifying storage boundaries.
+    use_when_zh:
+    - 原位更新用户明确授权的已登记 AI 工具并验证存储边界
+    required:
+    - shared/governance/agent_registry.yaml
+    - skills/governance/windows-ai-storage-governor/SKILL.md
+    - skills/governance/windows-ai-storage-governor/references/safety-policy.md
+    - shared/governance/git_integration_policy.md
+    optional: []
+    ignore:
+    - account credentials and conversation contents
+    - unrelated installed packages and project trees
+    tool_profile: cleanup_migration
+    ledger: true
+    budget: {required_warn_tokens: 8000, expanded_warn_tokens: 12000}
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - reports/ai-tool-updates/**
+    - '<npm-prefix-path>/node_modules/@openai/codex/'
+    - '<npm-prefix-path>/node_modules/@openai/.codex-*/**'
+    - '<npm-prefix-path>/node_modules/@anthropic-ai/claude-code/'
+    - '<npm-prefix-path>/node_modules/@anthropic-ai/.claude-code-*/**'
+    - '<npm-prefix-path>/node_modules/opencode-ai/'
+    - '<npm-prefix-path>/node_modules/.opencode-ai-*/**'
+    - '<npm-prefix-path>/node_modules/reasonix/'
+    - '<npm-prefix-path>/node_modules/.reasonix-*/**'
+    - '<npm-prefix-path>/node_modules/.package-lock.json'
+    - '<npm-prefix-path>/codex'
+    - '<npm-prefix-path>/codex.cmd'
+    - '<npm-prefix-path>/codex.ps1'
+    - '<npm-prefix-path>/claude'
+    - '<npm-prefix-path>/claude.cmd'
+    - '<npm-prefix-path>/claude.ps1'
+    - '<npm-prefix-path>/opencode'
+    - '<npm-prefix-path>/opencode.cmd'
+    - '<npm-prefix-path>/opencode.ps1'
+    - '<npm-prefix-path>/reasonix'
+    - '<npm-prefix-path>/reasonix.cmd'
+    - '<npm-prefix-path>/reasonix.ps1'
+    - '<npm-cache-path>/'
+    - '<harness-runtime-path>/'
+    - '<harness-cache-path>/'
+    - '<upgrade-staging-path>/'
+    - '<upgrade-lease-path>'
+    validation:
+    - Verify recorded package versions and CLI resolution without model requests.
+    - Verify preserved storage links, configuration paths and updater rollback evidence.
+    - workspace records validate
+    - git diff --check
   cleanup_migration:
     context_views:
       workspace_manifest.yaml: [workspace, platform_roots, session_stores, output_roots, runtime_roots, external_roots, shared, packages, skills, plugin_skills, projections, protocols, portability, discovery, failure_policy]
