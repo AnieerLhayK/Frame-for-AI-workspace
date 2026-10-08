@@ -1,5 +1,73 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  reasonix_hermes_ci_repair:
+    use_when:
+    - Repairing the user-approved Reasonix and Hermes installations and the associated Workspace/Frame CI regressions.
+    use_when_zh:
+    - 修复用户已批准的 Reasonix、Hermes 安装及关联 Workspace/Frame CI 回归。
+    required:
+    - shared/governance/agent_registry.yaml
+    - shared/governance/git_integration_policy.md
+    - skills/governance/windows-ai-storage-governor/SKILL.md
+    - skills/governance/windows-ai-storage-governor/references/safety-policy.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - reasonix.toml
+    optional: []
+    ignore:
+    - credential values and conversation contents
+    - unrelated installations and project trees
+    tool_profile: cleanup_migration
+    ledger: true
+    budget: {required_warn_tokens: 14000, expanded_warn_tokens: 20000}
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - reports/ai-tool-updates/20261007-repair/**
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - reasonix.toml
+    - scripts/publishing/registered_repo_sync.py
+    - scripts/tests/publishing/test_registered_repo_sync.py
+    - scripts/tests/publishing/test_sync_ai_workbench_repo.py
+    - scripts/workspace/verify_change_scope.py
+    - scripts/tests/workspace/test_verify_change_scope.py
+    - scripts/tests/workspace/test_hermes_workspace_guard.py
+    - skills/content/mardocx/SKILL.md
+    - skills/content/mardocx/scripts/**
+    - skills/content/mardocx/tests/**
+    - scripts/tests/workspace/test_standalone_skill_contracts.py
+    - scripts/tests/publishing/test_publish_skill_collection.py
+    - '<npm-prefix-path>/node_modules/reasonix/'
+    - '<npm-prefix-path>/node_modules/.reasonix-*/**'
+    - '<npm-prefix-path>/node_modules/.package-lock.json'
+    - '<npm-prefix-path>/reasonix'
+    - '<npm-prefix-path>/reasonix.cmd'
+    - '<npm-prefix-path>/reasonix.ps1'
+    - '<npm-cache-path>/'
+    - '<reasonix-data-path>/'
+    - ${DATA_ROOT}/reasonix-local/workspace-leases/
+    - '<hermes-install-path>/'
+    - '<hermes-data-path>/config.yaml'
+    - '<hermes-data-path>/.env'
+    - '<hermes-data-path>/auth.json'
+    - '<hermes-data-path>/state.db'
+    - '<hermes-data-path>/state.db-wal'
+    - '<hermes-data-path>/state.db-shm'
+    - '<hermes-data-path>/logs/'
+    - '<hermes-data-path>/cache/'
+    - '<hermes-data-path>/gateway_state.json'
+    - '<hermes-data-path>/uv-cache/'
+    - '<upgrade-backup-path>/'
+    - '<upgrade-staging-path>/'
+    - '<upgrade-lease-path>'
+    validation:
+    - python -m scripts.reporting.ci_run
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - workspace records validate
+    - Verify isolated and final tool installations without model requests or Bot messages.
+    - git diff --check
   registered_ai_tool_update:
     use_when:
     - Updating explicitly authorized registered AI-tool installations in place and verifying storage boundaries.

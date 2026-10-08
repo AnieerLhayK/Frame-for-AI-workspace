@@ -14,6 +14,19 @@ def run_git(command: list[str], cwd: Path | None = None, timeout: int = 180) -> 
     return subprocess.run(command, cwd=cwd, capture_output=True, text=True, timeout=timeout)
 
 
+def _is_link(path: Path) -> bool:
+    """Reject symlinks and Windows reparse points, including on Python 3.11."""
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return False
+    except OSError as exc:
+        raise RuntimeError(f"cannot inspect registered staging path: {path}") from exc
+    return stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+    )
+
+
 def is_managed_staging_path(path: Path, root: Path, checkout_name: str) -> bool:
     try:
         resolved, expected_root = path.resolve(), root.resolve()
@@ -83,11 +96,11 @@ def prepare_initializable_staging(staging: Path, remote_url: str, verify_baselin
     fetched baseline before any destructive reset of this disposable checkout.
     """
     path = staging.absolute()
-    if any(part.is_symlink() or part.is_junction() for part in (path, *path.parents)):
+    if any(_is_link(part) for part in (path, *path.parents)):
         raise RuntimeError("registered staging must not contain links")
     path = path.resolve()
     metadata = path / ".git"
-    if metadata.is_symlink() or metadata.is_junction() or (metadata.exists() and not metadata.is_dir()):
+    if _is_link(metadata) or (metadata.exists() and not metadata.is_dir()):
         raise RuntimeError("registered staging requires ordinary Git metadata")
     if (path / ".git").exists():
         remote = run_git(["git", "remote", "get-url", "origin"], path)

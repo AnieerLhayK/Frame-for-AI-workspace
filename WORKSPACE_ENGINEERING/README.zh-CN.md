@@ -40,6 +40,9 @@
 关于删除或简化后清理概念残留的方法与操作指南，见
 [`methods/anti_patterns.md`](methods/anti_patterns.md)。
 
+关于桌面工具的分阶段交付、服务状态证据、诊断、可移植导出及工具更新的行为验收，见
+[`methods/local_tool_workbench.md`](methods/local_tool_workbench.md)。
+
 ### 规划
 
 `proposals/` 存放尚未沉淀为稳定可复用方法的有限规划和评估。
@@ -53,6 +56,8 @@
 
 - `evidence/agent_registration_contract.md`：已验证的 Agent 注册案例。
 - `evidence/skill_engineering_setup_report.md`：历史搭建快照。
+- `evidence/commander_to_muti_ai.md`：从 Commander 到工作台的案例，包括诊断失败、
+  投影以及工具更新的验收边界。
 
 ### 模板
 

@@ -336,7 +336,7 @@ def verify_changes(
             if any(scope_matches(change.path, scope) for scope in owner["write_scope"]):
                 access = check_access(
                     governance_policy, load_manifest(), agent_name=owner["agent"],
-                    operation="write", raw_path=change.path, registry=load_registry(),
+                    operation="write", raw_path=change.path, registry=load_registry(), branch=branch,
                 )
                 if access["status"] == "ALLOW":
                     covering_tasks.append(owner["task_id"])
@@ -363,6 +363,7 @@ def verify_changes(
                 raw_path=change.path,
                 acting_skill=acting_skill,
                 registry=registry,
+                branch=branch,
             )
             if agent_id and manifest is not None and registry is not None
             else None

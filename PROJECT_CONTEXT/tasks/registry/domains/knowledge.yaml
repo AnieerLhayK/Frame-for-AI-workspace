@@ -1,5 +1,28 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  atlassian_course_delivery:
+    use_when:
+    - Validating and committing the completed personal Atlassian workflow course after owner readiness confirmation.
+    use_when_zh:
+    - 在原会话确认完成后验证并提交已有 Atlassian 工作流课程。
+    required:
+    - shared/governance/git_integration_policy.md
+    - shared/operations/delivery_output_policy.md
+    - external-skills/content/teach/courses/atlassian-workflow-thinking/MISSION.md
+    - external-skills/content/teach/courses/atlassian-workflow-thinking/RESOURCES.md
+    optional: []
+    ignore:
+    - unrelated courses and external installations
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - external-skills/content/teach/courses/atlassian-workflow-thinking/**
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - workspace records validate
+    - git diff --check
   context_resolution_tooling:
     use_when:
     - Changing the task context resolver, token meter, budget thresholds, or registry

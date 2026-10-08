@@ -45,6 +45,10 @@ knowledge provenance.
 See [`methods/anti_patterns.md`](methods/anti_patterns.md) for the method and
 operating guide for removing concept residue after deletion or simplification.
 
+See [`methods/local_tool_workbench.md`](methods/local_tool_workbench.md) for
+incremental desktop-tool delivery, service-state evidence, diagnostics, portable
+exports and behavioral acceptance of tool updates.
+
 ### Proposals
 
 `proposals/` contains bounded plans and evaluations that have not yet become
@@ -60,6 +64,8 @@ top-level directory for each subtype.
 
 - `evidence/agent_registration_contract.md`: validated registration case study.
 - `evidence/skill_engineering_setup_report.md`: historical setup snapshot.
+- `evidence/commander_to_muti_ai.md`: Commander-to-workbench case, including
+  diagnostic failures, projection and update acceptance limits.
 
 ### Templates
 

@@ -179,6 +179,7 @@ default_rules:
     - shared protocol contracts
     - current git state
 task_files:
+  atlassian_course_delivery: domains/knowledge.yaml
   ai_workbench_bootstrap: domains/ai-workbench.yaml
   ai_workbench_development: domains/ai-workbench.yaml
   ai_workbench_service_integration: domains/ai-workbench.yaml
@@ -191,6 +192,7 @@ task_files:
   claude_project_boundary: domains/governance.yaml
   cleanup_migration: domains/continuity.yaml
   registered_ai_tool_update: domains/continuity.yaml
+  reasonix_hermes_ci_repair: domains/continuity.yaml
   cleanup_migration_audit: domains/continuity.yaml
   context_resolution_tooling: domains/knowledge.yaml
   developer_interface_tooling: domains/workspace.yaml

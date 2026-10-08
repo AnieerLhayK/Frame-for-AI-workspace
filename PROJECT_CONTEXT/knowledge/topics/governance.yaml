@@ -24,3 +24,9 @@ topics:
     - path: WORKSPACE_ENGINEERING/methods/completion_notifications.md
       layer: workspace_engineering
       purpose: Per-turn completion hooks and ordered notification delivery diagnostics.
+    - path: WORKSPACE_ENGINEERING/methods/local_tool_workbench.md
+      layer: workspace_engineering
+      purpose: Personal tool delivery, runtime evidence, projection boundaries and behavioral update acceptance.
+    - path: WORKSPACE_ENGINEERING/evidence/commander_to_muti_ai.md
+      layer: workspace_engineering
+      purpose: Commander-to-workbench case with completed evidence and unresolved update limits.
