@@ -179,7 +179,6 @@ default_rules:
     - shared protocol contracts
     - current git state
 task_files:
-  atlassian_course_delivery: domains/knowledge.yaml
   ai_workbench_bootstrap: domains/ai-workbench.yaml
   ai_workbench_development: domains/ai-workbench.yaml
   ai_workbench_service_integration: domains/ai-workbench.yaml
