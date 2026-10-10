@@ -73,6 +73,11 @@ should return exit code `2` for stale or missing snapshots.
 
 Refresh is always explicit:
 
+The workspace setup/health generator resolves split skill catalogs through
+`scripts/workspace/manifest_loader.py`, rather than treating the root manifest
+as the full inventory. Its Python runtime must be available; loader errors stop
+generation instead of producing an incomplete snapshot.
+
 ```powershell
 python -m scripts.workspace.workspace_cli reports refresh manifest-validation
 python -m scripts.workspace.workspace_cli reports refresh protocol-validation

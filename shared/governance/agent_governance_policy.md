@@ -82,7 +82,7 @@ Agent Registration Contract
 | --- | --- | --- |
 | Structural maintainer | Codex | Records, source, core governance and reviewed platform deployment |
 | Development maintainer | Claude Code | Ordinary source and records, reviewed delivery through registered publishers |
-| Record producer | DeepSeek Harness, Hermes, OpenCode, Reasonix | Scoped diagnosis, handoff, agent report, and change request records |
+| Record producer | DeepSeek Harness, Hermes, OpenCode | Scoped diagnosis, handoff, agent report, and change request records |
 | Consumer | Unregistered agents | Read, temporary invocation, and change requests only |
 
 Agent identity does not replace a skill's own role and authority. For example,
@@ -114,15 +114,17 @@ is invoking it.
 
 ## Platform Adapters And Candidates
 
-DeepSeek Harness, Hermes, OpenCode, and Reasonix are active `record_producer` agents. They share
-the same workspace authority but enforce it through platform-specific project
-adapters: Hermes hooks, an OpenCode plugin plus project permissions, and
-Reasonix project permissions plus a bounded sandbox and filesystem MCP.
+DeepSeek Harness, Hermes, and OpenCode retain the `record_producer` role. Hermes
+hooks and an OpenCode plugin plus project permissions enforce their registered
+workspace boundaries.
 
-DeepSeek Harness currently has a declarative registration only: its Web UI has
-no workspace runtime-enforcement adapter. Its declared role and scopes do not
-by themselves authorize Harness tool calls until a supported plugin or adapter
-is registered.
+DeepSeek Harness uses the official Desktop application with a fresh managed home.
+Its old independent Web/browser entry and workspace-pilot adapter are retired.
+Desktop still requires its own internal local Host; that component is not the
+retired Web service. Desktop has no registered workspace runtime-enforcement
+adapter. Its declared role and scopes neither authorize native Workspace tool
+calls nor provide runtime protection. A supported Desktop adapter and a separate
+authority decision are required before enabling such writes.
 
 ## External Workspace Task Bridge
 

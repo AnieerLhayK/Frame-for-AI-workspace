@@ -64,8 +64,13 @@ function Read-WorkspaceManifest {
     throw "[ERROR] Missing required resource: workspace_manifest.yaml`nExpected:`n$Path`nAction:`nrestore the manifest or pass -ManifestPath."
   }
 
-  $raw = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
-  return $raw | ConvertFrom-Json
+  $loaderRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
+  $loaderCode = 'import json,sys; from pathlib import Path; sys.path.insert(0,sys.argv[1]); from scripts.workspace.manifest_loader import load_manifest; print(json.dumps(load_manifest(Path(sys.argv[2])),ensure_ascii=True))'
+  $resolved = & python -B -c $loaderCode $loaderRoot $Path 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    throw "Manifest loader failed: $($resolved -join '`n')"
+  }
+  return ($resolved -join "`n") | ConvertFrom-Json
 }
 
 function Get-NormalizedPath {
@@ -148,7 +153,9 @@ function Get-SkillFileStatus {
   )
 
   $skillRoot = Resolve-WorkspacePath -WorkspaceRoot $WorkspaceRoot -Path ([string]$Skill.source_path)
-  $files = if ($Kind -eq "required") { $Skill.required_files } else { $Skill.optional_files }
+  $propertyName = if ($Kind -eq "required") { "required_files" } else { "optional_files" }
+  $property = $Skill.PSObject.Properties[$propertyName]
+  $files = if ($null -ne $property) { @($property.Value) } elseif ($Kind -eq "required") { @("SKILL.md") } else { @() }
 
   foreach ($file in $files) {
     $path = Resolve-WorkspacePath -WorkspaceRoot $skillRoot -Path ([string]$file)
@@ -509,7 +516,7 @@ Add-Table -Lines $setupLines -Rows ($manifest.skills | ForEach-Object {
     Exposures = Get-SkillExposureSummary -Skill $_ -Manifest $manifest
     LegacyPlatform = $_.platform
     LegacyProjection = $_.projection_path
-    Protocols = ($_.protocol_dependencies -join ", ")
+    Protocols = if ($null -ne $_.PSObject.Properties["protocol_dependencies"]) { ($_.protocol_dependencies -join ", ") } else { "" }
   }
 }) -Headers @("Skill", "Package", "Role", "Authority", "Execution", "Source", "Exposures", "LegacyPlatform", "LegacyProjection", "Protocols")
 [void]$setupLines.Add("")

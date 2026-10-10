@@ -4,16 +4,16 @@
 Runs the full test suite and categorises failures into:
   - CORE:    tests that must pass everywhere
   - INFRA:   tests that depend on platform infrastructure (Hermes, OpenCode,
-             Reasonix, Windows-specific paths) and are expected to fail in a
+             Windows-specific paths) and are expected to fail in a
              clean public/Linux environment.
 
 Exit codes:
   0 — all tests pass (infra failures are tolerated).
   1 — one or more core tests failed (blocking).
-  2 — only infra-dependent tests failed (non-blocking signal).
+  2 — invalid command-line arguments.
 
 Usage:
-    python -m scripts.reporting.ci_run [pytest-args ...]
+    python -m scripts.reporting.ci_run [--suite-timeout SECONDS] [pytest-args ...]
 """
 
 from __future__ import annotations
@@ -23,14 +23,18 @@ import json
 import re
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.manifest_loader import load_manifest
+
+DEFAULT_SUITE_TIMEOUT = 600
 
 # Tests that require environment-specific infrastructure.
 # Failures in these modules are tolerated — they reflect the absence of
-# Hermes, OpenCode, Reasonix, or Windows-specific paths rather than a
+# Hermes, OpenCode, or Windows-specific paths rather than a
 # regression in workspace governance logic.
 INFRA_DEPENDENT_MODULES: set[str] = {
     "scripts/tests/workspace/test_agent_governance.py",
@@ -54,6 +58,18 @@ class TestSuite:
     test_path: Path
 
 
+@dataclass(frozen=True)
+class SuiteResult:
+    """Pytest output plus bounded execution evidence, including timeout output."""
+
+    returncode: int
+    stdout: str
+    stderr: str
+    duration_seconds: float
+    timed_out: bool
+    timeout_seconds: int
+
+
 def build_test_suites(root: Path | None = None) -> tuple[TestSuite, ...]:
     """Return governed suites with isolated working directories.
 
@@ -72,12 +88,25 @@ def build_test_suites(root: Path | None = None) -> tuple[TestSuite, ...]:
         / "corpus-preparation"
         / "qq-raw-material-filter"
     )
-    disk_scan_root = workspace_root / "skills" / "disk-scan-reporter"
-    candidates = (
+    manifest = load_manifest(workspace_root / "workspace_manifest.yaml")
+    disk_scan = next(
+        (skill for skill in manifest.get("skills", []) if skill.get("id") == "disk-scan-reporter"),
+        None,
+    )
+    candidates = [
         TestSuite("workspace", workspace_root, Path("scripts/tests")),
         TestSuite("qq-raw-material-filter", qq_root, Path("tests")),
-        TestSuite("disk-scan-reporter", disk_scan_root, Path("tests")),
-    )
+    ]
+    if disk_scan is not None:
+        source = disk_scan.get("source_path")
+        if not isinstance(source, str) or not source:
+            raise ValueError("Registered disk-scan-reporter has no source_path")
+        disk_scan_root = (workspace_root / source).resolve()
+        if not disk_scan_root.is_relative_to(workspace_root.resolve()):
+            raise ValueError("Registered disk-scan-reporter source escapes the workspace")
+        if not (disk_scan_root / "tests").is_dir():
+            raise ValueError("Registered disk-scan-reporter tests are missing")
+        candidates.append(TestSuite("disk-scan-reporter", disk_scan_root, Path("tests")))
     return tuple(
         suite
         for suite in candidates
@@ -90,35 +119,16 @@ def get_workspace_root() -> Path:
     return WORKSPACE_ROOT
 
 
-def run_pytest(extra_args: list[str] | None = None) -> subprocess.CompletedProcess:
-    """Run pytest, returning the completed process."""
-    root = get_workspace_root()
-
-    cmd = [sys.executable, "-m", "pytest", "-q"]
-    if extra_args:
-        cmd.extend(extra_args)
-
-    print(f"[ci_run] Running: {' '.join(cmd)}")
-    print(f"[ci_run] CWD:     {root}")
-    print()
-
-    result = subprocess.run(
-        cmd,
-        cwd=root,
-        capture_output=True,
-        text=True,
-        timeout=180,
-    )
-    return result
-
-
 def run_test_suites(
     extra_args: list[str] | None = None,
     *,
     verbose: bool = True,
-) -> list[tuple[TestSuite, subprocess.CompletedProcess[str]]]:
+    suite_timeout: int = DEFAULT_SUITE_TIMEOUT,
+) -> list[tuple[TestSuite, SuiteResult]]:
     """Run all pytest suites from their package-local import roots."""
-    results: list[tuple[TestSuite, subprocess.CompletedProcess[str]]] = []
+    if suite_timeout <= 0:
+        raise ValueError("suite_timeout must be positive")
+    results: list[tuple[TestSuite, SuiteResult]] = []
     for suite in build_test_suites():
         cmd = [sys.executable, "-m", "pytest", "-q", str(suite.test_path)]
         if extra_args:
@@ -128,13 +138,34 @@ def run_test_suites(
             print(f"[ci_run] Running: {' '.join(cmd)}")
             print(f"[ci_run] CWD:     {suite.cwd}")
             print()
-        result = subprocess.run(
-            cmd,
-            cwd=suite.cwd,
-            capture_output=True,
-            text=True,
-            timeout=180,
-        )
+        started = time.monotonic()
+        try:
+            process = subprocess.run(
+                cmd,
+                cwd=suite.cwd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=suite_timeout,
+            )
+            result = SuiteResult(
+                process.returncode, process.stdout, process.stderr,
+                round(time.monotonic() - started, 3), False, suite_timeout,
+            )
+        except subprocess.TimeoutExpired as exc:
+            def decode(value: str | bytes | None) -> str:
+                return value.decode("utf-8", errors="replace") if isinstance(value, bytes) else (value or "")
+
+            result = SuiteResult(
+                1, decode(exc.stdout), decode(exc.stderr),
+                round(time.monotonic() - started, 3), True, suite_timeout,
+            )
+        except OSError as exc:
+            result = SuiteResult(
+                1, "", str(exc), round(time.monotonic() - started, 3),
+                False, suite_timeout,
+            )
         results.append((suite, result))
     return results
 
@@ -179,7 +210,7 @@ def has_collection_error(stdout: str) -> bool:
 
 
 def summarize_results(
-    suite_results: list[tuple[TestSuite, subprocess.CompletedProcess[str]]],
+    suite_results: list[tuple[TestSuite, SuiteResult | subprocess.CompletedProcess[str]]],
 ) -> dict[str, object]:
     """Return the stable, machine-readable CI classification."""
     core_failures: set[str] = set()
@@ -194,11 +225,22 @@ def summarize_results(
         infra_failures.update(
             f"{suite.name}: {module}" for module in suite_infra
         )
-        if has_collection_error(result.stdout):
+        if getattr(result, "timed_out", False):
+            core_failures.add(f"{suite.name}: <suite timeout after {result.timeout_seconds}s>")
+        elif has_collection_error(result.stdout):
             core_failures.add(f"{suite.name}: <pytest collection>")
         elif result.returncode != 0 and not suite_core and not suite_infra:
             core_failures.add(f"{suite.name}: <pytest exit {result.returncode}>")
-        suites.append({"name": suite.name, "returncode": result.returncode})
+        suite_payload = {
+            "name": suite.name,
+            "returncode": result.returncode,
+            "duration_seconds": getattr(result, "duration_seconds", 0.0),
+            "timed_out": getattr(result, "timed_out", False),
+        }
+        if result.returncode != 0:
+            suite_payload["stdout"] = result.stdout
+            suite_payload["stderr"] = result.stderr
+        suites.append(suite_payload)
 
     return {
         "status": "FAIL" if core_failures else "PASS",
@@ -210,7 +252,7 @@ def summarize_results(
 
 def render_text(
     payload: dict[str, object],
-    suite_results: list[tuple[TestSuite, subprocess.CompletedProcess[str]]],
+    suite_results: list[tuple[TestSuite, SuiteResult | subprocess.CompletedProcess[str]]],
 ) -> None:
     """Render the legacy human-oriented output without changing exit semantics."""
     for suite, result in suite_results:
@@ -243,10 +285,30 @@ def render_text(
 
 
 def main(argv: list[str] | None = None) -> int:
+    def positive_seconds(value: str) -> int:
+        try:
+            seconds = int(value)
+        except ValueError as exc:
+            raise argparse.ArgumentTypeError("suite timeout must be a positive integer") from exc
+        if seconds <= 0:
+            raise argparse.ArgumentTypeError("suite timeout must be a positive integer")
+        return seconds
+
     parser = argparse.ArgumentParser(description="Run governed CI test suites.")
     parser.add_argument("--format", choices=("text", "json"), default="text")
+    parser.add_argument("--suite-timeout", type=positive_seconds, default=DEFAULT_SUITE_TIMEOUT)
     args, extra_args = parser.parse_known_args(argv)
-    suite_results = run_test_suites(extra_args, verbose=args.format == "text")
+    try:
+        suite_results = run_test_suites(
+            extra_args, verbose=args.format == "text", suite_timeout=args.suite_timeout,
+        )
+    except (ValueError, OSError) as exc:
+        payload = {"status": "FAIL", "core_failures": ["<suite discovery>"], "infra_failures": [], "suites": [], "errors": [str(exc)]}
+        if args.format == "json":
+            print(json.dumps(payload, sort_keys=True))
+        else:
+            print(f"[ci_run] FAIL — {exc}", file=sys.stderr)
+        return 1
     payload = summarize_results(suite_results)
     if args.format == "json":
         print(json.dumps(payload, sort_keys=True))

@@ -186,10 +186,16 @@ of a safe reusable checkout.
 
 ## DeepSeek Harness workspace governance adapter
 
-The local, version-controlled Cordis bundle at
-`scripts/platform/deepseek-harness-governance`. It intercepts DSH tool execution
-and denies mutable operations unless a scoped TASK, active lease, allowed skill
-execution mode, in-worktree path, and manual approval all pass.
+The historical, local Cordis boundary for the retired Web workspace pilot.
+It is not the official Desktop runtime's authorization adapter; installing
+Desktop does not transfer the pilot's authority or enable Workspace writes.
+
+## DeepSeek Harness Desktop transition
+
+Replacement of the independent browser-based Web launch path by the official
+native Desktop application. Desktop retains its own internal local Host, starts
+with fresh product data, and does not inherit old Web sessions, credentials,
+executable dependencies, or temporary Workspace pilot authority.
 
 ## two-phase controlled promotion
 

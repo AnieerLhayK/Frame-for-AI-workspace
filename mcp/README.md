@@ -47,7 +47,6 @@ Currently registered locally:
 - OpenCode: user config under `${USER_HOME}/.config/opencode` and data under
   `${USER_HOME}/.local/share/opencode`; both are junction-backed by
   `${DATA_ROOT}/opencode`.
-- Reasonix: user config at `${USER_HOME}\AppData\Roaming\reasonix\config.toml` (Junction-backed D-drive storage)
 - Cursor: global MCP config at `${USER_HOME}/.cursor\mcp.json` (Junction-backed D-drive storage)
 - Hermes: client-side MCP config under `${DATA_ROOT}/hermes\config.yaml`
 
@@ -65,8 +64,8 @@ The official GitHub MCP server is normally used through GitHub's remote MCP endp
 `${USER_HOME}/.codex`, `${USER_HOME}/.claude`,
 `${USER_HOME}/.config/opencode`,
 `${USER_HOME}/.local/share/opencode`, `${USER_HOME}/.cursor`,
-`${USER_HOME}/AppData/Roaming/Cursor`, and Reasonix's managed data
-directories point to D-drive storage through junctions or symbolic links.
+and `${USER_HOME}/AppData/Roaming/Cursor` point to D-drive storage through
+junctions or symbolic links.
 
 OpenCode state and cache paths remain separate runtime locations reported by
 `opencode debug paths`; do not infer that every OpenCode user directory is

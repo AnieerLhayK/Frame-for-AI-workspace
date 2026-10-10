@@ -370,10 +370,8 @@ tasks:
     - scripts/workspace/agent_governance.py
     - scripts/workspace/agent_governance.py
     - scripts/workspace/hermes_workspace_guard.py
-    - reasonix.toml
     - opencode.json
     - .opencode/plugins/workspace-governance.js
-    - reasonix.toml
     - scripts/workspace/verify_change_scope.py
     - scripts/workspace/workflow_check.py
     - scripts/workspace/workspace_health.py
@@ -415,7 +413,6 @@ tasks:
     - scripts/workspace/agent_governance.py
     - scripts/workspace/agent_governance.py
     - scripts/workspace/hermes_workspace_guard.py
-    - reasonix.toml
     - opencode.json
     - .opencode/plugins/workspace-governance.js
     - scripts/workspace/verify_change_scope.py
@@ -449,10 +446,9 @@ tasks:
     - reports/current/protocol_validation_report.md
     - reports/current/workspace_health_report.md
     - reports/current/workspace_setup_report.md
-    - scripts/platform/Start-DeepSeekHarnessWorkspacePilot.ps1
+    - scripts/platform/Start-DeepSeekHarnessDesktop.ps1
     - scripts/platform/dsh.cmd
-    - scripts/platform/dsh-pilot.cmd
-    - scripts/platform/deepseek-harness-governance/**
+    - scripts/tests/platform/test_deepseek_desktop_transition.py
     validation:
     - python -m unittest scripts.tests.reporting.test_ci_run scripts.tests.workspace.test_agent_governance
       scripts.tests.workspace.test_hermes_workspace_guard scripts.tests.platform.test_platform_agent_guards
@@ -463,8 +459,6 @@ tasks:
       packages/character-system/runtime/characters/zyc/references/voice_card.md
     - python -m scripts.workspace.workspace_cli agent check --agent hermes --skill style-doctor
       --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
-    - python -m scripts.workspace.workspace_cli agent check --agent reasonix --skill zyc --path
-      packages/character-system/runtime/characters/zyc/references/voice_card.md
     - python -m scripts.workspace.workspace_cli agent check --agent opencode --skill style-doctor
       --path packages/character-system/reports/runtime-loop/diagnoses/DIAG-demo.md
     - python -m scripts.workspace.workspace_cli changes verify runtime_authorization_enforcement
@@ -474,7 +468,7 @@ tasks:
     - python -m scripts.workspace.workspace_cli health --with-tests
     - python -m scripts.validation.validate_manifest
     - python -m scripts.validation.validate_protocols
-    - npm test --prefix scripts/platform/deepseek-harness-governance
+    - python -m unittest scripts.tests.platform.test_deepseek_desktop_transition
     - git diff --check
   runtime_guard_update:
     use_when:

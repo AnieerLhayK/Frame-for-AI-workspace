@@ -340,7 +340,7 @@ def run_tests(root: Path) -> list[str]:
 
             # Known infrastructure-dependent test files
             # These fail in a clean environment without Hermes, OpenCode,
-            # Reasonix, or Windows-specific path infrastructure.
+            # or Windows-specific path infrastructure.
             INFRA_TESTS = {
                 "scripts/tests/workspace/test_hermes_workspace_guard.py",
                 "scripts/tests/platform/test_platform_agent_guards.py",

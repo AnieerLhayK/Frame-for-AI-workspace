@@ -5,7 +5,6 @@ import json
 import os
 import subprocess
 import sys
-import tomllib
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -47,11 +46,9 @@ REQUIRED_AGENT_READ_ROOTS = {
         "packages", "character-system", "reports", "runtime-loop"
     ).casefold(),
 }
-REASONIX_CONFIG = WORKSPACE_ROOT / "reasonix.toml"
 OPENCODE_CONFIG = WORKSPACE_ROOT / "opencode.json"
 OPENCODE_GUARD = WORKSPACE_ROOT / ".opencode" / "plugins" / "workspace-governance.js"
 AGENT_REGISTRY = WORKSPACE_ROOT / "shared" / "governance" / "agent_registry.yaml"
-DSH_GOVERNANCE_ROOT = WORKSPACE_ROOT / "scripts" / "platform" / "deepseek-harness-governance"
 
 
 
@@ -338,65 +335,24 @@ def _normalized_windows_roots(values: Sequence[Any]) -> set[str]:
 
 
 def check_platform_agent_guards(
-    reasonix_path: Path | None = None,
     opencode_path: Path | None = None,
     opencode_guard_path: Path | None = None,
     registry_path: Path | None = None,
 ) -> CheckResult:
-    reasonix_path = reasonix_path or REASONIX_CONFIG
     opencode_path = opencode_path or OPENCODE_CONFIG
     opencode_guard_path = opencode_guard_path or OPENCODE_GUARD
     registry_path = registry_path or AGENT_REGISTRY
     findings: list[str] = []
     try:
-        reasonix = tomllib.loads(reasonix_path.read_text(encoding="utf-8-sig"))
         opencode = json.loads(opencode_path.read_text(encoding="utf-8-sig"))
         registry = yaml.safe_load(registry_path.read_text(encoding="utf-8-sig")) or {}
-    except (OSError, ValueError, tomllib.TOMLDecodeError, yaml.YAMLError) as exc:
+    except (OSError, ValueError, yaml.YAMLError) as exc:
         return CheckResult(
             "platform-agent-guards",
             "FAIL",
-            "Reasonix/OpenCode workspace governance configuration could not be read.",
+            "OpenCode workspace governance configuration could not be read.",
             {"error": str(exc)},
         )
-
-    reasonix_permissions = reasonix.get("permissions", {})
-    if reasonix_permissions.get("mode") != "deny":
-        findings.append("Reasonix fallback permission mode is not deny")
-    reasonix_denies = {str(value) for value in reasonix_permissions.get("deny", [])}
-    required_reasonix_denies = {
-        "write_file(shared/*)",
-        "edit_file(shared/*)",
-        "multi_edit(shared/*)",
-        "write_file(packages/character-system/runtime/*)",
-        "edit_file(packages/character-system/runtime/*)",
-        "multi_edit(packages/character-system/runtime/*)",
-        "mcp__filesystem__write_file(*)",
-        "mcp__filesystem__edit_file(*)",
-        "bash(*)",
-        "bash(git commit*)",
-        "bash(git reset*)",
-    }
-    if not required_reasonix_denies.issubset(reasonix_denies):
-        findings.append("Reasonix lacks explicit source, MCP, or Git mutation denials")
-    reasonix_root = _normalized_windows_roots(
-        [reasonix.get("sandbox", {}).get("workspace_root", "")]
-    )
-    expected_reasonix_root = _normalized_windows_roots([WORKSPACE_SOURCE_ROOT])
-    if reasonix_root != expected_reasonix_root:
-        findings.append("Reasonix sandbox is not rooted at this workspace")
-    reasonix_plugins = {
-        str(item.get("name")): item
-        for item in reasonix.get("plugins", [])
-        if isinstance(item, dict)
-    }
-    reasonix_roots = _normalized_windows_roots(
-        reasonix_plugins.get("filesystem", {}).get("args", [])
-    )
-    if {r"d:\ai", r"d:\dev"} & reasonix_roots:
-        findings.append("Reasonix filesystem MCP exposes a broad drive root")
-    if not REQUIRED_AGENT_READ_ROOTS.issubset(reasonix_roots):
-        findings.append("Reasonix filesystem MCP is missing canonical read roots")
 
     if "./.opencode/plugins/workspace-governance.js" not in opencode.get("plugin", []):
         findings.append("OpenCode project governance plugin is not configured")
@@ -411,7 +367,7 @@ def check_platform_agent_guards(
         findings.append("OpenCode project governance plugin is missing")
 
     agents = registry.get("agents", {})
-    for agent_id in ("deepseek-harness", "opencode", "reasonix"):
+    for agent_id in ("deepseek-harness", "opencode"):
         entry = agents.get(agent_id, {})
         if entry.get("status") != "active" or entry.get("role") != "record_producer":
             findings.append(f"{agent_id} is not an active record_producer")
@@ -423,63 +379,54 @@ def check_platform_agent_guards(
         return CheckResult(
             "platform-agent-guards",
             "FAIL",
-            "DeepSeek Harness/Reasonix/OpenCode workspace governance has drifted.",
+            "DeepSeek Harness/OpenCode workspace governance has drifted.",
             {"findings": findings},
         )
     return CheckResult(
         "platform-agent-guards",
         "PASS",
-        "Codex and Claude are structural maintainers; DeepSeek Harness, Reasonix, and OpenCode are registered record producers.",
+        "Codex is a structural maintainer; Claude is a development maintainer; DeepSeek Harness and OpenCode are registered record producers.",
     )
 
 
-def check_deepseek_harness_pilot_contract(
-    governance_root: Path | None = None,
-) -> CheckResult:
-    """Check the source-side contract for the external DSH pilot profile."""
-    governance_root = governance_root or DSH_GOVERNANCE_ROOT
-    package_path = governance_root / "package.json"
-    policy_path = governance_root / "src" / "policy.js"
-    contract_path = governance_root / "workspace-pilot-contract.yaml"
+def check_deepseek_desktop_contract(workspace_root: Path | None = None) -> CheckResult:
+    """Check portable source declarations, not Desktop runtime enforcement."""
+    root = workspace_root or WORKSPACE_ROOT
     findings: list[str] = []
     try:
-        package = json.loads(package_path.read_text(encoding="utf-8-sig"))
-        contract = yaml.safe_load(contract_path.read_text(encoding="utf-8-sig")) or {}
-    except (OSError, ValueError, yaml.YAMLError) as exc:
+        registry_path = root / "shared/governance/agent_registry.yaml"
+        registry = yaml.safe_load(registry_path.read_text(encoding="utf-8-sig")) or {}
+        agent = registry["agents"]["deepseek-harness"]
+        launcher_path = root / "scripts/platform/Start-DeepSeekHarnessDesktop.ps1"
+        launcher = launcher_path.read_text(encoding="utf-8-sig")
+        if not isinstance(agent, dict):
+            raise TypeError("DeepSeek registration must be a mapping")
+    except (OSError, ValueError, KeyError, TypeError, yaml.YAMLError) as exc:
         return CheckResult(
-            "deepseek-harness-pilot",
-            "FAIL",
-            "DeepSeek Harness pilot governance contract could not be read.",
-            {"error": str(exc)},
+            "deepseek-harness-desktop", "FAIL",
+            "DeepSeek Desktop source declarations could not be read.", {"error": str(exc)},
         )
-    if package.get("name") != "@workspace/dsh-workspace-governance":
-        findings.append("adapter package name drifted")
-    if package.get("version") != contract.get("adapter", {}).get("version"):
-        findings.append("adapter package version does not match the pilot contract")
-    if package.get("dsh", {}).get("bundle", {}).get("patch") != "cordis.patch.yml":
-        findings.append("adapter no longer exports a DSH bundle patch")
-    if not policy_path.exists():
-        findings.append("fail-closed policy module is missing")
-    if contract.get("dsh_version") != "0.1.0-rc.6":
-        findings.append("pilot does not pin the reviewed DSH release")
-    if contract.get("pilot", {}).get("lease_capability") != "structural_write":
-        findings.append("pilot lease capability drifted")
-    forbidden = set(contract.get("forbidden_surfaces", []))
-    for required in ("MCP client", "web tool", "subagent tool", "remote Git"):
-        if required not in forbidden:
-            findings.append(f"forbidden-surface contract omits {required}")
-    if findings:
-        return CheckResult(
-            "deepseek-harness-pilot",
-            "FAIL",
-            "DeepSeek Harness pilot source contract has drifted.",
-            {"findings": findings},
-        )
+    if agent.get("host", {}).get("kind") != "desktop_app":
+        findings.append("DeepSeek host is not registered as Desktop")
+    if agent.get("role") != "record_producer" or agent.get("capabilities", {}).get("allow") != []:
+        findings.append("Desktop role or additional capabilities drifted")
+    if agent.get("active_lease_refs") != []:
+        findings.append("Desktop retains a legacy pilot lease reference")
+    if "desktop-home" not in launcher or "desktop\\DeepSeek Harness.exe" not in launcher:
+        findings.append("Native launcher does not use the fresh managed Desktop paths")
+    retired_paths = (
+        "scripts/platform/dsh-pilot.cmd",
+        "scripts/platform/Start-DeepSeekHarnessWorkspacePilot.ps1",
+        "scripts/platform/deepseek-harness-governance/package.json",
+    )
+    for obsolete in retired_paths:
+        if (root / obsolete).exists():
+            findings.append(f"Retired source entry still exists: {obsolete}")
     return CheckResult(
-        "deepseek-harness-pilot",
-        "PASS",
-        "DeepSeek Harness pilot has a pinned, fail-closed source-side governance contract.",
-        {"profile": contract.get("profile"), "dsh_version": contract.get("dsh_version")},
+        "deepseek-harness-desktop", "FAIL" if findings else "PASS",
+        "DeepSeek Desktop source declarations drifted." if findings else
+        "Native Desktop entry is declared; no Workspace runtime-enforcement adapter is registered.",
+        {"findings": findings, "runtime_enforcement": False},
     )
 
 
@@ -550,7 +497,7 @@ def run_health(
         hygiene_checker(),
         hermes_guard_checker(),
         platform_guard_checker(),
-        check_deepseek_harness_pilot_contract(),
+        check_deepseek_desktop_contract(),
     ]
     if with_tests:
         checks.append(check_tests(runner))
@@ -597,7 +544,7 @@ HEALTH_GROUPS = (
         (
             ("hermes-guard", "Hermes hooks/MCP guard"),
             ("platform-agent-guards", "Agent roles and platform guards"),
-            ("deepseek-harness-pilot", "DeepSeek Harness pilot contract"),
+            ("deepseek-harness-desktop", "DeepSeek Desktop declaration (not a runtime guard)"),
         ),
     ),
     (

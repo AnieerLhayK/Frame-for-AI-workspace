@@ -43,6 +43,9 @@
 关于桌面工具的分阶段交付、服务状态证据、诊断、可移植导出及工具更新的行为验收，见
 [`methods/local_tool_workbench.md`](methods/local_tool_workbench.md)。
 
+关于表达偏好、工程质量要求、阅读辅助与按需编辑流程的分层取舍及证据限制，见
+[`methods/human_facing_output_discipline.md`](methods/human_facing_output_discipline.md)。
+
 ### 规划
 
 `proposals/` 存放尚未沉淀为稳定可复用方法的有限规划和评估。

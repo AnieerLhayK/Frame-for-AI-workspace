@@ -1,17 +1,109 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  workspace_lint_cache_cleanup:
+    use_when:
+    - Removing only the explicitly user-approved workspace-local .ruff_cache after identity and link checks.
+    use_when_zh:
+    - 核验路径归属和链接后，仅移除用户明确批准的工作区本地 .ruff_cache。
+    required:
+    - shared/workspace/workspace_path_policy.md
+    - scripts/workspace/workspace_health.py
+    optional: []
+    ignore:
+    - other caches, source files, sessions and tool data
+    - Reasonix and DeepSeek cleanup targets; their approvals and host denials remain separate
+    tool_profile: cleanup_migration
+    ledger: true
+    budget: {required_warn_tokens: 8000, expanded_warn_tokens: 12000}
+    write_scope:
+    - .ruff_cache/
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - Verify the exact .ruff_cache target is absent without touching another cache.
+    - workspace health --format json
+    - workspace records validate
+    - git diff --check
+  reasonix_retirement:
+    use_when:
+    - Executing the user-approved Reasonix retirement and exact-path cleanup; not reinstalling or repairing it.
+    use_when_zh:
+    - 执行用户批准的 Reasonix 退役及精确路径清理，不用于重新安装或修复。
+    required:
+    - shared/governance/agent_registry.yaml
+    - shared/governance/agent_governance.yaml
+    - shared/governance/git_integration_policy.md
+    - skills/governance/windows-ai-storage-governor/SKILL.md
+    - skills/governance/windows-ai-storage-governor/references/safety-policy.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    optional: []
+    ignore:
+    - credential values and conversation contents
+    - unrelated installations and shared MCP resources
+    tool_profile: cleanup_migration
+    ledger: true
+    budget: {required_warn_tokens: 16000, expanded_warn_tokens: 20000}
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/continuity.yaml
+    - PROJECT_CONTEXT/tasks/registry/domains/governance.yaml
+    - PROJECT_CONTEXT/todo/workspace-optimization.md
+    - shared/governance/agent_registry.yaml
+    - shared/governance/agent_governance.yaml
+    - shared/governance/agent_governance_policy.md
+    - reasonix.toml
+    - mcp/README.md
+    - scripts/workspace/workspace_health.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - scripts/tests/workspace/test_agent_governance.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/tests/platform/test_platform_agent_guards.py
+    - scripts/publishing/publish_policy.py
+    - scripts/publishing/publish_check.py
+    - scripts/reporting/ci_run.py
+    - scripts/tests/publishing/test_publish_policy.py
+    - reports/ai-tool-retirements/reasonix-20261009.json
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - ${WORKSPACE_ROOT}/tools/npm-global/node_modules/reasonix/
+    - ${WORKSPACE_ROOT}/tools/npm-global/node_modules/.package-lock.json
+    - ${WORKSPACE_ROOT}/tools/npm-global/reasonix
+    - ${WORKSPACE_ROOT}/tools/npm-global/reasonix.cmd
+    - ${WORKSPACE_ROOT}/tools/npm-global/reasonix.ps1
+    - ${DATA_ROOT}/npm-cache/
+    - ${DATA_ROOT}/workspace-governance/leases/LEASE-20261009-REASONIX-RETIREMENT.yaml
+    - ${DATA_ROOT}/reasonix/
+    - ${DATA_ROOT}/reasonix-roaming/
+    - ${DATA_ROOT}/reasonix-local/
+    - ${USER_HOME}/.reasonix
+    - ${USER_HOME}/AppData/Roaming/Reasonix
+    - ${USER_HOME}/AppData/Local/Reasonix
+    - ${DATA_ROOT}/hermes-upgrades/20261007-repair/reasonix-before/
+    - ${DATA_ROOT}/codex/cache/staging/reasonix-hermes-ci-20261007/permission-v2-write_file/
+    - ${DATA_ROOT}/codex/cache/staging/reasonix-hermes-ci-20261007/permission-v3-write_file/
+    - ${DATA_ROOT}/codex/cache/staging/reasonix-hermes-ci-20261007/permission-v4-write_file/
+    validation:
+    - python -m scripts.reporting.ci_run
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - workspace records validate
+    - workspace plans validate
+    - Verify npm package, command shims, registration and approved cleanup targets are absent; never launch Reasonix.
+    - git diff --check
   reasonix_hermes_ci_repair:
     use_when:
-    - Repairing the user-approved Reasonix and Hermes installations and the associated Workspace/Frame CI regressions.
+    - Resolving completed Reasonix/Hermes repair records for historical audits; use current routes for new maintenance.
     use_when_zh:
-    - 修复用户已批准的 Reasonix、Hermes 安装及关联 Workspace/Frame CI 回归。
+    - 为历史审计解析已完成的 Reasonix/Hermes 修复记录；新维护使用当前任务路由。
     required:
     - shared/governance/agent_registry.yaml
     - shared/governance/git_integration_policy.md
     - skills/governance/windows-ai-storage-governor/SKILL.md
     - skills/governance/windows-ai-storage-governor/references/safety-policy.md
     - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
-    - reasonix.toml
     optional: []
     ignore:
     - credential values and conversation contents
@@ -25,7 +117,6 @@ tasks:
     - reports/ai-tool-updates/20261007-repair/**
     - reports/current/manifest_validation_report.md
     - reports/current/protocol_validation_report.md
-    - reasonix.toml
     - scripts/publishing/registered_repo_sync.py
     - scripts/tests/publishing/test_registered_repo_sync.py
     - scripts/tests/publishing/test_sync_ai_workbench_repo.py
@@ -37,15 +128,6 @@ tasks:
     - skills/content/mardocx/tests/**
     - scripts/tests/workspace/test_standalone_skill_contracts.py
     - scripts/tests/publishing/test_publish_skill_collection.py
-    - '<npm-prefix-path>/node_modules/reasonix/'
-    - '<npm-prefix-path>/node_modules/.reasonix-*/**'
-    - '<npm-prefix-path>/node_modules/.package-lock.json'
-    - '<npm-prefix-path>/reasonix'
-    - '<npm-prefix-path>/reasonix.cmd'
-    - '<npm-prefix-path>/reasonix.ps1'
-    - '<npm-cache-path>/'
-    - '<reasonix-data-path>/'
-    - ${DATA_ROOT}/reasonix-local/workspace-leases/
     - '<hermes-install-path>/'
     - '<hermes-data-path>/config.yaml'
     - '<hermes-data-path>/.env'
@@ -95,8 +177,6 @@ tasks:
     - '<npm-prefix-path>/node_modules/@anthropic-ai/.claude-code-*/**'
     - '<npm-prefix-path>/node_modules/opencode-ai/'
     - '<npm-prefix-path>/node_modules/.opencode-ai-*/**'
-    - '<npm-prefix-path>/node_modules/reasonix/'
-    - '<npm-prefix-path>/node_modules/.reasonix-*/**'
     - '<npm-prefix-path>/node_modules/.package-lock.json'
     - '<npm-prefix-path>/codex'
     - '<npm-prefix-path>/codex.cmd'
@@ -107,9 +187,6 @@ tasks:
     - '<npm-prefix-path>/opencode'
     - '<npm-prefix-path>/opencode.cmd'
     - '<npm-prefix-path>/opencode.ps1'
-    - '<npm-prefix-path>/reasonix'
-    - '<npm-prefix-path>/reasonix.cmd'
-    - '<npm-prefix-path>/reasonix.ps1'
     - '<npm-cache-path>/'
     - '<harness-runtime-path>/'
     - '<harness-cache-path>/'
@@ -119,6 +196,70 @@ tasks:
     - Verify recorded package versions and CLI resolution without model requests.
     - Verify preserved storage links, configuration paths and updater rollback evidence.
     - workspace records validate
+    - git diff --check
+  deepseek_desktop_transition:
+    use_when:
+    - Installing the user-approved official DeepSeek Desktop and retiring only the named legacy Web installation and data.
+    use_when_zh:
+    - 安装用户确认的官方 DeepSeek 桌面端，退役指定的旧 Web 安装、入口和数据。
+    required:
+    - shared/governance/agent_registry.yaml
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/git_integration_policy.md
+    - skills/governance/windows-ai-storage-governor/SKILL.md
+    - skills/governance/windows-ai-storage-governor/references/safety-policy.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    optional:
+    - reports/ai-tool-updates/20261009-deepseek-desktop/
+    ignore:
+    - credential values and conversation contents
+    - unrelated tools, caches and source worktrees
+    tool_profile: cleanup_migration
+    ledger: true
+    budget: {required_warn_tokens: 18000, expanded_warn_tokens: 24000}
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - shared/governance/agent_registry.yaml
+    - shared/governance/agent_governance_policy.md
+    - scripts/platform/Start-DeepSeekHarnessWorkspacePilot.ps1
+    - scripts/platform/dsh.cmd
+    - scripts/platform/dsh-pilot.cmd
+    - scripts/platform/deepseek-harness-governance/**
+    - scripts/platform/Start-DeepSeekHarnessDesktop.ps1
+    - scripts/tests/platform/test_deepseek_desktop_transition.py
+    - scripts/workspace/workspace_health.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - reports/ai-tool-updates/20261009-deepseek-desktop/**
+    - ${DATA_ROOT}/deepseek-harness/desktop/**
+    - ${DATA_ROOT}/deepseek-harness/desktop-home/**
+    - ${DATA_ROOT}/deepseek-harness/data/**
+    - ${DATA_ROOT}/deepseek-harness/data/
+    - ${DATA_ROOT}/deepseek-harness/runtime/npm-global/**
+    - ${DATA_ROOT}/deepseek-harness/cache/npm/**
+    - ${DATA_ROOT}/deepseek-harness/scripts/Start-DeepSeekHarness.ps1
+    - ${DATA_ROOT}/deepseek-harness/scripts/Check-DeepSeekHarnessUpdate.ps1
+    - ${DATA_ROOT}/deepseek-harness/scripts/Update-DeepSeekHarnessIcon.ps1
+    - ${DATA_ROOT}/deepseek-harness/logs/web.log
+    - ${DATA_ROOT}/deepseek-harness/state/web.pid
+    - ${USER_HOME}/.dsh/**
+    - ${USER_HOME}/.dsh/
+    - ${USER_HOME}/Desktop/DeepSeek Harness.lnk
+    - ${USER_HOME}/AppData/Roaming/@deepseek-ai/dsh-desktop/**
+    - ${USER_HOME}/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/DeepSeek Harness/**
+    - ${DATA_ROOT}/codex/cache/staging/deepseek-desktop-transition-20261009/**
+    - ${DATA_ROOT}/workspace-governance/leases/LEASE-20261009-DEEPSEEK-DESKTOP.yaml
+    validation:
+    - workspace records validate
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - python -m scripts.workspace.workspace_cli agent validate deepseek-harness
+    - python -m unittest scripts.tests.platform.test_deepseek_desktop_transition
+    - Verify official installer identity, native Desktop launch and fresh managed home without model requests.
+    - Verify approved legacy data targets and browser launch chain are absent; preserve all source worktrees.
     - git diff --check
   cleanup_migration:
     context_views:
@@ -305,7 +446,6 @@ tasks:
     - shared/governance/agent_governance_policy.md
     - .claude/hooks/workspace_boundary_guard.ps1
     - .opencode/plugins/workspace-governance.js
-    - reasonix.toml
     - scripts/workspace/workspace_summary.py
     - scripts/tests/workspace/test_task_records.py
     - scripts/tests/workspace/test_resolve_task_context.py

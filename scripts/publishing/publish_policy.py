@@ -103,11 +103,11 @@ EXCLUDED_PATHS = {
     # placeholder; private package implementations stay in their source repo.
     "packages/sci-system",
     "packages/ai-workbench",
-    # Local pilot deployment launchers and contract are not framework source.
-    "scripts/platform/dsh-pilot.cmd",
+    # Local Desktop launchers and their private integration test are not
+    # framework source; exporting the test without its shim breaks validation.
     "scripts/platform/dsh.cmd",
-    "scripts/platform/Start-DeepSeekHarnessWorkspacePilot.ps1",
-    "scripts/platform/deepseek-harness-governance",
+    "scripts/platform/Start-DeepSeekHarnessDesktop.ps1",
+    "scripts/tests/platform/test_deepseek_desktop_transition.py",
     "WORKSPACE_ENGINEERING/evidence",
     "WORKSPACE_ENGINEERING/proposals",
     "scripts/publishing/publish_chatty_ch_system.py",
@@ -150,7 +150,6 @@ EXCLUDED_PATHS = {
     "scripts/tests/workspace/test_knowledge_registry.py",
     "scripts/tests/workspace/test_workspace_explain.py",
     "reports",
-    "reasonix.toml",
     "README.zh-CN.md",
     "PROJECT_CONTEXT/todo",
     "PROJECT_CONTEXT/references/external_projects.yaml",
@@ -225,7 +224,6 @@ SCRUB_FILES: set[str] = {
     "scripts/tests/workspace/test_workspace_health.py",
     "scripts/tests/workspace/test_agent_governance.py",
     ".claude/rules/workspace-boundary.md",
-    "reasonix.toml",
     "mcp/README.md",
     "scripts/publishing/sync_public_repo.py",
     "WORKSPACE_ENGINEERING/PUBLISH.md",

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
@@ -25,6 +26,30 @@ def run_command(arguments: Sequence[str]) -> subprocess.CompletedProcess[str]:
         text=True,
         check=False,
     )
+
+
+def batch_member_metadata(record_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Read historical attribution only; never return an active write permit."""
+    from scripts.workspace.task_records import read_record, validate_record
+
+    _, record = read_record(record_id)
+    if record.get("status") == "in_progress":
+        return active_registration(record_id, "workspace_write", allow_external_origin=True), record
+    errors = validate_record(record)
+    if errors:
+        raise ValueError(f"invalid batch TASK {record_id}: {'; '.join(errors)}")
+    if record.get("task_id") != record_id or record.get("status") != "successful":
+        raise ValueError("batch TASK must be active or successfully completed")
+    ended_at = record.get("ended_at")
+    if not isinstance(ended_at, str) or not ended_at:
+        raise ValueError("completed batch TASK requires ended_at")
+    try:
+        datetime.fromisoformat(ended_at.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValueError("completed batch TASK requires valid ended_at") from error
+    if "workspace_write" not in (record.get("registration") or {}).get("operations", []):
+        raise ValueError("batch TASK must declare workspace_write")
+    return {"task_type": record.get("task_type"), "git_baseline": record.get("git_baseline")}, record
 
 
 def check_workflow(
@@ -78,13 +103,11 @@ def check_workflow(
     batch_owners = []
     baseline = registration.get("git_baseline") if registration else None
     if batch_task_ids:
-        from scripts.workspace.task_records import read_record
         if not include_committed or not baseline:
             raise ValueError("batch validation requires --include-committed and a TASK baseline")
         bases = [baseline["head_commit"]]
         for batch_id in sorted(set(batch_task_ids)):
-            member = active_registration(batch_id, "workspace_write", allow_external_origin=True)
-            _, member_record = read_record(batch_id)
+            member, member_record = batch_member_metadata(batch_id)
             owner = member_record.get("owner") or member_record.get("origin") or {}
             if not owner.get("agent") or not member.get("git_baseline"):
                 raise ValueError("batch TASK requires recorded agent ownership and Git baseline")
@@ -254,7 +277,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--external-client-root")
     parser.add_argument("--include-committed", action="store_true", help="Verify all changes since the TASK baseline, requiring fast-forward history.")
     parser.add_argument("--coordinated-path", action="append", default=[], help="Exact already-dirty file whose concurrent edits were coordinated.")
-    parser.add_argument("--batch-task", action="append", default=[], help="Validate an explicitly coordinated batch against participating TASK scopes and owners.")
+    parser.add_argument("--batch-task", action="append", default=[], help="Attribute an explicitly coordinated batch to active or successfully completed TASK scopes and owners; grants no write authority.")
     parser.add_argument(
         "--include-staged",
         action=argparse.BooleanOptionalAction,

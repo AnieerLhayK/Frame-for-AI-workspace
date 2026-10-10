@@ -303,6 +303,8 @@ manifest-declared workspace output root and never changes source material.
 
 ## DeepSeek Harness Uses A Two-Phase, Default-Deny Promotion Path
 
+- status: Historical Web-pilot decision; the 2026-10-09 Desktop transition retires
+  that launch path and does not carry forward its temporary authority.
 - decision: Keep DeepSeek Harness registered as `record_producer`; permit only
   a separately leased, at-most-24-hour `structural_write` pilot in an isolated
   worktree, protected by the local Cordis governance adapter.
@@ -313,6 +315,20 @@ manifest-declared workspace output root and never changes source material.
 - consequence: Pin DSH and adapter versions, use local JSONL only, deny web,
   MCP, dynamic Cordis, subagents, remote Git, credential tools, and telemetry
   export. A separate reviewed TASK is required for permanent promotion.
+
+## DeepSeek Harness Uses Official Desktop With Fresh Product Data
+
+- decision: Replace the independent Web/browser launch chain with the official
+  Windows Desktop release. Start with a fresh managed Harness home; permanently
+  remove the four user-confirmed old Web data/log targets without migration or
+  another data backup, only after native Desktop startup is verified.
+- reason: The user no longer needs the Web experience or its history and prefers
+  the official native application over browser-launch workarounds.
+- date if known: 2026-10-09, confirmed plan and explicit implementation request.
+- consequence: Preserve source worktrees and shared caches. Desktop's internal
+  Host is not a retired standalone Web service. Keep the registered
+  `record_producer` role; neither a native UI nor registration prose grants
+  Workspace tool-write authority. Prior host-policy denials remain binding.
 
 ## Codex Owns Core Governance; Claude Retains Development Delivery
 

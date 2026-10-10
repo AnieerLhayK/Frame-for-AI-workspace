@@ -66,7 +66,12 @@ def normalize_path(value: str) -> str:
 
 def is_concrete_scope(value: str) -> bool:
     stripped = value.strip()
-    return bool(stripped) and not any(character.isspace() for character in stripped)
+    if not stripped or any(
+        ord(character) < 32 or ord(character) == 127
+        or (character.isspace() and character != " ") for character in value
+    ):
+        return False
+    return is_absolute_path(stripped) or " " not in stripped
 
 
 def is_absolute_path(value: str) -> bool:

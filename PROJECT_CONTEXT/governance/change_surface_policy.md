@@ -54,6 +54,12 @@ The verifier reads unstaged, staged, and untracked paths by default. It marks
 high-risk changes but permits them when the task explicitly declares the path.
 It never reverts, deletes, cleans, stages, commits, or moves a file.
 
+Absolute external paths may contain ordinary spaces and still be concrete
+verification scopes. Preserve their exact spelling; do not replace spaces with
+wildcards. Control characters and prose-only declarations are not concrete
+scopes. This syntax does not grant external authority or change the planner's
+rejection of absolute platform paths as workspace source edit targets.
+
 Risk classification is owned by `shared/governance/agent_governance.yaml`, reusing the
 existing surface classes rather than creating a parallel permission system.
 The verifier reports `normal`, `elevated`, or `high`, plus affected surfaces,

@@ -136,7 +136,6 @@ surface_classes:
       - packages/character-system/reports/runtime-loop/validations/**
       - packages/character-system/reports/runtime-loop/generalization_backlog/**
       - reports/opencode/**
-      - reports/reasonix/**
   - id: agent_experiment_record
     required_capability: record_write
     path_patterns:

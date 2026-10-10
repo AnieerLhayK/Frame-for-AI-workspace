@@ -49,6 +49,10 @@ See [`methods/local_tool_workbench.md`](methods/local_tool_workbench.md) for
 incremental desktop-tool delivery, service-state evidence, diagnostics, portable
 exports and behavioral acceptance of tool updates.
 
+See [`methods/human_facing_output_discipline.md`](methods/human_facing_output_discipline.md)
+for choosing between expression preferences, engineering requirements,
+reader assistance, and optional editorial workflows, with evidence limits.
+
 ### Proposals
 
 `proposals/` contains bounded plans and evaluations that have not yet become

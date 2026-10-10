@@ -18,7 +18,7 @@ tasks:
     - scripts/validation/validate_manifest.py
     - scripts/validation/validate_protocols.py
     - scripts/tests/validation/test_validate_protocols.py
-    - skills/disk-scan-reporter/tests/test_disk_scan.py
+    - skills/governance/disk-scan-reporter/tests/test_disk_scan.py
     - shared/workspace/workspace_policy.md
     - AGENTS.md
     optional:
@@ -51,7 +51,7 @@ tasks:
     - scripts/validation/validate_manifest.py
     - scripts/validation/validate_protocols.py
     - scripts/tests/validation/test_validate_protocols.py
-    - skills/disk-scan-reporter/tests/test_disk_scan.py
+    - skills/governance/disk-scan-reporter/tests/test_disk_scan.py
     - shared/workspace/workspace_policy.md
     - reports/current/manifest_validation_report.md
     - reports/current/protocol_validation_report.md
