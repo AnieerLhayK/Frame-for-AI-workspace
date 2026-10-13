@@ -124,6 +124,13 @@ tasks:
     - PROJECT_CONTEXT/todo/external-skills.md
     - PROJECT_CONTEXT/todo/workspace-optimization.md
     - PROJECT_CONTEXT/todo/package-development.md
+    - PROJECT_CONTEXT/todo/README.zh-CN.md
+    - PROJECT_CONTEXT/todo/personal-experiment-box.md
+    - PROJECT_CONTEXT/todo/personal-experiment-box.zh-CN.md
+    - PROJECT_CONTEXT/todo/idea-to-prototype.md
+    - PROJECT_CONTEXT/todo/idea-to-prototype.zh-CN.md
+    - PROJECT_CONTEXT/todo/download-intake.md
+    - PROJECT_CONTEXT/todo/download-intake.zh-CN.md
     - PROJECT_CONTEXT/tasks/ledger/README.md
     - PROJECT_CONTEXT/continuity/session_handoff.md
     - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
