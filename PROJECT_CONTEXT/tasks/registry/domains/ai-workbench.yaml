@@ -1,9 +1,9 @@
 tasks:
   ai_workbench_service_integration:
     use_when:
-    - Implementing and verifying user-approved muti-ai local service controls and project terminal launchers.
+    - Implementing and verifying user-approved ai-workbench local controls, project terminals and Personal Experiment Box deployment.
     use_when_zh:
-    - 实施并验证用户批准的 muti-ai 本机服务控制及项目终端入口
+    - 实施并验证用户批准的 ai-workbench 本机控制、项目终端和个人试验盒部署
     required:
     - packages/ai-workbench/AGENTS.md
     - packages/ai-workbench/shared/maintenance.md
@@ -34,6 +34,10 @@ tasks:
     - ${DATA_ROOT}/workspace-governance/leases/muti-ai-local.json
     - ${DATA_ROOT}/workspace-governance/leases/muti-ai-terminals.json
     - ${USER_HOME}/Desktop/muti-ai.lnk
+    - ${USER_HOME}/Desktop/个人试验盒.lnk
+    - ${DATA_ROOT}/workspace-governance/leases/experiment-box-local.json
+    - ${DATA_ROOT}/codex/cache/staging/experiment-box-qa/
+    - reports/agent-requests/REQ-experiment-box-local.md
     - ${USER_HOME}/Desktop/GPT?Commander.lnk
     - ${USER_HOME}/Desktop/停止?GPT?Commander.lnk
     - ${USER_HOME}/Desktop/启动?Hermes?Gateway.lnk
