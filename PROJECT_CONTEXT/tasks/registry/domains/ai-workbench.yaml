@@ -1,9 +1,9 @@
 tasks:
   ai_workbench_service_integration:
     use_when:
-    - Implementing and verifying user-approved ai-workbench local controls, project terminals and Personal Experiment Box deployment.
+    - Implementing and verifying user-approved ai-workbench local controls, project terminals, Personal Experiment Box and e-Diary deployment.
     use_when_zh:
-    - 实施并验证用户批准的 ai-workbench 本机控制、项目终端和个人试验盒部署
+    - 实施并验证用户批准的 ai-workbench 本机控制、项目终端、个人试验盒和 e-Diary 部署
     required:
     - packages/ai-workbench/AGENTS.md
     - packages/ai-workbench/shared/maintenance.md
@@ -38,6 +38,10 @@ tasks:
     - ${DATA_ROOT}/workspace-governance/leases/experiment-box-local.json
     - ${DATA_ROOT}/codex/cache/staging/experiment-box-qa/
     - reports/agent-requests/REQ-experiment-box-local.md
+    - reports/agent-requests/REQ-e-diary-local.md
+    - ${DATA_ROOT}/workspace-governance/leases/e-diary-local.json
+    - ${DATA_ROOT}/codex/cache/staging/e-diary-qa/
+    - ${USER_HOME}/Desktop/e-Diary.lnk
     - ${USER_HOME}/Desktop/GPT?Commander.lnk
     - ${USER_HOME}/Desktop/停止?GPT?Commander.lnk
     - ${USER_HOME}/Desktop/启动?Hermes?Gateway.lnk
