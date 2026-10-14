@@ -370,6 +370,8 @@ tasks:
     write_scope:
     - PROJECT_CONTEXT/tasks/registry/index.yaml
     - PROJECT_CONTEXT/tasks/ledger/README.md
+    # Release outcome synchronization writes only the invoking TASK's day entry.
+    - PROJECT_CONTEXT/tasks/ledger/
     - packages/character-system/distribution/
     - packages/character-system/runtime/characters/zyc/SKILL.md
     - packages/character-system/runtime/characters/zyc/README.md
