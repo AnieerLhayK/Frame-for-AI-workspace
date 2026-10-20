@@ -228,3 +228,23 @@ owns this authority; ordinary development does not confer it.
 An explicit Codex or user decision permitting delivery of a reviewed governance
 batch, bound to source and target commits. It covers integration and registered
 publication, never editing governance. Changed commits require renewed approval.
+
+## e-Chatter local library
+
+A user's local collection of application sessions, folder classifications,
+registered character versions, diagnoses, handoffs and accepted writing revisions.
+Codex authentication grants model access; it does not identify, synchronize or
+own this library.
+
+## character registration and version
+
+Registration declares a user-confirmed character and its developing/runtime
+classification. A version is an immutable app-owned snapshot actually loaded for
+a reply. Classification is a manual workflow label, not evidence of quality.
+
+## engineering task and revision proposal
+
+An isolated Generator, Maintainer or Doctor conversation associated with a chat
+session and applicable character version. A revision proposal is a staging copy
+awaiting review; accepting it saves a new application version without validating
+behavior or overwriting imported originals.

@@ -352,3 +352,19 @@ manifest-declared workspace output root and never changes source material.
   validation, preserving all history, branches and contributions; do not delete it.
   Bilingual documentation incorporates useful ideas from both unmerged README PRs
   with attribution, without making remote changes authoritative.
+
+## e-Chatter Uses Local Libraries And Application-Owned Revisions
+
+- decision: Implement e-Chatter first in ai-workbench as an independently
+  distributable Windows desktop application. Each user supplies their own Codex
+  login and local character data. Bundle adapted engineering skills, not personal
+  characters or a character-system runtime dependency.
+- reason: Local ownership supports portable distribution while preserving the
+  existing Codex account flow. A hosted multi-user service and account-synced
+  library would require different storage and authorization contracts.
+- date if known: 2026-10-17, user-approved implementation specification.
+- consequence: Imported originals remain read-only; edits occur in task staging
+  and are accepted as new application-owned versions. Diagnostics and handoffs
+  live under application data. Future migration into character-system must resolve
+  resource ownership separately. Saved revisions require subsequent trials before
+  claiming improved character behavior.

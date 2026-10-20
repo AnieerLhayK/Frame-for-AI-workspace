@@ -210,6 +210,7 @@ task_files:
   public_projection_synchronization: domains/publishing.yaml
   public_projection_publisher_update: domains/publishing.yaml
   character_system_public_integration: domains/publishing.yaml
+  e_chatter_stable_distribution: domains/publishing.yaml
   raw_material_filter_tooling: domains/skills.yaml
   report_freshness_tooling: domains/publishing.yaml
   report_freshness_status_update: domains/publishing.yaml

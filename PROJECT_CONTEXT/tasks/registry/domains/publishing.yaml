@@ -1,5 +1,41 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  e_chatter_stable_distribution:
+    use_when:
+    - Preparing independent e-Chatter source snapshots, local candidate bundles and manual stable promotion from ai-workbench to character-system.
+    use_when_zh:
+    - 将 ai-workbench 中的 e-Chatter 手动晋升为 character-system 独立源码快照和本地候选发行包。
+    required:
+    - packages/ai-workbench/AGENTS.md
+    - packages/ai-workbench/shared/maintenance.md
+    - packages/character-system/README.md
+    - shared/governance/git_integration_policy.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    optional:
+    - packages/ai-workbench/docs/e-chatter.md
+    - packages/character-system/applications/e-chatter/
+    ignore:
+    - personal characters, credentials and corpus
+    tool_profile: platform_maintenance
+    ledger: true
+    budget:
+      required_warn_tokens: 20000
+      expanded_warn_tokens: 28000
+      hard_max_tokens: 32000
+    write_scope:
+    - ${DATA_ROOT}/out/workspace/e-chatter/**
+    - ${DATA_ROOT}/ai-workbench/e-chatter/**
+    - ${USER_HOME}/Desktop/e-Chatter.lnk
+    - packages/ai-workbench/
+    - packages/character-system/applications/e-chatter/
+    - packages/character-system/README.md
+    - packages/character-system/README.zh-CN.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -B -m pytest -q -p no:cacheprovider packages/ai-workbench/tests
+    - python -B -m scripts.validation.check_doc_pairs --validate-coverage
+    - git diff --check
   ai_workbench_public_projection:
     use_when:
     - Preparing, registering or synchronizing the authorized ai-workbench public projection.
