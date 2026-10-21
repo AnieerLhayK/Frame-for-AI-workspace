@@ -181,6 +181,9 @@ EXCLUDED_PATHS = {
     "packages/character-system/distribution",
     "WORKSPACE_ENGINEERING/plans/public-repo-plan.md",
     # Individual files
+    # Personal prose snapshot: archived locally, never an active Frame policy.
+    "shared/policies/prose.md",
+    "shared/policies/.gitattributes",
     ".env",
     ".claude/routing_events.ndjson",
     ".claude/settings.local.json",
