@@ -248,3 +248,22 @@ An isolated Generator, Maintainer or Doctor conversation associated with a chat
 session and applicable character version. A revision proposal is a staging copy
 awaiting review; accepting it saves a new application version without validating
 behavior or overwriting imported originals.
+
+## user-style mirror
+
+An e-Diary-owned private snapshot of an upstream writing-style skill and its
+required text references. A user explicitly accepts source updates by manual
+synchronization. Its source identity is retained; its availability does not depend
+on the upstream directory during generation.
+
+## delayed evidence
+
+Work material newly discovered or changed since its registered coverage baseline
+whose underlying activity may precede the current report period. Discovery is not
+an activity date; reports explain known time differences and uncertainty.
+
+## retrospective baseline
+
+Bounded prior self-descriptions and contextual reports used to understand a
+person's continuing interests, priorities and approach. It is context for this
+period's changes, not an independent source of facts or inferred personality.

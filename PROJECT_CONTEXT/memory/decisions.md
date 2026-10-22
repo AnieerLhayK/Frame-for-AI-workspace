@@ -368,3 +368,31 @@ manifest-declared workspace output root and never changes source material.
   live under application data. Future migration into character-system must resolve
   resource ownership separately. Saved revisions require subsequent trials before
   claiming improved character behavior.
+
+## Writer A Connectivity Test Artifact Is Retired
+
+- decision: Retire the generated `characters/writerA/` artifact and set the existing
+  generator `configs/writerA.json` to `enabled: false`. Keep original corpus,
+  example configuration and synthetic tests; Writer A labels there remain examples.
+- date: 2026-10-22, user-confirmed character cleanup plan.
+- reason: This was a connectivity-test output, not a maintained runtime character.
+- consequence: Batch generation skips it. Do not recreate or expose it as a
+  maintained character without a new explicit request. This retirement does not
+  change ZYC/ZF style, generator scripts/templates or e-Chatter distributions.
+
+## e-Diary Owns Manual Style Snapshots And Delayed Evidence
+
+- decision: Keep user-style as an immutable private snapshot under application data,
+  updated only by explicit manual sync; retain upstream identity and legacy source configuration.
+- date: 2026-10-22, user-approved PLAN-20261022-001.
+- reason: Generation must remain reproducible without live external skill dependencies
+  or downstream maintenance in character-system.
+- consequence: Ordinary-directory registration establishes a background-only content
+  baseline. Later adopted changes belong to the current successful work report, with
+  earlier activity dates disclosed rather than inferred from file modification time.
+  Comparison reports retain originals and consume no coverage. Historical generated
+  reports cannot independently prove facts; personal experience follows self-report.
+  Saved entries retain retryable coverage bookkeeping independently of generation.
+  The user accepted the actual comparison reports before Cover It was extracted.
+  Cover It is a private, explicitly invoked, application-independent writing skill;
+  inference scope belongs to each caller, rather than inheriting e-Diary privileges.
