@@ -1,5 +1,74 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  workspace_runtime_hygiene:
+    use_when:
+    - Implementing the user-approved bounded MCP/runtime log and installation migration, with exact cleanup targets.
+    use_when_zh:
+    - 实施用户批准的 MCP 安装与有界日志迁移，仅清理已核实的精确目标。
+    required:
+    - shared/workspace/workspace_path_policy.md
+    - shared/workspace/manifest_portability_policy.md
+    - shared/operations/session_continuity_policy.md
+    - shared/governance/git_integration_policy.md
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - mcp/README.md
+    optional:
+    - workspace_manifest.yaml
+    - scripts/workspace/resolve_task_context.py
+    - scripts/reporting/report_routing_quality.py
+    ignore:
+    - unrelated tools, credentials, private content, archives and session stores
+    tool_profile: cleanup_migration
+    ledger: true
+    write_scope:
+    - workspace_manifest.yaml
+    - mcp/
+    - .opencode/.gitignore
+    - .claude/.gitignore
+    - .claude/routing_events.ndjson
+    - scripts/workspace/runtime_logging.py
+    - scripts/workspace/mcp_runtime.py
+    - scripts/workspace/resolve_task_context.py
+    - scripts/reporting/report_routing_quality.py
+    - scripts/publishing/publish_check.py
+    - scripts/publishing/publish_policy.py
+    - scripts/publishing/publish_public.py
+    - scripts/publishing/public_workspace_renderer.py
+    - scripts/publishing/readme_templates/frame/mcp.md
+    - scripts/tests/publishing/test_publish_rendering.py
+    - scripts/tests/workspace/test_runtime_logging.py
+    - scripts/tests/workspace/test_mcp_runtime.py
+    - scripts/tests/workspace/test_resolve_task_context.py
+    - scripts/tests/reporting/test_report_routing_quality.py
+    - scripts/tests/publishing/test_publish_projection.py
+    - scripts/tests/publishing/test_publish_policy.py
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/glossary.zh-CN.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - PROJECT_CONTEXT/memory/decisions.zh-CN.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - PROJECT_CONTEXT/tasks/registry/domains/continuity.yaml
+    - PROJECT_CONTEXT/tasks/registry/index.yaml
+    - PROJECT_CONTEXT/governance/context_budget.md
+    - reports/current/manifest_validation_report.md
+    - skills/governance/ai-record-gather/assets/
+    - skills/productivity/collaboration-builder/assets/starter/
+    - ${DATA_ROOT}/mcp/
+    - ${DATA_ROOT}/workspace/logs/
+    - ${DATA_ROOT}/codex/cache/staging/workspace-runtime-hygiene/
+    - ${DATA_ROOT}/codex/config.toml
+    - ${USER_HOME}/.claude.json
+    - ${USER_HOME}/.config/opencode/opencode.json
+    - ${DATA_ROOT}/hermes/config.yaml
+    - ${DATA_ROOT}/workspace-governance/leases/LEASE-20261023-MCP-RUNTIME.yaml
+    validation:
+    - python -m unittest scripts.tests.workspace.test_runtime_logging scripts.tests.workspace.test_mcp_runtime scripts.tests.workspace.test_resolve_task_context scripts.tests.reporting.test_report_routing_quality scripts.tests.publishing.test_publish_projection
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - workspace records validate
+    - workspace plans validate
+    - git diff --check
   workspace_lint_cache_cleanup:
     use_when:
     - Removing only the explicitly user-approved workspace-local .ruff_cache after identity and link checks.

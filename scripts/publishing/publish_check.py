@@ -17,10 +17,12 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 # Patterns that should be scrubbed (must NOT appear in output)
@@ -197,10 +199,12 @@ def check_no_python_bytecode(root: Path) -> list[str]:
     return issues
 
 
-def _python_check_env() -> dict[str, str]:
+def _python_check_env(log_directory: str | None = None) -> dict[str, str]:
     """Keep Python subprocesses from writing bytecode into the projection."""
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    if log_directory is not None:
+        env["AI_TOOL_STAGING_DIR"] = log_directory
     return env
 
 
@@ -222,41 +226,33 @@ def check_docs(root: Path) -> list[str]:
     return issues
 
 
-def _routing_event_snapshot(root: Path) -> dict[Path, str | None]:
-    """Snapshot resolver logs at both workspace and script-relative locations."""
-    paths = (
-        root / ".claude" / "routing_events.ndjson",
-        root / "scripts" / ".claude" / "routing_events.ndjson",
-    )
-    return {
-        path: path.read_text(encoding="utf-8") if path.is_file() else None
-        for path in paths
-    }
-
-
-def _restore_routing_event_snapshot(snapshot: dict[Path, str | None]) -> None:
-    """Restore pre-check resolver logs and remove newly created transient logs."""
-    for path, original in snapshot.items():
-        if original is None:
-            if path.exists():
-                path.unlink()
-        else:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(original, encoding="utf-8")
+def _telemetry_directory() -> tempfile.TemporaryDirectory:
+    """Give each check its own telemetry, never restore over a live log."""
+    parent = os.environ.get("AI_TOOL_STAGING_DIR")
+    if not parent:
+        manifest = Path(__file__).resolve().parents[2] / "workspace_manifest.yaml"
+        if manifest.is_file():
+            configured = json.loads(manifest.read_text(encoding="utf-8-sig")).get("runtime_roots", {}).get("staging")
+            if configured and "${" not in configured and Path(configured).is_absolute():
+                parent = configured
+    if parent:
+        Path(parent).mkdir(parents=True, exist_ok=True)
+    return tempfile.TemporaryDirectory(prefix="publish-check-", dir=parent)
 
 
 def run_functional_checks(root: Path) -> list[str]:
     """Run key scripts in the staging directory to verify they work."""
     issues: list[str] = []
     cwd = os.getcwd()
-    routing_events = _routing_event_snapshot(root)
+    telemetry = _telemetry_directory()
+    check_env = _python_check_env(telemetry.name)
     try:
         os.chdir(root)
 
         # 1. Task resolver
         result = subprocess.run(
             [sys.executable, "-m", "scripts.workspace.resolve_task_context", "--list"],
-            capture_output=True, text=True, timeout=30, env=_python_check_env(),
+            capture_output=True, text=True, timeout=30, env=check_env,
         )
         if result.returncode != 0:
             issues.append(
@@ -267,7 +263,7 @@ def run_functional_checks(root: Path) -> list[str]:
         # 2. workspace CLI agent list
         result = subprocess.run(
             [sys.executable, "-m", "scripts.workspace.workspace_cli", "agent", "list"],
-            capture_output=True, text=True, timeout=30, env=_python_check_env(),
+            capture_output=True, text=True, timeout=30, env=check_env,
         )
         if result.returncode != 0:
             issues.append(
@@ -285,7 +281,7 @@ def run_functional_checks(root: Path) -> list[str]:
                 "mechanism",
                 "task-routing",
             ],
-            capture_output=True, text=True, timeout=30, env=_python_check_env(),
+            capture_output=True, text=True, timeout=30, env=check_env,
         )
         if result.returncode != 0:
             issues.append(
@@ -297,7 +293,7 @@ def run_functional_checks(root: Path) -> list[str]:
         # rc=0 clean, rc=1 issues found, rc=2 infrastructure not fully set up
         result = subprocess.run(
             [sys.executable, "-m", "scripts.workspace.workspace_cli", "health"],
-            capture_output=True, text=True, timeout=30, env=_python_check_env(),
+            capture_output=True, text=True, timeout=30, env=check_env,
         )
         if result.returncode not in (0, 1, 2):
             issues.append(
@@ -311,7 +307,7 @@ def run_functional_checks(root: Path) -> list[str]:
         issues.append(f"  Script not found: {exc}")
     finally:
         os.chdir(cwd)
-        _restore_routing_event_snapshot(routing_events)
+        telemetry.cleanup()
 
     return issues
 
@@ -320,12 +316,13 @@ def run_tests(root: Path) -> list[str]:
     """Run pytest in the staging directory."""
     issues: list[str] = []
     cwd = os.getcwd()
-    routing_events = _routing_event_snapshot(root)
+    telemetry = _telemetry_directory()
+    check_env = _python_check_env(telemetry.name)
     try:
         os.chdir(root)
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "scripts/tests", "-q"],
-            capture_output=True, text=True, timeout=120, env=_python_check_env(),
+            capture_output=True, text=True, timeout=120, env=check_env,
         )
         if result.returncode != 0:
             lines = result.stdout.strip().split("\n")
@@ -369,7 +366,7 @@ def run_tests(root: Path) -> list[str]:
         issues.append(f"  pytest not found: {exc}")
     finally:
         os.chdir(cwd)
-        _restore_routing_event_snapshot(routing_events)
+        telemetry.cleanup()
     return issues
 
 

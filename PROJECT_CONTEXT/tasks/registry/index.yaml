@@ -136,7 +136,6 @@ default_rules:
   - ${WORKSPACE_ROOT}/research/skills/
   - mcp/servers/
   - mcp/downloads/
-  - mcp/logs/
   context_budget:
     policy_file: PROJECT_CONTEXT/governance/context_budget.md
     initial_level: resolver_required

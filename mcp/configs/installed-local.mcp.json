@@ -1,30 +1,34 @@
 {
   "mcpServers": {
     "wps-agent": {
-      "command": "${WORKSPACE_ROOT}\\mcp\\servers\\wps-agent\\.venv\\Scripts\\python.exe",
+      "command": "${DATA_ROOT}\\mcp\\wps-agent\\.venv\\Scripts\\python.exe",
       "args": [
-        "${WORKSPACE_ROOT}\\mcp\\servers\\wps-agent\\mcp_server.py"
+        "${DATA_ROOT}\\mcp\\wps-agent\\source\\mcp_server.py"
       ],
-      "cwd": "${WORKSPACE_ROOT}\\mcp\\servers\\wps-agent",
+      "cwd": "${DATA_ROOT}\\mcp\\wps-agent\\source",
       "env": {
-        "PYTHONUTF8": "1"
+        "PYTHONUTF8": "1",
+        "WPS_AGENT_LOG_DIR": "${DATA_ROOT}\\workspace\\logs\\wps-agent"
       }
     },
     "filesystem": {
-      "command": "${WORKSPACE_ROOT}\\mcp\\servers\\filesystem\\node_modules\\.bin\\mcp-server-filesystem.cmd",
+      "command": "${DATA_ROOT}\\mcp\\node\\node_modules\\.bin\\mcp-server-filesystem.cmd",
       "args": [
         "${WORKSPACE_ROOT}",
         "${DEV_ROOT}"
       ]
     },
     "memory": {
-      "command": "${WORKSPACE_ROOT}\\mcp\\servers\\memory\\node_modules\\.bin\\mcp-server-memory.cmd"
+      "command": "${DATA_ROOT}\\mcp\\node\\node_modules\\.bin\\mcp-server-memory.cmd",
+      "env": {
+        "MEMORY_FILE_PATH": "${DATA_ROOT}\\mcp\\state\\memory\\memory.jsonl"
+      }
     },
     "sequential-thinking": {
-      "command": "${WORKSPACE_ROOT}\\mcp\\servers\\sequential-thinking\\node_modules\\.bin\\mcp-server-sequential-thinking.cmd"
+      "command": "${DATA_ROOT}\\mcp\\node\\node_modules\\.bin\\mcp-server-sequential-thinking.cmd"
     },
     "playwright": {
-      "command": "${WORKSPACE_ROOT}\\mcp\\servers\\playwright-mcp\\node_modules\\.bin\\playwright-mcp.cmd",
+      "command": "${DATA_ROOT}\\mcp\\node\\node_modules\\.bin\\playwright-mcp.cmd",
       "args": [
         "--browser",
         "msedge",
@@ -36,7 +40,7 @@
       }
     },
     "context7": {
-      "command": "${WORKSPACE_ROOT}\\mcp\\servers\\context7\\node_modules\\.bin\\context7-mcp.cmd"
+      "command": "${DATA_ROOT}\\mcp\\node\\node_modules\\.bin\\context7-mcp.cmd"
     },
     "hermes": {
       "command": "${DATA_ROOT}/hermes\\hermes-agent\\venv\\Scripts\\hermes.exe",

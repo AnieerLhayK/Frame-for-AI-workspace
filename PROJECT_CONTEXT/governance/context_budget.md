@@ -92,8 +92,7 @@ Do not read these by default:
 - platform data roots such as `${DATA_ROOT}/`
 - tool install roots such as `${WORKSPACE_ROOT}/tools/`
 - raw external skill repositories under `workspace_manifest.yaml -> external_roots.raw_skills`
-- gitignored local MCP payloads such as `mcp/servers/`, `mcp/downloads/`, and
-  `mcp/logs/`
+- gitignored local MCP payloads such as `mcp/servers/` and `mcp/downloads/`
 
 Read them only when the task registry or user explicitly requires them.
 

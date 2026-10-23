@@ -92,6 +92,11 @@ def generate_public_manifest(source_manifest: Path) -> str:
     data["projections"] = []
     return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
 
+def generate_public_mcp_readme() -> str:
+    """Describe the configuration templates actually shipped publicly."""
+    return load_template("frame/mcp.md")
+
+
 def generate_public_readme(repo_name: str) -> str:
     """Return the public Frame README with its framework-only boundary explicit."""
     return render_template("frame/README.md", repo_name=repo_name)

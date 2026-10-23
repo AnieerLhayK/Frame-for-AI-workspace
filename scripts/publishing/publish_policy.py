@@ -163,13 +163,18 @@ EXCLUDED_PATHS = {
     "opencode.json",
     "scripts/reporting/report_status.py",
     "scripts/reporting/report_routing_quality.py",
+    "scripts/tests/reporting/test_report_routing_quality.py",
+    # Host-managed vendor snapshot/locks and its installer are private deployment.
+    "mcp/runtime",
+    "mcp/README.md",
+    "scripts/workspace/mcp_runtime.py",
+    "scripts/tests/workspace/test_mcp_runtime.py",
     "scripts/validation/validate_protocols.py",
     "scripts/tests/validation/test_validate_protocols.py",
     "scripts/sync_report.ps1",
     "scripts/tests/reporting/test_report_status.py",
     "mcp/servers",
     "mcp/downloads",
-    "mcp/logs",
     "publish-staging",
     "corpus",
     "backups",
@@ -185,7 +190,6 @@ EXCLUDED_PATHS = {
     "shared/policies/prose.md",
     "shared/policies/.gitattributes",
     ".env",
-    ".claude/routing_events.ndjson",
     ".claude/settings.local.json",
 }
 
@@ -227,7 +231,6 @@ SCRUB_FILES: set[str] = {
     "scripts/tests/workspace/test_workspace_health.py",
     "scripts/tests/workspace/test_agent_governance.py",
     ".claude/rules/workspace-boundary.md",
-    "mcp/README.md",
     "scripts/publishing/sync_public_repo.py",
     "WORKSPACE_ENGINEERING/PUBLISH.md",
 }

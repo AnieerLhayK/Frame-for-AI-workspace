@@ -1,5 +1,21 @@
 # Decisions
 
+## WPS Uses An External Vendor Snapshot And Workspace-Owned Patches
+
+- decision: Preserve the installed WPS source as a fingerprinted external vendor
+  snapshot, recreate its independently locked Python environment, and maintain
+  reproducible patches in Workspace rather than adopting the whole vendor tree
+  as a source fork. The five Node MCP servers use one dedicated locked install;
+  server state and bounded logs remain separate from dependencies.
+- date: 2026-10-23, user-confirmed PLAN-20261023-001.
+- reason: Per-server ignored installs obscured maintenance ownership and duplicated
+  dependencies. A vendor snapshot preserves local behavior without creating an
+  untracked maintenance fork or taking ownership of unrelated upstream code.
+- consequence: Patch application stops on a fingerprint mismatch. Client cutover
+  must preserve arguments, permissions and persistent state; old installations
+  remain until replacements pass verification and old consumers exit. Root paths
+  resolve through the manifest, not this decision record.
+
 ## muti-ai Separates Service Controls From Project Terminal Dispatch
 
 - decision: Add Codex/Claude new and resume-latest terminal actions using a

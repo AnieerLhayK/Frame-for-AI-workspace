@@ -974,14 +974,9 @@ def print_text(result: dict[str, Any]) -> None:
 
 
 def routing_events_path() -> Path:
-    """Keep resolver telemetry outside the moved implementation package."""
-    staging_dir = os.environ.get("AI_TOOL_STAGING_DIR")
-    if staging_dir:
-        return Path(staging_dir) / "routing_events.ndjson"
-    return WORKSPACE_ROOT / ".claude" / "routing_events.ndjson"
-
-
-ROUTING_EVENTS_PATH = str(routing_events_path())
+    """Resolve telemetry through the manifest, with the staging override."""
+    from scripts.workspace.runtime_logging import routing_events_path as resolve_path
+    return resolve_path(WORKSPACE_ROOT)
 
 
 def record_routing_event(result: dict[str, Any]) -> None:
@@ -1021,11 +1016,9 @@ def record_routing_event(result: dict[str, Any]) -> None:
     }
 
     try:
-        event_path = Path(ROUTING_EVENTS_PATH)
-        event_path.parent.mkdir(parents=True, exist_ok=True)
-        with event_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(event, ensure_ascii=False) + "\n")
-    except OSError:
+        from scripts.workspace.runtime_logging import BoundedLog
+        BoundedLog(routing_events_path()).append(json.dumps(event, ensure_ascii=False))
+    except (OSError, ValueError):
         pass  # best-effort recording
 
 

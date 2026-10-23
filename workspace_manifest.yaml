@@ -5,7 +5,18 @@
     "source_of_truth": "${WORKSPACE_ROOT}",
     "manifest_format": "json-compatible-yaml",
     "manifest_path": "workspace_manifest.yaml",
-    "description": "Portable manifest for a governed AI workspace framework."
+    "description": "Portable manifest for a governed AI workspace framework.",
+    "directory_naming": {
+      "documentation_roots": [
+        "PROJECT_CONTEXT",
+        "USAGE_GUIDES",
+        "WORKSPACE_ENGINEERING"
+      ],
+      "documentation_style": "UPPER_SNAKE_CASE",
+      "source_style": "lowercase-or-kebab-case",
+      "tool_dot_directories": "tool-defined",
+      "enforcement": "convention-only"
+    }
   },
   "platform_roots": {
     "codex": "${DATA_ROOT}/codex/skills",

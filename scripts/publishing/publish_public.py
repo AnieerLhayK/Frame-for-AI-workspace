@@ -48,6 +48,7 @@ from scripts.publishing.public_workspace_renderer import (
     generate_public_agent_guidance,
     generate_public_architecture_md,
     generate_public_manifest,
+    generate_public_mcp_readme,
     generate_public_readme,
     generate_public_readme_zh,
     generate_public_setup_py,
@@ -290,6 +291,7 @@ def main() -> int:
     if not args.dry_run:
         public_manifest = generate_public_manifest(manifest_path)
         write_file(out_dir, "workspace_manifest.yaml", public_manifest)
+        write_file(out_dir, "mcp/README.md", generate_public_mcp_readme())
         write_file(out_dir, "README.md", generate_public_readme(repo_name))
         write_file(out_dir, "README.zh-CN.md", generate_public_readme_zh(repo_name))
         write_file(out_dir, "ARCHITECTURE.md", generate_public_architecture_md())
@@ -310,7 +312,7 @@ def main() -> int:
         for layer in PUBLIC_EXTENSION_LAYERS:
             write_file(out_dir, f"{layer}/README.md", EXTENSION_LAYER_READMES[layer])
         create_required_public_context_dirs(out_dir)
-        counts["copied"] += 11
+        counts["copied"] += 12
 
     print()
     if args.dry_run:

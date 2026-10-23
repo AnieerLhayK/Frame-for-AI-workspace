@@ -1,5 +1,13 @@
 # Glossary
 
+## managed MCP installation
+
+A local deployment of an MCP server whose installation recipe, dependency locks
+and maintenance patches are owned by Workspace. Installed vendor files are
+deployment artifacts; persistent server state and diagnostic logs have separate
+lifecycles and do not belong to the dependency tree. Sharing an installation does
+not imply sharing every client's permissions or conversation state.
+
 ## ai-workbench
 
 A personal helper-tool source package in the authoritative Workspace. Its
