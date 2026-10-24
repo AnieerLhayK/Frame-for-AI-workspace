@@ -3,8 +3,10 @@ tasks:
   workspace_runtime_hygiene:
     use_when:
     - Implementing the user-approved bounded MCP/runtime log and installation migration, with exact cleanup targets.
+    - Repairing Python-version or platform compatibility of the managed MCP installer without changing installed dependency versions.
     use_when_zh:
     - 实施用户批准的 MCP 安装与有界日志迁移，仅清理已核实的精确目标。
+    - 修复受管 MCP 安装器的 Python 版本或平台兼容性，不改变已安装依赖版本。
     required:
     - shared/workspace/workspace_path_policy.md
     - shared/workspace/manifest_portability_policy.md
