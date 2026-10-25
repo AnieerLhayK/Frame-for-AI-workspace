@@ -255,14 +255,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = commands.add_parser("validate", help="Run an existing workspace validator.")
     validate_commands = validate.add_subparsers(dest="target", required=True)
-    validate_commands.add_parser(
+    validate_manifest = validate_commands.add_parser(
         "manifest",
         help="Validate the manifest and refresh its snapshot report.",
     )
-    validate_commands.add_parser(
+    validate_manifest.add_argument("--check", action="store_true", help="Validate without updating the report.")
+    validate_protocols = validate_commands.add_parser(
         "protocols",
         help="Validate shared protocols and refresh their snapshot report.",
     )
+    validate_protocols.add_argument("--check", action="store_true", help="Validate without updating the report.")
     validate_runtime_loop = validate_commands.add_parser(
         "runtime-loop",
         help="Audit runtime-loop packets, links, ledgers, and state evidence without writing.",
@@ -565,10 +567,11 @@ def dispatch(args: argparse.Namespace) -> int:
             command.append("--include-optional")
         return run_command(command)
     if args.command == "validate":
-        if args.target == "manifest":
-            return run_command([sys.executable, "-m", "scripts.validation.validate_manifest"])
-        if args.target == "protocols":
-            return run_command([sys.executable, "-m", "scripts.validation.validate_protocols"])
+        if args.target in {"manifest", "protocols"}:
+            command = [sys.executable, "-m", f"scripts.validation.validate_{args.target}"]
+            if args.check:
+                command.append("--check")
+            return run_command(command)
         if args.target == "runtime-loop":
             command = [sys.executable, "-m", "scripts.validation.validate_runtime_loop"]
             if args.strict:

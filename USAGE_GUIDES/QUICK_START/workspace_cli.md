@@ -74,6 +74,19 @@ workspace validate links
 workspace skill list
 ```
 
+只验证 manifest 或 protocol、不刷新报告时使用：
+
+```powershell
+workspace validate manifest --check
+workspace validate protocols --check
+```
+
+两个验证器的模块入口也支持 `--check`；验证失败仍返回非零。`--help` 不验证或写报告。
+为兼容既有调用，不带 `--check` 的验证仍会写报告；显式刷新使用
+`workspace reports refresh <report-id>`。触碰或恢复旧报告不会清除 Git 已知的陈旧证据。
+协议验证属于 Workspace 私有能力；公开 Frame 模板仅附带 manifest 验证器，模板项目
+需先接入自己的协议验证器，再使用这里的 protocol 命令。
+
 刷新报告或建立平台投影会写文件。先查看对应命令帮助，并仅在任务明确授权时使用写入选项。
 
 ## 帮助

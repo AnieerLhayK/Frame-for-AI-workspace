@@ -171,6 +171,9 @@ EXCLUDED_PATHS = {
     "scripts/tests/workspace/test_mcp_runtime.py",
     "scripts/validation/validate_protocols.py",
     "scripts/tests/validation/test_validate_protocols.py",
+    # Keep the portable manifest CLI contract, without a dangling dependency
+    # on the private protocol validator excluded above.
+    "scripts/tests/validation/test_validate_protocols_cli.py",
     "scripts/sync_report.ps1",
     "scripts/tests/reporting/test_report_status.py",
     "mcp/servers",

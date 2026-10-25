@@ -249,9 +249,9 @@ tasks:
   report_freshness_tooling:
     use_when:
     - Changing read-only report freshness detection or the explicit report refresh
-      interface.
+      interface, including non-writing manifest/protocol validation.
     use_when_zh:
-    - 修改只读报告新鲜度检测或显式报告刷新接口
+    - 修改只读报告新鲜度检测、显式报告刷新接口或 manifest/protocol 的只读验证
     required:
     - shared/operations/reporting_policy.md
     - scripts/reporting/report_status.py
@@ -283,12 +283,20 @@ tasks:
     - scripts/reporting/sync_report.ps1
     - scripts/workspace/workspace_cli.py
     - scripts/tests/workspace/test_workspace_cli.py
+    - scripts/validation/validate_manifest.py
+    - scripts/validation/validate_protocols.py
+    - scripts/tests/validation/test_validate_report_cli.py
+    - scripts/tests/validation/test_validate_protocols_cli.py
+    - USAGE_GUIDES/QUICK_START/workspace_cli.md
     - reports/
     validation:
     - python -m unittest scripts.tests.reporting.test_report_status scripts.tests.workspace.test_workspace_cli
+      scripts.tests.validation.test_validate_report_cli scripts.tests.validation.test_validate_protocols
+      scripts.tests.validation.test_validate_protocols_cli
     - python -m scripts.workspace.workspace_cli reports status --format json
-    - python -m scripts.validation.validate_protocols
-    - powershell -ExecutionPolicy Bypass -File scripts/reporting/sync_report.ps1
+    - python -m scripts.validation.validate_manifest --check
+    - python -m scripts.validation.validate_protocols --check
+    - python -m scripts.workspace.workspace_cli reports refresh all-current
     - git diff --check
   report_freshness_status_update:
     use_when:

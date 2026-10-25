@@ -56,7 +56,7 @@ A report is stale when any of these change after report generation:
 
 - `workspace_manifest.yaml`
 - any shared policy or protocol used by the report
-- current Git commit
+- relevant source commits (not unrelated audit-only commits)
 - platform projection targets
 - required skill source paths
 - report generation script
@@ -70,6 +70,30 @@ and the Git ordering of the latest relevant source and report commits. A header'
 because source changes and their refreshed report are commonly committed together.
 The command must not regenerate or edit reports. Use `--strict` when automation
 should return exit code `2` for stale or missing snapshots.
+
+Editing, touching, or restoring an old report does not erase committed source
+staleness. An uncommitted refresh supersedes the old report commit only when its
+generation baseline resolves to a Git commit containing the latest relevant
+committed source. Source and report committed together remain valid even when
+the header names their previous generation baseline. Working source changes
+and environments without usable Git history retain the modification-time check;
+grouped reports must agree on generation timestamp and baseline.
+
+For validation without refreshing snapshots, use:
+
+```powershell
+python -m scripts.workspace.workspace_cli validate manifest --check
+python -m scripts.workspace.workspace_cli validate protocols --check
+```
+
+The underlying `scripts.validation.validate_manifest` and
+`scripts.validation.validate_protocols` modules accept the same `--check` option.
+It preserves report contents and timestamps, including on validation failure;
+errors still return nonzero. `--help` only displays help. Existing calls without
+`--check` continue validating and writing their snapshot for compatibility.
+Protocol validation is a private Workspace capability. The public Frame template
+ships the manifest validator; template adopters must provide their own protocol
+validator before using the protocol commands shown here.
 
 Refresh is always explicit:
 
@@ -121,7 +145,7 @@ Regenerate workspace setup and health reports after:
 - manifest changes
 - shared policy/protocol changes
 - projection changes
-- Git baseline changes
+- relevant Git source changes
 - report script changes
 
 Regenerate Git governance reports only after Git boundary work.

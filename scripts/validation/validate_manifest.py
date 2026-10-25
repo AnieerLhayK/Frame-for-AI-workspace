@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import sys
@@ -669,15 +670,19 @@ def write_report(state: State, manifest: dict[str, Any] | None) -> None:
     REPORT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Validate without writing the snapshot report.")
+    args = parser.parse_args(argv)
     state = State()
     manifest = load_manifest(state)
     if manifest is not None:
         check_required_fields(manifest, state)
         check_paths(manifest, state)
         check_absolute_paths(manifest, state)
-    write_report(state, manifest)
-    print(f"Manifest validation report: {REPORT_PATH.relative_to(WORKSPACE_ROOT).as_posix()}")
+    if not args.check:
+        write_report(state, manifest)
+        print(f"Manifest validation report: {REPORT_PATH.relative_to(WORKSPACE_ROOT).as_posix()}")
     print(f"ERROR: {len(state.errors)}")
     print(f"WARNING: {len(state.warnings)}")
     for finding in state.errors:
