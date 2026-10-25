@@ -264,10 +264,11 @@ tasks:
     - PROJECT_CONTEXT/governance/change_surface_policy.md
     - shared/governance/agent_governance.yaml
     - shared/governance/agent_governance_policy.md
+    - shared/governance/git_integration_policy.md
+    optional:
     - scripts/workspace/verify_change_scope.py
     - scripts/workspace/workflow_check.py
     - scripts/workspace/workspace_cli.py
-    optional:
     - AGENTS.md
     - scripts/tests/workspace/test_verify_change_scope.py
     - scripts/tests/workspace/test_workflow_check.py
@@ -343,18 +344,15 @@ tasks:
     - reports/current/workspace_setup_report.md
     validation:
     - python -m unittest scripts.tests.workspace.test_verify_change_scope scripts.tests.workspace.test_workflow_check
-      scripts.tests.workspace.test_workspace_cli
-    - python -m scripts.workspace.workspace_cli changes verify governance_workflow_simplification
-      --strict
+      scripts.tests.workspace.test_workspace_cli scripts.tests.workspace.test_startup_context_policy
     - python -m scripts.workspace.workspace_cli workflow check governance_workflow_simplification
-      --strict
+      --record-id "$env:WORKSPACE_TASK_RECORD" --include-committed --strict
     - python -m scripts.workspace.resolve_task_context governance_workflow_simplification --format
       json
     - python -m scripts.workspace.workspace_cli knowledge validate
     - python -m scripts.validation.validate_manifest
     - python -m scripts.validation.validate_protocols
     - python -m scripts.workspace.workspace_cli health --with-tests
-    - git diff --check
   runtime_authorization_enforcement:
     use_when:
     - Connecting Agent and Skill authority to runtime tool dispatch, actor-aware change

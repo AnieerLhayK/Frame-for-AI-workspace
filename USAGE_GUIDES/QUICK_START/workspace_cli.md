@@ -17,6 +17,9 @@ workspace launcher status
 python -m scripts.workspace.workspace_cli launcher install
 ```
 
+向 PLAN 等命令传递多行正文时，用 Python 子进程参数列表调用模块入口，避免 `.cmd`
+对复杂参数进行二次解析；保存后核对记录正文和验收条件。
+
 ## 日常读取
 
 ```powershell
@@ -37,7 +40,7 @@ workspace explain path scripts/workspace/workspace_cli.py
 ```powershell
 workspace records start --task-type <task-id> --operation workspace_write `
   --owner-agent codex --owner-session <session-id>
-workspace agent check --agent codex --path <workspace-relative-path>
+workspace agent check --agent codex --path <workspace-relative-path> --record-id <TASK-ID>
 ```
 
 如果权限不足，可提交审查或临时授权申请；申请本身不会授予权限：
@@ -55,6 +58,12 @@ workspace workflow check <task-id> --record-id <TASK-ID>
 ```
 
 `workflow check` 检查写入范围、Git diff 和工作流就绪状态；它不会代替任务的验证命令，也不会提交。Agent 权限、skill 权限/执行模式和 TASK 写入范围必须同时允许操作。
+
+同一状态、同一范围内，`workflow check` 已包含 `changes verify` 与未暂存/已暂存的
+diff 检查，无需再分别重复运行。整批交付加 `--include-committed`；文件、暂存区或
+提交变化后重新检查。检查其他范围、排查失败和独立测试仍按需要执行。
+登记验证命令若使用 `$env:WORKSPACE_TASK_RECORD`，先把它设为本轮的准确活动 TASK；
+批量协作仍显式传入 `--batch-task` 和经协调的路径，不能借此扩大写入权限。
 
 ## 常用只读检查
 

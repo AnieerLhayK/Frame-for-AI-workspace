@@ -43,6 +43,13 @@ tests, manifests, or the target file's nearest owning policy.
 
 ## Post-Change Verification
 
+For `governance_workflow_simplification`, begin with the required policies and
+the resolver's write scope. Before editing a verifier, workflow command, or CLI,
+load its optional source and focused tests. Before changing authority rules,
+read the complete owning policy and registry. Before changing a route, read its
+owning domain entry and resolver tests. Count these additional reads as editing
+context; the initial budget is not the total cost of completing the task.
+
 Planning compares candidate paths before editing. Verification compares the
 resolved task scope with current Git evidence after editing:
 

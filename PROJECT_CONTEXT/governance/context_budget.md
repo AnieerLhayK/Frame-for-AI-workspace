@@ -144,16 +144,24 @@ Before edits:
 1. Run `git status --short --untracked-files=all`.
 2. Identify existing modified or untracked files.
 3. Do not overwrite unexplained user changes.
-4. Perform governance changes on the agent's registered long-lived branch
-   (normally `codex` or `claude`); integrate only through the approved
-   fast-forward workflow in `AGENTS.md`.
+4. Develop on shared `dev` without switching this checkout. Read
+   `shared/governance/git_integration_policy.md` for coordination, review and
+   fast-forward integration through the existing suitable `main` worktree.
 
 After edits:
 
-1. Run focused validation from the task registry.
-2. Run `git diff --check`.
-3. Add the human decision note to the appropriate `PROJECT_CONTEXT/tasks/ledger/YYYY/MM/DD.md` file when the task materially changes workspace maintenance state.
-4. Summarize changed files and whether the work should be committed.
+1. Run affected validation from the task registry. Set
+   `$env:WORKSPACE_TASK_RECORD` to the exact active TASK before running a routed
+   PowerShell command that uses it; an empty or stale value must not be replaced
+   with another session's record.
+2. Run `workspace workflow check <task-id> --record-id <TASK-ID>` while the TASK
+   is active; use `--include-committed` for the full batch. This includes scope
+   verification and unstaged/staged diff checks. Do not repeat those checks for
+   the same state and path set; rerun after edits, staging or commits change it.
+   Standalone diagnostics and checks of a different scope remain useful.
+3. Record reusable decisions in their owning source or mark writeback N/A.
+   Finalization synchronizes the daily ledger; manual ledger duplication is not
+   required. Follow the Git integration policy for review, delivery and closure.
 
 ## Conflict Rules
 

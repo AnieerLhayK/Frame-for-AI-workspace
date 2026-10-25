@@ -79,6 +79,31 @@ The context budget (`PROJECT_CONTEXT/governance/context_budget.md`) defines esca
 
 Each level has a token ceiling with per-task overrides. Missing required context is an ERROR; missing optional is a WARNING.
 
+### Consolidate Checks At The Same State
+
+The 2026-10-26 review of the latest ten closed TASKs found repeated validation
+lists, timeout/retry evidence, and stale branch examples. All ten TASKs were
+successful; failed intermediate attempts are not failed TASK outcomes, and the
+records do not prove how many commands ran on an identical state.
+
+The actionable duplication was in the governance route: separate scope and
+diff commands surrounded `workflow check`, which already performs both. Use
+one complete workflow invocation with the active record and full-batch options
+instead. Set `WORKSPACE_TASK_RECORD` to that exact active record before using
+the routed PowerShell command; add coordinated batch members explicitly.
+Repeat after changes to files, index, commits or checked scope. Standalone
+diagnostics remain available; tests, capability checks, independent review,
+commit-bound merge preflight and publication checks keep their own purposes.
+
+Keep required authority and delivery policies visible at startup. Defer
+implementation and tests until their edit or investigation branch is selected,
+with an explicit loading trigger in required context. Report both initial and
+expanded context; moving a read later does not eliminate its editing cost.
+Do not raise warning thresholds to obtain PASS. A timeout followed by a complete
+independent run is evidence to inspect, not permission for automatic test reuse.
+The audit sample and case-specific retention decisions live in the owning TASK,
+not in another permanent observation ledger.
+
 ### Dependency Contracts Belong In One Registry
 
 For a multi-skill package, keep each skill's runtime protocol dependency list
