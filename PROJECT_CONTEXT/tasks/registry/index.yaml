@@ -178,6 +178,7 @@ default_rules:
     - shared protocol contracts
     - current git state
 task_files:
+  workspace_portability_repair: domains/workspace.yaml
   ai_workbench_bootstrap: domains/ai-workbench.yaml
   ai_workbench_development: domains/ai-workbench.yaml
   ai_workbench_service_integration: domains/ai-workbench.yaml

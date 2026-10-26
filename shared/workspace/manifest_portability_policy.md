@@ -12,6 +12,8 @@ This policy defines how the workspace should remain recoverable when local direc
 - shared projection paths
 - external Claude Code and OpenCode session-store roots
 - local external research roots declared under `external_roots`
+- installed runtimes, staging and log roots under `runtime_roots`
+- delivery roots under `output_roots`
 
 These paths describe the current machine deployment. They should remain centralized in the manifest and should not spread back into skill docs or source files.
 
@@ -80,7 +82,7 @@ python -m scripts.workspace.bootstrap_workspace
 python -m scripts.validation.validate_manifest
 python -m scripts.workspace.migration_dry_run --scenario root-rename --new-root <new-workspace-root>
 python -m scripts.validation.validate_protocols
-powershell -ExecutionPolicy Bypass -File scripts\check_links.ps1
+powershell -ExecutionPolicy Bypass -File scripts\validation\check_links.ps1
 ```
 
 ## Manifest Maintenance
@@ -94,3 +96,19 @@ Reports may contain old paths as snapshots. If reports conflict with the manifes
 Source moves must also follow `shared/operations/session_continuity_policy.md`. Session
 stores stay outside the Git tree, and old working-directory values may remain as
 historical metadata when project identity is unchanged.
+
+## Classified path observations
+
+Report path matches retain their file, token and classification reason. Manifest
+roots and owner catalogs explain deployment locations; catalog internal source
+paths still need review. Historical TASK/PLAN records, ledgers, migration maps,
+report snapshots and engineering evidence retain the paths actually observed.
+Test fixtures and exact replacement/leak-detection signatures are not production
+defaults. Signature files do not exempt unrelated runtime assignments. Unexplained
+active source or current-memory references remain review items. Classification
+never grants write authority or permission to migrate a path.
+
+Agent projections declare `kind: agent` and nonempty `required_files`. Validation
+requires each entrypoint to exist inside its target under the Workspace `agents/`
+source root. Unknown kinds, missing files and escaping paths fail validation;
+unreferenced skill projections continue to warn.

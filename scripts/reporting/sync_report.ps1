@@ -261,74 +261,15 @@ function Get-HardcodedPathFindings {
     [Parameter(Mandatory = $true)]$Manifest
   )
 
-  $rootTokens = @()
-  $rootTokens += [string]$Manifest.workspace.source_of_truth
-  foreach ($root in $Manifest.platform_roots.PSObject.Properties.Value) {
-    $rootTokens += [string]$root
-  }
-  $tokens = @()
-  foreach ($token in ($rootTokens | Sort-Object -Unique)) {
-    $tokens += $token
-    $tokens += ($token -replace '\\', '\\')
-  }
-  $tokens = $tokens | Sort-Object -Unique
-
-  $textExtensions = @(
-    ".cfg", ".css", ".csv", ".html", ".ini", ".js", ".json", ".md",
-    ".ps1", ".py", ".toml", ".ts", ".txt", ".xml", ".yaml", ".yml"
-  )
-  $gitFiles = @(& git -C $WorkspaceRoot ls-files --cached --others --exclude-standard 2>$null)
-  if ($LASTEXITCODE -eq 0) {
-    $files = $gitFiles |
-      ForEach-Object { Join-Path $WorkspaceRoot $_ } |
-      Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
-      ForEach-Object { Get-Item -LiteralPath $_ -Force } |
-      Where-Object {
-        $_.Length -le 2MB -and
-        $textExtensions -contains $_.Extension.ToLowerInvariant()
-      }
-  } else {
-    $files = Get-ChildItem -LiteralPath $WorkspaceRoot -Recurse -Force -File -ErrorAction SilentlyContinue |
-      Where-Object {
-        $_.FullName -notmatch '\\.git\\' -and
-        $_.FullName -notmatch '\\__pycache__\\' -and
-        $_.Length -le 2MB -and
-        $textExtensions -contains $_.Extension.ToLowerInvariant()
-      }
-  }
-
-  foreach ($file in $files) {
-    $content = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
-    if ($null -eq $content) { continue }
-    foreach ($token in $tokens) {
-      if ($content.Contains($token)) {
-        $normalizedRoot = (Get-NormalizedPath $WorkspaceRoot)
-        $normalizedFile = [System.IO.Path]::GetFullPath($file.FullName)
-        $relative = if ($normalizedFile.StartsWith($normalizedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-          $normalizedFile.Substring($normalizedRoot.Length).TrimStart('\')
-        } else {
-          $normalizedFile
-        }
-        $category = if ($relative -eq "workspace_manifest.yaml") {
-          "manifest-source-of-truth"
-        } elseif ($relative -like "reports/*" -or $relative -like "reports\*") {
-          "generated-report"
-        } elseif ($relative -like "scripts/*" -or $relative -like "scripts\*") {
-          "script"
-        } elseif ($relative -like "shared/*" -or $relative -like "shared\*") {
-          "shared-doc"
-        } elseif ($relative -like "skills/*" -or $relative -like "skills\*" -or $relative -like "packages/*" -or $relative -like "packages\*") {
-          "skill-doc-or-source"
-        } else {
-          "other"
-        }
-        [pscustomobject]@{
-          File = $relative
-          Token = $token
-          Category = $category
-        }
-      }
-    }
+  # Classification is shared with focused regression tests. Fail closed if Git
+  # cannot enumerate the bounded index; never fall back to recursive traversal.
+  Push-Location $WorkspaceRoot
+  try {
+    $result = & python -B (Join-Path $PSScriptRoot "path_portability.py") --root $WorkspaceRoot --manifest $ManifestPath
+    if ($LASTEXITCODE -ne 0) { throw "Path portability inventory failed" }
+    return ($result -join "`n" | ConvertFrom-Json)
+  } finally {
+    Pop-Location
   }
 }
 
@@ -472,7 +413,7 @@ $protocolStatuses = $manifest.protocols | ForEach-Object { Get-ProtocolStatus -P
 $runtimeLoopStatuses = Get-RuntimeLoopStatus -WorkspaceRoot $workspaceRoot
 $protocolValidationStatuses = Get-ProtocolValidationStatus -WorkspaceRoot $workspaceRoot
 $manifestPortabilityStatuses = Get-ManifestPortabilityStatus -WorkspaceRoot $workspaceRoot
-$hardcodedFindings = Get-HardcodedPathFindings -WorkspaceRoot $workspaceRoot -Manifest $manifest
+$hardcodedFindings = @(Get-HardcodedPathFindings -WorkspaceRoot $workspaceRoot -Manifest $manifest)
 $gitBoundaries = Get-GitBoundaryStatus -WorkspaceRoot $workspaceRoot -Manifest $manifest
 
 $missingRequired = @($requiredStatuses | Where-Object { -not $_.Exists })
@@ -486,7 +427,7 @@ $sharedExpected = Get-NormalizedPath (Resolve-WorkspacePath -WorkspaceRoot $work
 $sharedProjectionStatuses = @($projectionStatuses | Where-Object { (Get-NormalizedPath $_.ExpectedTarget) -eq $sharedExpected })
 $sharedProjectionDrift = @($sharedProjectionStatuses | Where-Object { $_.Status -ne "OK" })
 $sharedUniquenessStatus = if ($sharedProjectionDrift.Count -eq 0) { "OK" } else { "FAILED" }
-$unsafeHardcoded = @($hardcodedFindings | Where-Object { $_.Category -notin @("manifest-source-of-truth", "generated-report") })
+$unexplainedPaths = @($hardcodedFindings | Where-Object { $_.RequiresReview })
 
 $now = Get-Date -Format "yyyy-MM-dd HH:mm:ss zzz"
 
@@ -581,14 +522,15 @@ if ($missingOptional.Count -eq 0) {
 }
 [void]$healthLines.Add("")
 [void]$healthLines.Add("## Hardcoded Paths Remaining")
+[void]$healthLines.Add("Coverage: current source/platform root tokens and their JSON-escaped spellings; this is not an exhaustive search for every absolute path.")
 [void]$healthLines.Add("")
 if ($hardcodedFindings.Count -eq 0) {
   [void]$healthLines.Add("- None.")
 } else {
-  Add-Table -Lines $healthLines -Rows $hardcodedFindings -Headers @("File", "Token", "Category")
+  Add-Table -Lines $healthLines -Rows $hardcodedFindings -Headers @("File", "Token", "Category", "Reason", "RequiresReview")
 }
 [void]$healthLines.Add("")
-[void]$healthLines.Add("Unsafe hardcoded path references outside manifest/generated reports: ``$($unsafeHardcoded.Count)``.")
+[void]$healthLines.Add("Unexplained active path references requiring review: ``$($unexplainedPaths.Count)``.")
 [void]$healthLines.Add("")
 [void]$healthLines.Add("## Protocol Consistency")
 [void]$healthLines.Add("")
@@ -625,7 +567,7 @@ Add-Table -Lines $healthLines -Rows $gitBoundaries -Headers @("Path", "HasGit", 
 [void]$healthLines.Add("")
 [void]$healthLines.Add("## Overall Status")
 [void]$healthLines.Add("")
-$overall = if ($missingRequired.Count -eq 0 -and $missingProtocols.Count -eq 0 -and $missingRuntimeLoop.Count -eq 0 -and $missingProtocolValidation.Count -eq 0 -and $missingManifestPortability.Count -eq 0 -and $projectionDrift.Count -eq 0 -and $unsafeHardcoded.Count -eq 0 -and $sharedUniquenessStatus -eq "OK") { "HEALTHY" } else { "NEEDS_ATTENTION" }
+$overall = if ($missingRequired.Count -eq 0 -and $missingProtocols.Count -eq 0 -and $missingRuntimeLoop.Count -eq 0 -and $missingProtocolValidation.Count -eq 0 -and $missingManifestPortability.Count -eq 0 -and $projectionDrift.Count -eq 0 -and $unexplainedPaths.Count -eq 0 -and $sharedUniquenessStatus -eq "OK") { "HEALTHY" } else { "NEEDS_ATTENTION" }
 [void]$healthLines.Add("- Status: ``$overall``")
 [void]$healthLines.Add("- Required missing count: ``$($missingRequired.Count + $missingProtocols.Count)``")
 [void]$healthLines.Add("- Runtime loop missing count: ``$($missingRuntimeLoop.Count)``")
@@ -633,7 +575,7 @@ $overall = if ($missingRequired.Count -eq 0 -and $missingProtocols.Count -eq 0 -
 [void]$healthLines.Add("- Manifest portability missing count: ``$($missingManifestPortability.Count)``")
 [void]$healthLines.Add("- Optional missing count: ``$($missingOptional.Count)``")
 [void]$healthLines.Add("- Projection drift count: ``$($projectionDrift.Count)``")
-[void]$healthLines.Add("- Unsafe hardcoded path count: ``$($unsafeHardcoded.Count)``")
+[void]$healthLines.Add("- Unexplained active path count: ``$($unexplainedPaths.Count)``")
 
 Set-Content -LiteralPath (Join-Path $reportRoot "workspace_setup_report.md") -Value $setupLines -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $reportRoot "workspace_health_report.md") -Value $healthLines -Encoding UTF8

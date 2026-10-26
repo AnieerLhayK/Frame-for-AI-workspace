@@ -15,17 +15,33 @@ projection omits these skill payloads; template adopters register their own set:
 
 ## Verify discovery
 
+From the Workspace root, use the manifest-bound read-only inventory:
+
 ```powershell
-hermes skills list
+python -B -m scripts.platform.hermes_skill_inventory
 ```
 
-The executable can enter its update/bootstrap path before listing skills.
-Use this command only when local runtime initialization is acceptable; stop on
-maintenance prompts or failures rather than bypassing updater locks. A directory
-or CLI listing does not establish what an already-running gateway session sees.
-Compare names and resolved sources with the manifest, keeping built-in, hub and
-other local skills separate. The earlier CLI/direct-loader count discrepancy is
-an open audit finding, not evidence that the four projections are missing.
+This probe targets the existing Windows `venv/Scripts/python.exe` layout. It
+requires an installation declared at `runtime_roots.hermes` and
+the skills root at `platform_roots.hermes`; missing declarations stop the probe.
+It invokes the installed Python directly, fixes `HERMES_HOME` from the declared
+skills root and the platform to `cli`, and compares CLI-list names with enabled
+native-loader names in one process. It reports missing registered skills,
+name differences, source fingerprints and counts. Python audit hooks deny supported file mutations, process execution and
+network operations inside the probe (null-device logging is allowed); missing runtime or hub
+metadata stops the query instead of initializing it. This is a diagnostic guard for the reviewed installed functions, not an OS
+sandbox for arbitrary or untrusted code. It does not run a model,
+reload the gateway or enter the `hermes.exe` update/bootstrap path.
+
+The current fixed-context comparison is 69/69 with no name differences and all
+four registered skills present. The previous separate CLI/loader observations
+were 68/69, without the CLI name list or matching context; their historical
+single-skill difference cannot be reconstructed. This does not establish what
+an already-running gateway session sees.
+
+For normal interactive maintenance, `hermes skills list` remains the vendor
+entrypoint. Its executable can enter update/bootstrap before listing; do not
+use it for an audit that forbids initialization or bypass an updater lock.
 
 ## Deploy registered projections
 

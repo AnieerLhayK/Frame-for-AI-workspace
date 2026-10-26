@@ -377,3 +377,58 @@ tasks:
     - python -m unittest scripts.tests.workspace.test_task_records scripts.tests.workspace.test_task_record_store scripts.tests.workspace.test_agent_governance scripts.tests.workspace.test_merge_safety scripts.tests.workspace.test_task_plans
     - workspace records validate
     - git diff --check
+
+  workspace_portability_repair:
+    use_when:
+    - Repairing Workspace path-portability diagnostics and bootstrap-free Hermes skill
+      inventory without changing vendor installations or package sources.
+    required:
+    - workspace_manifest.yaml
+    - shared/workspace/manifest_portability_policy.md
+    - shared/operations/reporting_policy.md
+    - scripts/validation/validate_manifest.py
+    - scripts/reporting/sync_report.ps1
+    - scripts/reporting/report_status.py
+    - scripts/tests/reporting/test_report_status.py
+    - USAGE_GUIDES/QUICK_START/hermes.md
+    optional:
+    - scripts/reporting/path_portability.py
+    - scripts/platform/hermes_skill_inventory.py
+    - scripts/tests/reporting/test_path_portability.py
+    - scripts/tests/platform/test_hermes_skill_inventory.py
+    - scripts/tests/validation/test_manifest_portability.py
+    ignore:
+    - private corpus and session bodies
+    - vendor writes and package source changes
+    - unrelated historical reports
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - workspace_manifest.yaml
+    - scripts/validation/validate_manifest.py
+    - scripts/reporting/sync_report.ps1
+    - scripts/reporting/report_status.py
+    - scripts/tests/reporting/test_report_status.py
+    - scripts/reporting/path_portability.py
+    - scripts/platform/hermes_skill_inventory.py
+    - scripts/tests/reporting/test_path_portability.py
+    - scripts/tests/platform/test_hermes_skill_inventory.py
+    - scripts/tests/validation/test_manifest_portability.py
+    - shared/workspace/manifest_portability_policy.md
+    - shared/operations/reporting_policy.md
+    - USAGE_GUIDES/QUICK_START/hermes.md
+    - PROJECT_CONTEXT/tasks/records/2026/10/26/TASK-20261026-005.json
+    - PROJECT_CONTEXT/tasks/ledger/2026/10/26.md
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - reports/current/workspace_health_report.md
+    - reports/current/workspace_setup_report.md
+    validation:
+    - python -B -m unittest scripts.tests.reporting.test_path_portability scripts.tests.platform.test_hermes_skill_inventory
+      scripts.tests.validation.test_manifest_portability
+    - python -B -m scripts.validation.validate_manifest --check
+    - python -B -m scripts.validation.check_doc_pairs --validate-coverage
+    - python -B -m scripts.platform.hermes_skill_inventory
+    - python -B -m scripts.workspace.task_records validate
+    - python -B -m scripts.workspace.task_ledger validate
+    - git diff --check

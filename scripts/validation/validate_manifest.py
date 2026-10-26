@@ -9,7 +9,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 
@@ -480,6 +480,28 @@ def check_paths(manifest: dict[str, Any], state: State) -> None:
 
     for projection in manifest.get("projections", []):
         projection_id = str(projection.get("id", ""))
+        kind = projection.get("kind", "skill")
+        if kind == "agent":
+            target = resolve_path(workspace_root, str(projection.get("target_path", ""))).resolve()
+            agent_root = (workspace_root / "agents").resolve()
+            entries = projection.get("required_files", [])
+            valid = isinstance(entries, list) and bool(entries)
+            if not target.is_relative_to(agent_root):
+                valid = False
+            for entry in entries if isinstance(entries, list) else []:
+                if not isinstance(entry, str) or not entry or Path(entry).is_absolute() or PureWindowsPath(entry).is_absolute():
+                    valid = False
+                    continue
+                candidate = (target / entry).resolve()
+                if not candidate.is_relative_to(target) or not candidate.is_file():
+                    valid = False
+            if valid:
+                expected_targets_by_projection[projection_id] = str(projection["target_path"])
+                state.add("INFO", f"agent projection entrypoints verified: {projection_id}")
+            else:
+                state.add("ERROR", f"agent projection requires bounded existing entrypoints under agents/: {projection_id}")
+        elif kind != "skill":
+            state.add("ERROR", f"unknown projection kind: {projection_id}: {kind}")
         if projection_id not in expected_targets_by_projection:
             state.add("WARNING", f"projection is not referenced by any skill exposure: {projection_id}")
         link_path = resolve_path(workspace_root, str(projection.get("link_path", "")))
@@ -559,12 +581,14 @@ def check_absolute_paths(manifest: dict[str, Any], state: State) -> None:
         elif isinstance(value, list):
             for index, child in enumerate(value):
                 walk(child, f"{path}[{index}]")
-        elif isinstance(value, str) and Path(value).is_absolute():
+        elif isinstance(value, str) and (Path(value).is_absolute() or PureWindowsPath(value).is_absolute()):
             allowed = (
                 path == "workspace.source_of_truth"
                 or path.startswith("platform_roots.")
                 or path.startswith("session_stores.")
                 or path.startswith("output_roots.")
+                or path.startswith("runtime_roots.")
+                or path.startswith("external_roots.")
                 or path.startswith("shared.projection_paths.")
                 or path.endswith(".projection_path")
                 or path.endswith(".link_path")

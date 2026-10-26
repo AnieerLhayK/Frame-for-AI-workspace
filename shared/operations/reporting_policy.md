@@ -177,3 +177,16 @@ These retained reports must declare `lifecycle: historical` and
 state.
 
 Generated per-character reports may be retained or ignored according to each character's Git/privacy policy.
+
+## Path portability evidence
+
+The current health snapshot matches the current Workspace source/platform root
+tokens and their JSON-escaped spellings, not every possible absolute path. It
+classifies every detected match and retains its reason. Only unexplained active references contribute to the path-review count.
+Deployment catalog aliases, historical evidence, fixtures and exact migration or
+security signatures stay visible in the table. Their treatment follows the
+manifest portability policy; a classification is not a cleanup authorization.
+The collector enumerates the Git index and non-ignored files, skips links outside
+the source root and oversized/non-text files, and stops if Git enumeration fails.
+It never falls back to a recursive disk traversal. Explicit manifest/root inputs
+remain supported by the report generator.
