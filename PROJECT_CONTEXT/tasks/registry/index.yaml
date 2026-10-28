@@ -1,4 +1,3 @@
-# Canonical task registry index. Root compatibility projections are retired.
 schema_version: '0.2'
 purpose: Canonical task routing index; task bodies live in domains/*.yaml.
 truth_sources:

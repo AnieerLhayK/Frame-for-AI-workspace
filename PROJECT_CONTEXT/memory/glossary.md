@@ -1,5 +1,13 @@
 # Glossary
 
+## personal archive
+
+An owner-maintained private record of biographical facts, self-reported experiences
+and interpretations. Confirmation refers to an explicitly reviewed version and
+does not change a claim's nature. Callers retrieve only task-relevant confirmed
+records with provenance and applicability periods; discovery grants no write or
+publication authority.
+
 ## managed MCP installation
 
 A local deployment of an MCP server whose installation recipe, dependency locks

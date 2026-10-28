@@ -1,6 +1,7 @@
 """Public projection selection and machine-path scrubbing policy."""
 from __future__ import annotations
 import re
+import yaml
 
 SUBSTITUTIONS: list[tuple[re.Pattern[str], str]] = [
     # Windows backslash paths
@@ -153,6 +154,7 @@ EXCLUDED_PATHS = {
     "README.zh-CN.md",
     "PROJECT_CONTEXT/todo",
     "PROJECT_CONTEXT/references/external_projects.yaml",
+    "PROJECT_CONTEXT/tasks/registry/domains/personal-archive.yaml",
     "PROJECT_CONTEXT/reports/history",
     "PROJECT_CONTEXT/tasks/ledger",
     "PROJECT_CONTEXT/tasks/records",
@@ -269,6 +271,15 @@ def scrub_content(text: str) -> str:
     """Replace all known absolute-path patterns with template variables."""
     for pattern, repl in _compile_substitutions():
         text = pattern.sub(repl, text)
+    # A private task body must not leave an unresolved route in the public index.
+    if re.search(r"(?m)^task_files:\s*$", text):
+        payload = yaml.safe_load(text)
+        if not isinstance(payload, dict) or not isinstance(payload.get("task_files"), dict):
+            raise ValueError("Invalid task index during public projection")
+        payload["task_files"] = {key: value for key, value in payload["task_files"].items()
+                                 if not isinstance(value, str) or
+                                 not should_exclude("PROJECT_CONTEXT/tasks/registry/" + value)}
+        text = yaml.safe_dump(payload, allow_unicode=True, sort_keys=False)
     return text
 
 def should_exclude(rel_path: str) -> bool:

@@ -1,5 +1,18 @@
 # Decisions
 
+## Personal Context Remains Separate From Writing Style
+
+- decision: Keep private personal records in an external owner-controlled Git
+  repository; Workspace stores discovery rules and private location metadata.
+  A shared data-only archive Module supplies bounded cited context to CLI and
+  diary callers. Style snapshots never include personal archive contents.
+- date: 2026-10-28, owner-confirmed personal archive implementation plan.
+- reason: Style evidence cannot establish biography; explicit confirmation and
+  source attribution reduce factual drift without copying private content into
+  portable code or public projections.
+- consequence: Intake creates candidates, owner approval binds the shown content
+  version, and diary generation remains read-only with personal/topic selection.
+
 ## WPS Uses An External Vendor Snapshot And Workspace-Owned Patches
 
 - decision: Preserve the installed WPS source as a fingerprinted external vendor

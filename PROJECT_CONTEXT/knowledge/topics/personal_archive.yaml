@@ -1,0 +1,15 @@
+topics:
+  personal_archive:
+    title: Owner-authorized personal archive usage
+    aliases:
+    - personal archive
+    - personal context
+    - 个人档案
+    - 个人信息
+    - 人物关系
+    - 个人履历
+    - 个人价值观
+    entries:
+    - path: USAGE_GUIDES/personal_archive.md
+      layer: usage_guide
+      purpose: Resolve an owner's private archive, query confirmed context and maintain candidate provenance without loading private data during general tasks.
