@@ -32,7 +32,7 @@ def batch_member_metadata(record_id: str) -> tuple[dict[str, Any], dict[str, Any
     """Read historical attribution only; never return an active write permit."""
     from scripts.workspace.task_records import read_record, validate_record
 
-    _, record = read_record(record_id)
+    record_path, record = read_record(record_id)
     if record.get("status") == "in_progress":
         return active_registration(record_id, "workspace_write", allow_external_origin=True), record
     errors = validate_record(record)
@@ -49,7 +49,11 @@ def batch_member_metadata(record_id: str) -> tuple[dict[str, Any], dict[str, Any
         raise ValueError("completed batch TASK requires valid ended_at") from error
     if "workspace_write" not in (record.get("registration") or {}).get("operations", []):
         raise ValueError("batch TASK must declare workspace_write")
-    return {"task_type": record.get("task_type"), "git_baseline": record.get("git_baseline")}, record
+    record_path = Path(record_path)
+    if record_path.is_absolute():
+        record_path = record_path.relative_to(WORKSPACE_ROOT)
+    return {"task_type": record.get("task_type"), "git_baseline": record.get("git_baseline"),
+            "path": record_path.as_posix()}, record
 
 
 def check_workflow(
@@ -120,7 +124,7 @@ def check_workflow(
                 raise ValueError("batch TASK requires recorded string bindings; renew legacy registration")
             member_task = resolve_task(member["task_type"], member_bindings)
             batch_owners.append({"task_id": batch_id, "agent": owner["agent"],
-                                 "write_scope": member_task["context"]["write_scope"]})
+                                 "write_scope": [*member_task["context"]["write_scope"], member["path"]]})
             bases.append(member["git_baseline"]["head_commit"])
         common = command_runner(["git", "merge-base", "--octopus", *bases])
         if common.returncode or not common.stdout.strip():
