@@ -425,3 +425,16 @@ manifest-declared workspace output root and never changes source material.
   The user accepted the actual comparison reports before Cover It was extracted.
   Cover It is a private, explicitly invoked, application-independent writing skill;
   inference scope belongs to each caller, rather than inheriting e-Diary privileges.
+
+## Shared Expression Has One Editable Source
+
+- decision: Speaking Like A MAN owns the shared expression reference; active
+  consumers read it without invoking the full explicit-only skill. Existing
+  exporters bundle generated reference copies, never separately maintained rules.
+- reason: Reuse meaning/evidence discipline without imposing report-like directness
+  on character voices or making standalone consumers install the complete skill.
+- date if known: 2026-10-29.
+- consequence: Build checks require complete, matching copies and local links;
+  runtime read failures disclose the gap once and retain the consumer's own rules.
+  Doctor remains character-only and advisory; maintenance/generalization ownership
+  is unchanged. Only approved expression lessons enter the shared source.

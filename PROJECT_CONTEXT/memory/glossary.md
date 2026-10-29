@@ -283,3 +283,10 @@ an activity date; reports explain known time differences and uncertainty.
 Bounded prior self-descriptions and contextual reports used to understand a
 person's continuing interests, priorities and approach. It is context for this
 period's changes, not an independent source of facts or inferred personality.
+
+## shared expression rules
+
+Task-scoped meaning, evidence and wording guidance maintained in Speaking Like A
+MAN's `references/shared-expression.md`. Consumers read the reference without
+activating the complete skill. Character voice remains a task- and
+character-specific judgment, not a stricter copy of MAN's stylistic preferences.
