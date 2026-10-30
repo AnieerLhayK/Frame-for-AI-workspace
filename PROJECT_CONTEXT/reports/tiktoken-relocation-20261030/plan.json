@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "report_type": "plan",
+  "report_id": "tiktoken-plan-20261030-001",
+  "source_report_id": "tiktoken-audit-20261030-001",
+  "generated_at": "2026-10-30T23:11:08.6694736+08:00",
+  "mode": "plan",
+  "status": "PASS",
+  "target_root": "${DATA_ROOT}/cache/tiktoken",
+  "actions": [
+    {
+      "action_id": "A001",
+      "source": "${DATA_ROOT}/codex\\cache\\tiktoken",
+      "target": "${DATA_ROOT}\\cache\\tiktoken",
+      "classification": "cache",
+      "operation": "configure-location",
+      "reason": "Use the native TIKTOKEN_CACHE_DIR contract, with a tool-independent cache under the existing shared cache root. No filesystem link.",
+      "risk": "Tool-specific configuration, locks, permissions, or concurrent writes may invalidate the plan.",
+      "prerequisites": [
+        "Re-audit source state",
+        "Confirm target is expected and writable",
+        "Stop the owning tool when required"
+      ],
+      "verification": [
+        "Recheck original file SHA256 and mtime_ns against audit; stop on drift.",
+        "Copy only the verified o200k_base cache to a previously absent directory; compare SHA256 against upstream expected hash.",
+        "Run the actual tiktoken package in an isolated staging verification environment; block network reads and load o200k_base, then verify Chinese/English encode/decode round-trip.",
+        "Cold-load cl100k_base from the official public encoding URL and verify its new cache file and expected hash at the new target.",
+        "Launch a fresh child with the approved new setting, repeat offline loading, and prove the original cache snapshot is unchanged."
+      ],
+      "rollback": "Restore previous user/process TIKTOKEN_CACHE_DIR. Retained original cache remains immediately usable; do not delete the new target automatically.",
+      "irreversible": false,
+      "approved": true,
+      "copy_files": [
+        "fb374d419588a4632f3f557e76b4b70aebbca790"
+      ],
+      "preserve_source": true,
+      "skip_temp_files": true
+    },
+    {
+      "action_id": "A002",
+      "source": "HKCU/Environment/TIKTOKEN_CACHE_DIR",
+      "target": "${DATA_ROOT}/cache/tiktoken",
+      "classification": "configuration",
+      "operation": "configure-location",
+      "reason": "Future processes inherit the native shared cache path.",
+      "risk": "Existing application processes retain their old inherited environment until restarted.",
+      "prerequisites": [
+        "Approve exact A001-A003",
+        "Authorize the exact user environment variable and filesystem targets through the applicable execution path"
+      ],
+      "verification": [
+        "Read back user-level setting",
+        "Set the explicit child environment for immediate checks",
+        "State restart requirement for existing applications"
+      ],
+      "rollback": "Restore user TIKTOKEN_CACHE_DIR to ${DATA_ROOT}/codex/cache/tiktoken; no machine-level setting changes.",
+      "irreversible": false,
+      "approved": true
+    },
+    {
+      "action_id": "A003",
+      "source": "Actual tiktoken Python package",
+      "target": "${DATA_ROOT}/codex/cache/staging/tiktoken-relocation-20261030-001",
+      "classification": "temp",
+      "operation": "configure-location",
+      "reason": "Use a temporary isolated verification environment because tiktoken is absent in the three checked interpreters; do not install into unrelated environments.",
+      "risk": "Package installation and cold encoding fetch require the network; failure blocks a successful migration claim.",
+      "prerequisites": [
+        "Approve exact A001-A003",
+        "Fresh non-existing staging directory",
+        "Approved bounded execution authority"
+      ],
+      "verification": [
+        "Record interpreter/package version",
+        "Run the actual offline warm-cache and real cold-cache tests, not a mocked replacement library"
+      ],
+      "rollback": "Restore previous cache setting on failure; retain original files. Remove only newly owned staging after successful use if permitted; never bypass a cleanup rejection.",
+      "irreversible": false,
+      "approved": true
+    }
+  ],
+  "warnings": [
+    "Runtime path/registry write authority must be valid before applying. No governance edits solely to bypass a missing route.",
+    "Original directory and duplicate TMP remain unchanged for rollback; cleanup is a separate approval.",
+    "Only the three named interpreters were checked; do not claim this inventories every application.",
+    "Updating the cache setting does not install tiktoken into every Python environment.",
+    "User approval is recorded. Actual apply still requires runtime actor/task scope, or direct execution by the user with their own Windows authority."
+  ],
+  "errors": [],
+  "task_id": "TASK-20261030-012",
+  "cleanup": {
+    "approved": false,
+    "paths": [
+      "${DATA_ROOT}/codex/cache/tiktoken"
+    ],
+    "operation": "report-only"
+  },
+  "primary_sources": [
+    "https://raw.githubusercontent.com/openai/tiktoken/main/tiktoken/load.py",
+    "https://raw.githubusercontent.com/openai/tiktoken/main/tiktoken_ext/openai_public.py"
+  ],
+  "approval": {
+    "source": "Explicit user reply 确认 to the exact destination and A001-A003 plan",
+    "recorded_at": "2026-10-30T15:18:03.477034+00:00"
+  },
+  "execution": {
+    "status": "completed",
+    "operator": "user",
+    "apply_report_id": "tiktoken-apply-20261030-001",
+    "verification_report_id": "tiktoken-verify-20261030-001"
+  }
+}

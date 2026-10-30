@@ -104,6 +104,7 @@ EXCLUDED_PATHS = {
     # placeholder; private package implementations stay in their source repo.
     "packages/sci-system",
     "packages/ai-workbench",
+    "packages/vivado-experiments-operator",
     # Local Desktop launchers and their private integration test are not
     # framework source; exporting the test without its shim breaks validation.
     "scripts/platform/dsh.cmd",

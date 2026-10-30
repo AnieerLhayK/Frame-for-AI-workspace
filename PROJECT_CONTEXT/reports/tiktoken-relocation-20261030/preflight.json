@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "report_type": "verify",
+  "report_id": "tiktoken-preflight-20261030-001",
+  "source_report_id": "tiktoken-plan-20261030-001",
+  "generated_at": "2026-10-30T15:21:51.348918+00:00",
+  "mode": "verify",
+  "status": "BLOCKED",
+  "execution_operator": "pending_user",
+  "agent_write_check": {
+    "status": "DENY",
+    "reason": "target is outside the task write scope",
+    "path": "${DATA_ROOT}/cache/tiktoken",
+    "task_id": "TASK-20261030-012"
+  },
+  "read_only_checks": [
+    {
+      "name": "PowerShell parser",
+      "status": "PASS"
+    },
+    {
+      "name": "Python ast.parse",
+      "status": "PASS"
+    },
+    {
+      "name": "Windows PowerShell apply.ps1 -CheckOnly",
+      "status": "PASS"
+    }
+  ],
+  "actual_apply": "NOT_RUN",
+  "actual_tiktoken_runtime_tests": "NOT_RUN",
+  "source_state": "matches audit",
+  "target_state": "absent",
+  "link_state": "no link created",
+  "command_state": "user executable fixed-scope script prepared",
+  "residual_write_state": "original user environment still points at old cache; no migration performed",
+  "warnings": [
+    "User approval does not expand the agent TASK scope. No governance permissions modified or alternate tool used to perform denied writes.",
+    "User may execute the reviewed fixed-scope script under their own Windows authority; agent will verify the resulting receipt and real state."
+  ],
+  "errors": []
+}

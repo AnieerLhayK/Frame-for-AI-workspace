@@ -1,0 +1,48 @@
+tasks:
+  vivado_experiments_bootstrap:
+    context_views:
+      workspace_manifest.yaml: [workspace, packages]
+    use_when:
+    - Registering the empty vivado-experiments-operator package and the planned sci-system experiment-workflow scaffold without importing resources.
+    use_when_zh:
+    - 登记空的 vivado-experiments-operator 包和 sci-system 实验流程占位骨架，不迁入资源。
+    required:
+    - workspace_manifest.yaml
+    - shared/workspace/workspace_policy.md
+    - shared/schemas/package_catalog.schema.json
+    - shared/schemas/package_protocol_manifest.schema.json
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    - PROJECT_CONTEXT/todo/package-development.md
+    - scripts/publishing/publish_policy.py
+    optional:
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - packages/sci-system/shared/scientific-presentation-contract.md
+    ignore:
+    - external experiment resources, Vivado projects and platform links
+    - unrelated package implementations
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - packages/vivado-experiments-operator/
+    - packages/sci-system/README.md
+    - packages/sci-system/workflows/experiment-workflow/
+    - workspace_manifest.yaml
+    - PROJECT_CONTEXT/todo/package-development.md
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - scripts/publishing/publish_policy.py
+    - scripts/tests/publishing/test_publish_policy.py
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -B -m scripts.validation.validate_manifest
+    - python -B -m scripts.validation.validate_protocols
+    - python -B -m scripts.validation.validate_project_context
+    - python -B -m scripts.validation.check_doc_pairs --validate-coverage
+    - python -B -m unittest scripts.tests.publishing.test_publish_policy scripts.tests.workspace.test_manifest_loader scripts.tests.validation.test_validate_protocols
+    - python -B -m scripts.workspace.resolve_task_context vivado_experiments_bootstrap
+    - powershell -ExecutionPolicy Bypass -File scripts/validation/check_links.ps1
+    - git diff --check

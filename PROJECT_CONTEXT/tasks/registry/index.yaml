@@ -180,6 +180,7 @@ task_files:
   workspace_portability_repair: domains/workspace.yaml
   ai_workbench_bootstrap: domains/ai-workbench.yaml
   ai_workbench_development: domains/ai-workbench.yaml
+  vivado_experiments_bootstrap: domains/vivado-experiments.yaml
   ai_workbench_service_integration: domains/ai-workbench.yaml
   ai_workbench_public_projection: domains/publishing.yaml
   agent_registry_update: domains/governance.yaml

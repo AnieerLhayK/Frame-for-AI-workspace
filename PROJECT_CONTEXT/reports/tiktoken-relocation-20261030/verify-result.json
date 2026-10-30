@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "report_type": "verify",
+  "report_id": "tiktoken-verify-20261030-001",
+  "source_report_id": "tiktoken-plan-20261030-001",
+  "apply_report_id": "tiktoken-apply-20261030-001",
+  "generated_at": "2026-10-30T15:27:13.926979+00:00",
+  "mode": "verify",
+  "status": "PASS",
+  "target_root": "${DATA_ROOT}\\cache\\tiktoken",
+  "operator_of_apply": "user",
+  "agent_verification": "read_only",
+  "configuration": {
+    "user_TIKTOKEN_CACHE_DIR": "${DATA_ROOT}\\cache\\tiktoken",
+    "current_agent_inherited_TIKTOKEN_CACHE_DIR": "${DATA_ROOT}/codex\\cache\\tiktoken",
+    "machine_level_changed": false
+  },
+  "results": [
+    {
+      "action_id": "A001",
+      "source_state": "exact audit snapshot unchanged: both SHA256, sizes and mtime_ns match",
+      "target_state": [
+        {
+          "name": "9b5ad71b2ce5302211f9c61530b329a4922fc6a4",
+          "size": 1681126,
+          "sha256": "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7"
+        },
+        {
+          "name": "fb374d419588a4632f3f557e76b4b70aebbca790",
+          "size": 3613922,
+          "sha256": "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d"
+        }
+      ],
+      "link_state": "real directory, no junction/symlink",
+      "command_state": "PASS: actual o200k_base offline loading and round-trip repeated independently",
+      "residual_write_state": "old cache retained; existing application environment still old",
+      "status": "PASS",
+      "message": "Copied only verified normal word table; duplicate TMP not copied."
+    },
+    {
+      "action_id": "A002",
+      "source_state": "user executed approved apply script",
+      "target_state": "user registry readback equals approved new path",
+      "link_state": "not applicable",
+      "command_state": "PASS",
+      "residual_write_state": "restart already running applications to inherit the user value",
+      "status": "PASS",
+      "message": "No machine variable or other Python environment was changed."
+    },
+    {
+      "action_id": "A003",
+      "source_state": "isolated staging venv retained",
+      "target_state": "tiktoken 0.12.0; actual public cl100k_base cold download recorded and matching SHA256",
+      "link_state": "not applicable",
+      "command_state": "PASS: fresh offline-both process repeated independently with file-fetch function blocked; Chinese/English/emoji round-trip succeeds for both encodings",
+      "residual_write_state": "new target contains only two verified encoding files; temporary verification environment retained pending cleanup permission",
+      "status": "PASS",
+      "message": "Does not claim package installation into all existing Python interpreters."
+    }
+  ],
+  "commands": [
+    "User: powershell -NoProfile -ExecutionPolicy Bypass -File apply.ps1",
+    "Agent: fresh child reads user registry value, sets it only in child environment, runs verify_cache.py snapshot and offline-both with -B and PYTHONDONTWRITEBYTECODE=1"
+  ],
+  "cleanup": {
+    "status": "NOT_APPROVED_NOT_EXECUTED",
+    "retained_paths": [
+      "${DATA_ROOT}/codex\\cache\\tiktoken",
+      "${DATA_ROOT}/codex/cache/staging/tiktoken-relocation-20261030-001"
+    ]
+  },
+  "warnings": [
+    "Existing Codex process still inherits the old cache path; restart the app after task delivery.",
+    "Original cache preserved for rollback. No automatic cleanup, authority expansion or governance bypass."
+  ],
+  "errors": []
+}

@@ -105,6 +105,20 @@ and visualization. A later stage requires an explicit design, task record,
 fixtures, and authority decision; the current package does not authorize
 research-data mutation, network access, or publication.
 
+## Vivado Keeps Domain Ownership Alongside A Future Sci-system Generic Layer
+
+- decision: Keep vivado-experiments-operator as the long-term owner of the
+  Vivado-specific experiment flow. Reserve experiment-workflow in Sci-system
+  for generic methods extracted later, with possible reuse by the domain package.
+- reason: Preserve a useful Vivado workflow while allowing portable scientific
+  methods to evolve without duplicating two independently maintained flows.
+- date: 2026-10-31, user-confirmed design and implementation request.
+- consequence: Register an empty package and a documentation-only generic
+  scaffold now. Keep external resources at their existing sources and track
+  development in the existing package-development roadmap. Migration and
+  generalization acceptance criteria remain for later design; this decision
+  establishes no runtime dependency or new execution authority.
+
 ## Showcase-Packer is a clean-room native skill
 
 The unversioned, unlicensed research source `project-showcase-pack` is design

@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "report_type": "audit",
+  "report_id": "tiktoken-audit-20261030-001",
+  "generated_at": "2026-10-30T15:11:07.933093+00:00",
+  "mode": "audit",
+  "status": "PASS",
+  "task_id": "TASK-20261030-012",
+  "commands": [
+    "inspect-path.ps1 on the explicit source; environment probes; importlib.find_spec in three known interpreters; SHA256 comparison with upstream openai_public.py"
+  ],
+  "findings": [
+    {
+      "path": "${DATA_ROOT}/codex\\cache\\tiktoken",
+      "exists": true,
+      "path_type": "directory",
+      "classification": "cache",
+      "disposition": "migrate-candidate",
+      "link_type": "",
+      "link_target": "",
+      "system_drive": false,
+      "tool": "tiktoken",
+      "evidence": "TIKTOKEN_CACHE_DIR and official o200k_base hash",
+      "risk": "Existing processes retain inherited environment"
+    }
+  ],
+  "source_files": [
+    {
+      "name": "fb374d419588a4632f3f557e76b4b70aebbca790",
+      "size": 3613922,
+      "sha256": "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d",
+      "last_write_ns": 1781104446081621100
+    },
+    {
+      "name": "fb374d419588a4632f3f557e76b4b70aebbca790.a640f814-c061-41ba-a150-d27b8a3e3cc8.tmp",
+      "size": 3613922,
+      "sha256": "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d",
+      "last_write_ns": 1781104525245221100
+    }
+  ],
+  "configuration": {
+    "process_TIKTOKEN_CACHE_DIR": "${DATA_ROOT}/codex\\cache\\tiktoken",
+    "user_TIKTOKEN_CACHE_DIR": "${DATA_ROOT}/codex/cache/tiktoken"
+  },
+  "target_exists": false,
+  "inspected_interpreters": {
+    "D:/CODER/python/anaconda/python.exe": "tiktoken not installed",
+    "D:/CODER/python/anaconda/envs/ai/python.exe": "tiktoken not installed",
+    "${DATA_ROOT}/hermes/hermes-agent/venv/Scripts/python.exe": "tiktoken not installed"
+  },
+  "warnings": [
+    "Absence in these interpreters does not prove absence in embedded/other environments.",
+    "No files moved or deleted; no registry/environment values changed."
+  ],
+  "errors": []
+}

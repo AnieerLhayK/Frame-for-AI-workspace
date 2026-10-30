@@ -74,6 +74,21 @@ its first member is the unexposed development skill project-showcase-pack.
 Data intake, processing, analysis, reproducibility, and visualization remain
 separately planned stages.
 
+## vivado-experiments-operator
+
+A domain package for Vivado experiment operation, data and evidence curation,
+and report workflows. It is currently a registered empty scaffold. Vivado-specific
+behavior belongs here; generic methods may later be extracted into Sci-system.
+Registration does not mean external resources have been imported or operations
+are available.
+
+## experiment-workflow
+
+Sci-system's planned domain-neutral experiment module spanning operation, data
+and evidence curation, and reporting. It currently reserves those stages without
+an executable capability. Domain packages retain tool-specific behavior; future
+reuse of the generic layer requires later design.
+
 ## project-showcase-pack
 
 An unexposed Sci-system development skill that prepares a research-period

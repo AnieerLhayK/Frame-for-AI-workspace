@@ -1,0 +1,83 @@
+﻿{
+    "schema_version":  "1.0",
+    "report_type":  "apply",
+    "report_id":  "tiktoken-apply-20261030-001",
+    "source_report_id":  "tiktoken-plan-20261030-001",
+    "mode":  "apply",
+    "status":  "PASS",
+    "operator":  "user",
+    "target_root":  "${DATA_ROOT}\\cache\\tiktoken",
+    "checks":  [
+                   {
+                       "status":  "PASS",
+                       "check":  "original_snapshot_unchanged",
+                       "files":  2
+                   },
+                   {
+                       "status":  "PASS",
+                       "check":  "original_snapshot_unchanged",
+                       "files":  2
+                   },
+                   {
+                       "status":  "PASS",
+                       "mode":  "warm",
+                       "tiktoken_version":  "0.12.0",
+                       "cache":  "${DATA_ROOT}\\cache\\tiktoken",
+                       "checks":  [
+                                      {
+                                          "encoding":  "o200k_base",
+                                          "round_trip":  "PASS",
+                                          "cache_sha256":  "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d"
+                                      }
+                                  ]
+                   },
+                   {
+                       "status":  "PASS",
+                       "mode":  "cold",
+                       "tiktoken_version":  "0.12.0",
+                       "cache":  "${DATA_ROOT}\\cache\\tiktoken",
+                       "checks":  [
+                                      {
+                                          "encoding":  "cl100k_base",
+                                          "round_trip":  "PASS",
+                                          "cache_sha256":  "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7"
+                                      }
+                                  ]
+                   },
+                   {
+                       "status":  "PASS",
+                       "mode":  "offline-both",
+                       "tiktoken_version":  "0.12.0",
+                       "cache":  "${DATA_ROOT}\\cache\\tiktoken",
+                       "checks":  [
+                                      {
+                                          "encoding":  "o200k_base",
+                                          "round_trip":  "PASS",
+                                          "cache_sha256":  "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d"
+                                      },
+                                      {
+                                          "encoding":  "cl100k_base",
+                                          "round_trip":  "PASS",
+                                          "cache_sha256":  "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7"
+                                      }
+                                  ]
+                   },
+                   {
+                       "status":  "PASS",
+                       "check":  "original_snapshot_unchanged",
+                       "files":  2
+                   }
+               ],
+    "cleanup":  "not_executed",
+    "warnings":  [
+                     "Previously running applications require restart to inherit the new setting."
+                 ],
+    "errors":  [
+
+               ],
+    "user_setting":  "${DATA_ROOT}\\cache\\tiktoken",
+    "source_state":  "unchanged",
+    "residual_write_state":  "new probes use target; earlier application processes may retain old environment",
+    "retained_stage":  "${DATA_ROOT}/codex\\cache\\staging\\tiktoken-relocation-20261030-001",
+    "generated_at":  "2026-10-30T23:24:46.0136849+08:00"
+}
