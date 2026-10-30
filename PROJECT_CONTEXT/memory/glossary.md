@@ -1,5 +1,30 @@
 # Glossary
 
+## masking
+
+Replacing selected sensitive values with obscured tokens. Coverage is bounded by
+the selected values and output surfaces; masking does not establish anonymity.
+
+## pseudonymization
+
+Replacing identifying entities with consistent aliases while a separately held
+private mapping or retained context can still reconnect them. Stable aliases
+preserve relationships and may permit linkage across outputs.
+
+## anonymization
+
+A context-dependent outcome in which people cannot reasonably be identified from
+the released material and relevant outside information. A masking count, privacy
+score, pseudonym or processing-strength label alone does not establish it.
+
+## Privacy-Ruler
+
+A Codex-only material de-identification capability invoked explicitly by the
+user or a user-started downstream skill. Low, medium (default) and high describe
+treatment strength; public disclosure always uses high. It produces technically
+checked copies pending human review, private batch mappings, and declared
+coverage and residual risks; it does not grant publication authority.
+
 ## personal archive
 
 An owner-maintained private record of biographical facts, self-reported experiences

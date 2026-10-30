@@ -1,0 +1,940 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "baseline": "5eb14077",
+  "consumer_count": 40,
+  "excluded": [
+    "privacy-ruler self-reference",
+    "unregistered personal skills",
+    "bundled plugins",
+    "private linked material"
+  ],
+  "consumers": [
+    {
+      "id": "agengrator",
+      "source": "skills/engineering/agengrator/SKILL.md",
+      "sha256": "03a92bb581181b1f759f775cd8045d7921952e6ed7da553e5f3b33e10b6fee4f",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "environment_write"
+        ]
+      },
+      "platforms": [
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-migrator",
+      "source": "skills/engineering/skill-migrator/SKILL.md",
+      "sha256": "347d9f337d37d4720fef440568c28168b2a8eddd9ee14ca90694fbfc39b12c31",
+      "role": "maintenance",
+      "authority": {
+        "default": "source_patch",
+        "allowed": [
+          "source_patch"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "skill-adaptator",
+      "source": "skills/engineering/skill-adaptator/SKILL.md",
+      "sha256": "6e91caba0607fcea3c778a48053946b45f6fc99b9581596b3c7528217a924fc5",
+      "role": "maintenance",
+      "authority": {
+        "default": "source_patch",
+        "allowed": [
+          "source_patch",
+          "environment_migration_apply"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch",
+          "environment_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "disk-scan-reporter",
+      "source": "skills/governance/disk-scan-reporter/SKILL.md",
+      "sha256": "cfc126e1f9002142c2f6eae946cd277deb2b89538a24749cefa32e13cac4d4a9",
+      "role": "governance",
+      "authority": {
+        "default": "environment_audit",
+        "allowed": [
+          "environment_audit"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex"
+      ]
+    },
+    {
+      "id": "ai-record-gather",
+      "source": "skills/governance/ai-record-gather/SKILL.md",
+      "sha256": "ad03b1af0e8cc66e627562950f62b4282f9a4e1ac74962adcff4d6aaa0f35794",
+      "role": "governance",
+      "authority": {
+        "default": "environment_audit",
+        "allowed": [
+          "environment_audit"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex"
+      ]
+    },
+    {
+      "id": "windows-ai-storage-governor",
+      "source": "skills/governance/windows-ai-storage-governor/SKILL.md",
+      "sha256": "434a1a880918a9fcaa160c2194f9686600cb07d6610dba8376d6e34e9cbaabd1",
+      "role": "governance",
+      "authority": {
+        "default": "environment_audit",
+        "allowed": [
+          "environment_audit",
+          "environment_migration_apply"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "environment_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "far-repo-governor",
+      "source": "skills/governance/far-repo-governor/SKILL.md",
+      "sha256": "93dcfea9c0de812b08871fa2ba3f463ca790ddf14a187601231782a16c6277ea",
+      "role": "maintenance",
+      "authority": {
+        "default": "source_patch",
+        "allowed": [
+          "source_patch"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex"
+      ]
+    },
+    {
+      "id": "kill-for-remote",
+      "source": "skills/governance/kill-for-remote/SKILL.md",
+      "sha256": "9eb0512270b5becd75c316872228c71c02adbd987d5f0f2a616f8c4e20241942",
+      "role": "governance",
+      "authority": {
+        "default": "environment_audit",
+        "allowed": [
+          "environment_audit",
+          "environment_migration_apply"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "environment_write"
+        ]
+      },
+      "platforms": [
+        "codex"
+      ]
+    },
+    {
+      "id": "collaboration-builder",
+      "source": "skills/productivity/collaboration-builder/SKILL.md",
+      "sha256": "87a2058bc54364d891791baa3b08e24b406070e7f0afdc86c2e4e5c7bf49af69",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "environment_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "cover-it",
+      "source": "skills/productivity/cover-it/SKILL.md",
+      "sha256": "966271efe185c0522411720bd2d94739b5136a5e750f1d66e8763a8220b49cf9",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude",
+        "opencode",
+        "hermes"
+      ]
+    },
+    {
+      "id": "mardocx",
+      "source": "skills/content/mardocx/SKILL.md",
+      "sha256": "415025273abd79452aecaddfebecc49fc96f55d2fb834e10b7eb6fc9d201dfea",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "environment_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "showcase-packer",
+      "source": "skills/content/showcase-packer/SKILL.md",
+      "sha256": "659e3b98d20925cf8d34f44d51d151396c3674e539c46817792120707295d410",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "environment_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "speaking-like-a-man",
+      "source": "skills/content/speaking-like-a-man/SKILL.md",
+      "sha256": "7ca60a57371629fd948f1fd3f3573a0a3f074dc1b62f3f0979c7f71818aa2181",
+      "role": "production",
+      "authority": {
+        "default": "runtime_output_only",
+        "allowed": [
+          "runtime_output_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude",
+        "opencode",
+        "hermes"
+      ]
+    },
+    {
+      "id": "diagnosing-bugs",
+      "source": "external-skills/engineering/diagnosing-bugs/SKILL.md",
+      "sha256": "1ce7d298eb917b6e887d008bdfe483a767de11ff91e66f6911eb1bbeb1ec8841",
+      "role": "maintenance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "tdd",
+      "source": "external-skills/engineering/tdd/SKILL.md",
+      "sha256": "983a6a1b57a47fb0aea49a16bf7b7437452d76d2b0c850edf77e3e31d15a9f34",
+      "role": "maintenance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "to-spec",
+      "source": "external-skills/engineering/to-spec/SKILL.md",
+      "sha256": "e6f14014f8f4b708655bd920a9dd316317782adef2b1276698dd17eba2dee97e",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_record_write",
+        "allowed": [
+          "diagnosis_record_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "to-tickets",
+      "source": "external-skills/engineering/to-tickets/SKILL.md",
+      "sha256": "ee508fe34b60dfd7212be1b84f7d83b5782c3e8870f6becad59738b3a676613e",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_record_write",
+        "allowed": [
+          "diagnosis_record_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "triage",
+      "source": "external-skills/engineering/triage/SKILL.md",
+      "sha256": "48d4cb683a5aaaa2c09342941b009a7dce118f50765e3d689d1f4de543f32c90",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_record_write",
+        "allowed": [
+          "diagnosis_record_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "wayfinder",
+      "source": "external-skills/engineering/wayfinder/SKILL.md",
+      "sha256": "510636999ee180cc804aff16f0463561a286330599df9197903a8e56de648306",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_record_write",
+        "allowed": [
+          "diagnosis_record_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "prototype",
+      "source": "external-skills/engineering/prototype/SKILL.md",
+      "sha256": "eb7208709cf2a040d8a990d4bc7545fc17f6c1cc44f99697ef887e35027ffe0b",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch",
+          "environment_write"
+        ]
+      },
+      "platforms": [
+        "codex"
+      ]
+    },
+    {
+      "id": "improve-codebase-architecture",
+      "source": "external-skills/engineering/improve-codebase-architecture/SKILL.md",
+      "sha256": "925e26fa241d19383a9d71004303ea01fe32a39e209000fc1f0d6754598829ef",
+      "role": "maintenance",
+      "authority": {
+        "default": "diagnosis_record_write",
+        "allowed": [
+          "diagnosis_record_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex"
+      ]
+    },
+    {
+      "id": "resolving-merge-conflicts",
+      "source": "external-skills/engineering/resolving-merge-conflicts/SKILL.md",
+      "sha256": "14f95844b52f46169ed8766dc403c5de63959a98a420f46b7bf17e6aa5979188",
+      "role": "maintenance",
+      "authority": {
+        "default": "source_patch",
+        "allowed": [
+          "source_patch"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex"
+      ]
+    },
+    {
+      "id": "code-review",
+      "source": "external-skills/engineering/code-review/SKILL.md",
+      "sha256": "dd2290e6c3370be0a8639ea9d13b0bd2aa5b6e07eca660f19ea8fbdb7d383e7d",
+      "role": "maintenance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "codebase-design",
+      "source": "external-skills/engineering/codebase-design/SKILL.md",
+      "sha256": "a8d50abac5a4018f60e1d911d4b6f4e36454ca14d6c390c0695a578c7de65dad",
+      "role": "maintenance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "ask-matt",
+      "source": "external-skills/engineering/ask-matt/SKILL.md",
+      "sha256": "2384fa4b07002542de731c520403a82326ec83102099c92526a67b99bbda7f2b",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "grill-with-docs",
+      "source": "external-skills/engineering/grill-with-docs/SKILL.md",
+      "sha256": "455a955d1be14e11dea5cb8f86cada2df5f6b84b8ca4e9c24f1e7d3321be339c",
+      "role": "governance",
+      "authority": {
+        "default": "source_patch",
+        "allowed": [
+          "source_patch"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "domain-modeling",
+      "source": "external-skills/engineering/domain-modeling/SKILL.md",
+      "sha256": "6a083b78bb9483fbd51f288e2563f6a39a840276c5055bbf1f80a26cd528ec27",
+      "role": "maintenance",
+      "authority": {
+        "default": "source_patch",
+        "allowed": [
+          "source_patch"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "writing-great-skills",
+      "source": "external-skills/engineering/writing-great-skills/SKILL.md",
+      "sha256": "4d6ccbc3760b1bd4107c495a79872286ea69494003f3b0a719fc95b147457061",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "grill-me",
+      "source": "external-skills/productivity/grill-me/SKILL.md",
+      "sha256": "66ce07d714c1f705a20297ba68baf6541e1448e18cefb189e661f2e6c8eeefa4",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "grilling",
+      "source": "external-skills/productivity/grilling/SKILL.md",
+      "sha256": "a5b641cc93fd02e0e62869ede31a38f700b379e2cbf8bfc629b6bc1c1933388f",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "handoff",
+      "source": "external-skills/productivity/handoff/SKILL.md",
+      "sha256": "4e39f9b3aba8c14bb4219583e664160320b38129e0cd6eb5b5904ea8ba5a2c40",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "i-have-adhd-local",
+      "source": "external-skills/productivity/i-have-adhd-local/SKILL.md",
+      "sha256": "7a10abfe86fcdc202065330e013dfbe6ce8b55fcae3193a495cadadf9cec0c5d",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "opencode"
+      ]
+    },
+    {
+      "id": "teach",
+      "source": "external-skills/content/teach/SKILL.md",
+      "sha256": "a366bda46d7e34baf37323f85e7c7f5547020478966fe5313b45ebf77ae58b1f",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "research",
+      "source": "external-skills/content/research/SKILL.md",
+      "sha256": "eade0a997fd08b463aaad1afc35ca8ac5ddcd66bf85c0d2ab85b1543aecd8960",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "writing-for-agents",
+      "source": "external-skills/content/writing-for-agents/SKILL.md",
+      "sha256": "1e80ddb5608eee16345b1f931311321221c3216e5315264831a18628f82e97d7",
+      "role": "governance",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "character-generator",
+      "source": "packages/character-system/engineering/generation/character-generator/SKILL.md",
+      "sha256": "69be12d66b115a1568dd5351dce13b9befcd8b2073959e471ed04716ba855877",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "character-maintainer",
+      "source": "packages/character-system/engineering/maintenance/character-maintainer/SKILL.md",
+      "sha256": "92e11201942c65eb30da40489144b87adf41caed3aa8325775bc151249411b96",
+      "role": "maintenance",
+      "authority": {
+        "default": "source_patch",
+        "allowed": [
+          "source_patch"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    },
+    {
+      "id": "style-doctor",
+      "source": "packages/character-system/engineering/diagnosis/style-doctor/SKILL.md",
+      "sha256": "a5c79fafab8654dff7c0f23bb5656c7c57d642a76bbc5082bee8e24fbe0208a2",
+      "role": "feedback_diagnosis",
+      "authority": {
+        "default": "diagnosis_text_only",
+        "allowed": [
+          "diagnosis_text_only",
+          "diagnosis_record_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write"
+        ]
+      },
+      "platforms": [
+        "opencode",
+        "codex",
+        "claude",
+        "hermes"
+      ]
+    },
+    {
+      "id": "zyc",
+      "source": "packages/character-system/runtime/characters/zyc/SKILL.md",
+      "sha256": "74c2262de36e23ea5c305b4e4ab57f75f66952d4834f5469b2f3d9a522e62896",
+      "role": "runtime_character",
+      "authority": {
+        "default": "runtime_output_only",
+        "allowed": [
+          "runtime_output_only"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only"
+        ]
+      },
+      "platforms": [
+        "opencode",
+        "codex",
+        "claude",
+        "hermes"
+      ]
+    },
+    {
+      "id": "putogether",
+      "source": "packages/teaching-system/skills/putogether/SKILL.md",
+      "sha256": "bf45f4575c2d56e61c06f542495c4e9b296dfd7cdf1b80cf0be2a520ff2c4380",
+      "role": "production",
+      "authority": {
+        "default": "generator_write",
+        "allowed": [
+          "generator_write"
+        ]
+      },
+      "execution_modes": {
+        "default": "text_only",
+        "allowed": [
+          "text_only",
+          "record_write",
+          "source_patch"
+        ]
+      },
+      "platforms": [
+        "codex",
+        "claude"
+      ]
+    }
+  ]
+}
