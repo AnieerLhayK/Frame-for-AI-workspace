@@ -1,0 +1,23 @@
+tasks:
+  personal_language_behavior_bootstrap:
+    use_when:
+    - Initializing and registering the approved personal language behavior research preparation project.
+    use_when_zh:
+    - 初始化并登记已批准的个人语言行为研究准备项目。
+    required:
+    - PROJECT_CONTEXT/references/external_projects.yaml
+    - shared/governance/git_integration_policy.md
+    optional:
+    - PROJECT_CONTEXT/documentation/doc_pair_registry.yaml
+    tool_profile: workspace_maintenance
+    ledger: true
+    write_scope:
+    - ${WORKSPACE_ROOT}/projects/personal_language_behavior/
+    - ${DATA_ROOT}/workspace-governance/leases/personal-language-bootstrap.json
+    - PROJECT_CONTEXT/references/external_projects.yaml
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m scripts.workspace.workspace_cli knowledge validate
+    - python -m scripts.validation.check_doc_pairs --validate-coverage
+    - git diff --check

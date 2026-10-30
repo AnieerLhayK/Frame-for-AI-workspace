@@ -205,6 +205,7 @@ task_files:
   platform_exposure: domains/skills.yaml
   platform_exposure_audit: domains/skills.yaml
   project_memory_maintenance: domains/knowledge.yaml
+  personal_language_behavior_bootstrap: domains/personal-language.yaml
   usage_guide_edit: domains/knowledge.yaml
   public_projection_synchronization: domains/publishing.yaml
   public_projection_publisher_update: domains/publishing.yaml
