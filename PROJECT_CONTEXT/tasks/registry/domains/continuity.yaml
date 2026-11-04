@@ -1,5 +1,33 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  cleanup_policy_diagnosis:
+    use_when:
+    - Diagnosing tool-policy rejection through the current exec entrypoint using only newly created ordinary synthetic staging files.
+    use_when_zh:
+    - 仅用新建的普通合成 staging 文件，经当前执行入口诊断工具策略拦截。
+    required:
+    - workspace_manifest.yaml
+    - shared/workspace/workspace_path_policy.md
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/git_integration_policy.md
+    context_views:
+      workspace_manifest.yaml: [runtime_roots]
+    optional:
+    - current-chat rejection receipts and their exact-time host log windows
+    ignore:
+    - unrelated sessions, private mappings, existing junctions and existing leases
+    - permission changes, alternate deletion mechanisms and broad cleanup
+    tool_profile: cleanup_migration
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - <cleanup-staging>/
+    - <cleanup-lease>
+    validation:
+    - git diff --check
+    - verify tool outcome, target absence and retained synthetic file hash after each permitted deletion
+    - stop deletion attempts on rejection; record exact residue and rule evidence or explicitly state that the rule is unknown
   workspace_runtime_hygiene:
     use_when:
     - Implementing the user-approved bounded MCP/runtime log and installation migration, with exact cleanup targets.

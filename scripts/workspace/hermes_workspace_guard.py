@@ -7,6 +7,13 @@ import sys
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
+# The hook is launched by absolute script path, from arbitrary gateway cwd.
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from scripts.workspace.hermes_skill_approval import (
+    POLICY_CONTEXT, SkillPolicy, adapter_attested, within,
+)
 from scripts.workspace.agent_governance import (
         POLICY_PATH,
         check_access,
@@ -38,7 +45,7 @@ STATE_ROOT = Path(
 )
 
 DIRECT_WRITE_TOOLS = {"write_file", "patch"}
-ALWAYS_BLOCKED_TOOLS = {"skill_manage", "execute_code", "process"}
+ALWAYS_BLOCKED_TOOLS = {"execute_code", "process", "browser_cdp", "browser_console", "browser_evaluate"}
 MCP_MUTATION_MARKERS = (
     "write",
     "edit",
@@ -129,7 +136,7 @@ REQUEST_COMMAND_PATTERN = re.compile(
     r"agent\s+request\b",
     re.IGNORECASE,
 )
-UNSAFE_TERMINAL_COMPOSITION = re.compile(r"[;&|><`\r\n]|\$\(")
+UNSAFE_TERMINAL_COMPOSITION = re.compile(r"[;&|><`(){}$%\r\n]")
 
 
 def _is_within(path: Path, root: Path) -> bool:
@@ -211,8 +218,12 @@ def _patch_paths(tool_input: dict[str, Any]) -> list[str]:
 
 
 def _terminal_is_read_only(command: str) -> bool:
-    if UNSAFE_TERMINAL_COMPOSITION.search(command):
+    if UNSAFE_TERMINAL_COMPOSITION.search(command) or re.search(
+        r"--(pre(?:=|\s)|output(?:=|\s)|ext-diff|exec-path)|\b(?:-c|--config)\b", command
+    ):
         return False
+    if re.match(r"^\s*git\s+branch\b", command, re.IGNORECASE):
+        return bool(re.fullmatch(r"\s*git\s+branch(?:\s+--(?:show-current|list))?\s*", command, re.IGNORECASE))
     return any(
         re.search(pattern, command, re.IGNORECASE)
         for pattern in READ_ONLY_TERMINAL_PATTERNS
@@ -227,15 +238,15 @@ def _terminal_is_agent_request(command: str) -> bool:
 
 
 def _mcp_is_mutating(tool_name: str, tool_input: dict[str, Any]) -> bool:
+    if any(marker in tool_name.casefold() for marker in MCP_MUTATION_MARKERS):
+        return True
     action = str(tool_input.get("action") or "").strip().casefold()
     if action:
         return not (
             action in READ_ONLY_MCP_ACTIONS
             or action.startswith(READ_ONLY_MCP_ACTION_PREFIXES)
         )
-    return any(
-        marker in tool_name.casefold() for marker in MCP_MUTATION_MARKERS
-    )
+    return False
 
 
 def _skill_is_workspace_skill(skill: str | None) -> bool:
@@ -316,6 +327,14 @@ def _check_paths(
     checked = False
     for value in values:
         path = _resolve_path(value, cwd)
+        resolved = Path(path).resolve(strict=False)
+        if within(resolved, HERMES_HOME) and not any(
+            within(resolved, HERMES_HOME / allowed) for allowed in ("cache", "memories")
+        ):
+            return _block("Hermes runtime, skills, pending approvals and configuration are protected. "
+                          "Use the native per-change skill approval flow; never write them with file tools.")
+        if within(resolved, STATE_ROOT):
+            return _block("Workspace guard state cannot be changed by Hermes tools")
         target = classify_path(policy, manifest, path)
         if target["surface"] == "external_environment":
             continue
@@ -358,11 +377,11 @@ def evaluate(payload: dict[str, Any]) -> dict[str, str]:
     active_skill = _read_active_skill(session_id)
     if event == "pre_llm_call":
         if not _workspace_context(active_skill=active_skill, cwd=cwd):
-            return {}
+            return {"context": POLICY_CONTEXT}
         skill_note = f" Active skill: {active_skill}." if active_skill else ""
         return {
             "context": (
-                "[Workspace authority] Hermes is a record_producer. It may "
+                POLICY_CONTEXT + "\n[Workspace authority] Hermes is a record_producer. It may "
                 "read/invoke skills and write only scoped diagnosis, handoff, "
                 "Hermes report, or agent-request records. It must never patch "
                 "skill source, governance, or projections. A user request does "
@@ -385,7 +404,16 @@ def evaluate(payload: dict[str, Any]) -> dict[str, str]:
         cwd=str(tool_input.get("cwd") or cwd),
     )
 
-    if tool_name in ALWAYS_BLOCKED_TOOLS and in_workspace_context:
+    if tool_name == "skill_manage":
+        try:
+            if not adapter_attested(HERMES_HOME):
+                return _block("Hermes skill approval adapter is unavailable; skill writes are disabled")
+            SkillPolicy(HERMES_HOME).target(tool_input)
+        except Exception as error:
+            return _block(str(error))
+        return {}
+
+    if tool_name in ALWAYS_BLOCKED_TOOLS:
         return _block(
             f"Workspace governance blocks Hermes tool '{tool_name}'. "
             "Use a change request or an approved isolated lease."
@@ -398,8 +426,6 @@ def evaluate(payload: dict[str, Any]) -> dict[str, str]:
             cwd=str(tool_input.get("cwd") or cwd),
             command=command,
         )
-        if not in_workspace_context:
-            return {}
         if _terminal_is_agent_request(command) or _terminal_is_read_only(command):
             return {}
         return _block(
@@ -413,6 +439,11 @@ def evaluate(payload: dict[str, Any]) -> dict[str, str]:
         tool_name,
         tool_input,
     )
+    if tool_name.startswith("mcp_") and any(
+        part in {"execute", "exec", "start", "run", "shell", "terminal", "process", "eval", "evaluate", "python", "command", "cdp", "console"}
+        for part in tool_name.casefold().split("_")
+    ):
+        return _block("Executable MCP tools cannot bypass the private-skill approval boundary")
     if tool_name in DIRECT_WRITE_TOOLS or mutating_mcp:
         paths = _patch_paths(tool_input)
         if not paths:

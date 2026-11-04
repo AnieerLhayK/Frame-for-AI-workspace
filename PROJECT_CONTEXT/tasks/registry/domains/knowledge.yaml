@@ -1,5 +1,27 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  privacy_preset_acceptance:
+    use_when:
+    - Verifying the named Privacy preset on explicitly approved synthetic material without changing its implementation.
+    use_when_zh:
+    - 用明确批准的合成材料验收 Privacy 专用角色，不修改其实现。
+    required:
+    - skills/content/privacy-ruler/SKILL.md
+    - skills/content/privacy-ruler/references/delegation.md
+    - skills/content/privacy-ruler/references/processing-contract.md
+    tool_profile: cleanup_migration
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - PROJECT_CONTEXT/reports/privacy-preset-acceptance-*.md
+    - <acceptance-staging>/
+    - <acceptance-private>/
+    - <acceptance-output>/
+    - <acceptance-lease>
+    validation:
+    - workspace skill validate privacy-ruler
+    - git diff --check
   context_resolution_tooling:
     use_when:
     - Changing the task context resolver, token meter, budget thresholds, or registry

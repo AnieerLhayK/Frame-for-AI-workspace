@@ -66,8 +66,13 @@ identify a skill by short or qualified id, but never bypasses task records,
 agent checks, or path scope.
 
 `environment_write` additionally requires an exact user-approved action plan,
-explicit environment-mutation authority, and a verified rollback path. It does
-not authorize cleanup or deletion.
+explicit environment-mutation authority, and a verified rollback path.
+The mode alone does not authorize cleanup. A skill declaring
+`environment_cleanup_apply` may execute an exact, separately approved cleanup
+batch in the same chat, with an active TASK and scoped environment capability.
+The approval must name each action's disposition, impacts, and recovery or
+irreversibility; approving an explicitly described permanent deletion with its
+backup status accepts that recovery limit. Automated scans remain read-only.
 
 Agent identity, task records, capabilities, leases, surface classification, and
 write checks are defined by `shared/governance/agent_governance.yaml` and

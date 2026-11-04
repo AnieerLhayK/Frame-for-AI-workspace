@@ -1,5 +1,24 @@
 # Glossary
 
+## automatic disk scan
+
+A scheduled or default metadata inventory whose configuration controls scope,
+automatic promotion thresholds and budgets. A candidate is evidence for review,
+not cleanup authority.
+
+## manual deep scan
+
+A one-run read-only inspection of directories explicitly requested by the user.
+Automatic size thresholds and review-only promotion restrictions do not gate
+selection; protected boundaries and a shared total budget remain effective.
+
+## approved cleanup batch
+
+An exact set of paths and dispositions approved after the user reviews their
+purpose, impact and recovery limits. Approval covers only those actions in the
+current chat; records and time-limited path authorization implement that approval
+without extending it to future scheduled runs.
+
 ## masking
 
 Replacing selected sensitive values with obscured tokens. Coverage is bounded by
@@ -330,3 +349,11 @@ Task-scoped meaning, evidence and wording guidance maintained in Speaking Like A
 MAN's `references/shared-expression.md`. Consumers read the reference without
 activating the complete skill. Character voice remains a task- and
 character-specific judgment, not a stricter copy of MAN's stylistic preferences.
+
+## Man Evolver
+
+A maintenance workflow for evolving human-expression guidance from reviewed
+feedback. It places shared lessons, cases and diagnostic cues with their owners
+while preserving character-specific voice and existing maintenance authority.
+Its one-way skill index describes maintenance objects; it neither grants
+permissions nor records update history.

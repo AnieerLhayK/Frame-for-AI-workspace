@@ -226,7 +226,8 @@ def check_hermes_guard(
                 entry
                 for entry in entries
                 if isinstance(entry, dict)
-                and "-m scripts.workspace.hermes_workspace_guard" in str(entry.get("command", ""))
+                and ("-m scripts.workspace.hermes_workspace_guard" in str(entry.get("command", ""))
+                     or HERMES_GUARD_SCRIPT.as_posix().casefold() in str(entry.get("command", "")).replace("\\", "/").casefold())
             ),
             None,
         )
@@ -271,6 +272,7 @@ def check_hermes_guard(
         "skill_manage",
         "execute_code",
         "process",
+        "browser_.*",
         "mcp_.*",
     }
     configured_matches = {
@@ -312,6 +314,31 @@ def check_hermes_guard(
     if not HERMES_GUARD_SCRIPT.exists():
         findings.append("tracked Hermes workspace guard script is missing")
 
+    if config.get("skills", {}).get("creation_nudge_interval") != 0:
+        findings.append("Hermes automatic skill creation trigger is not disabled")
+    if config.get("skills", {}).get("write_approval") is not True:
+        findings.append("Hermes native per-change skill approval is disabled")
+    if config.get("curator", {}).get("enabled") is not False:
+        findings.append("Hermes automatic curator is not disabled")
+    if configured_entries.get("pre_tool_call", {}).get("fail_closed") is not True:
+        findings.append("Hermes pre-tool guard must fail closed")
+    if any("-m scripts.workspace.hermes_workspace_guard" in c for c in configured_commands.values()):
+        findings.append("Hermes guard launch still depends on its current directory")
+    # Behavioral probes intentionally perform no tool dispatch or writes.
+    from scripts.workspace import hermes_workspace_guard as guard
+    from scripts.workspace.hermes_skill_deployment import status as approval_status
+    runtime_status = approval_status(config_path.parent)
+    if runtime_status["status"] != "PASS":
+        findings.append("Hermes approval adapter/fallback state is not healthy")
+    for name, args in (("skill_manage", {"action": "create", "name": "health-probe"}),
+                       ("terminal", {"command": "python arbitrary_mutation.py"}),
+                       ("execute_code", {"code": "pass"})):
+        decision = guard.evaluate({"hook_event_name": "pre_tool_call", "tool_name": name,
+                                   "tool_input": args, "session_id": "readonly-health-probe",
+                                   "cwd": str(config_path.parent / "cache/staging")})
+        if decision.get("action") != "block":
+            findings.append(f"Hermes default-deny behavior probe failed: {name}")
+
     if findings:
         return CheckResult(
             "hermes-guard",
@@ -322,7 +349,8 @@ def check_hermes_guard(
     return CheckResult(
         "hermes-guard",
         "PASS",
-        "Hermes cognition hooks, write guard, and MCP restrictions are active.",
+        "Hermes hooks and behavioral approval probes passed.",
+        {"skill_approval": runtime_status},
     )
 
 

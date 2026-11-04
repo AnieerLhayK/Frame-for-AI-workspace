@@ -139,6 +139,14 @@ EXCLUDED_PATHS = {
     # governance registrations that are intentionally absent from Frame.
     "scripts/tests/workspace/test_agent_governance.py",
     "scripts/tests/workspace/test_hermes_workspace_guard.py",
+    # Owner-local deployment and skill cleanup depend on installations and
+    # private skill registrations, neither of which Frame distributes.
+    "scripts/workspace/hermes_skill_deployment.py",
+    "scripts/tests/workspace/test_hermes_skill_deployment.py",
+    "scripts/tests/workspace/test_hermes_skill_approval.py",
+    "scripts/workspace/disk_scan_cleanup.py",
+    "scripts/workspace/disk_scan_cleanup_native.ps1",
+    "scripts/tests/workspace/test_disk_scan_cleanup.py",
     # These project-private tests rely on governance capabilities and TASK
     # records that the public projection intentionally scrubs.
     "scripts/tests/workspace/test_merge_safety.py",

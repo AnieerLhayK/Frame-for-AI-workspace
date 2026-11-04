@@ -1,5 +1,49 @@
 # Decisions
 
+## Disk Scan Follow-up Stays In The Original Chat
+
+- decision: Keep automatic disk scans read-only, allow explicit manual deep scans
+  independent of automatic promotion thresholds, and execute exact user-approved
+  cleanup through a separate Workspace adapter. Codex automatically manages the
+  cleanup TASK and a maximum one-hour exact-path environment lease.
+- date: 2026-11-02, user-confirmed PLAN-20261102-001 and implementation request.
+- reason: A read-only scanner audit should protect unattended inventory without
+  forcing the owner to create another chat or manually register authorized work.
+- consequence: Scanner scripts retain destructive-operation auditing; cleanup
+  has separate approval, preflight and execution receipts. Permanent deletion
+  requires a displayed irreversible disposition and backup status. No permanent
+  environment capability or future scheduled cleanup authority is granted.
+
+## Grilling Remains A File Dependency Without A Codex Entry
+
+- decision: Keep the registered grilling source and its Claude exposure; remove
+  its declared Codex exposure and disable its resolved source in Codex's local
+  skills.config. Upstream workflows read the interview
+  primitive relative to their resolved real source paths.
+- date: 2026-10-31, user-confirmed four-part todo closeout plan.
+- reason: The owner wants a smaller Codex skill selector while preserving the
+  interview primitive used by grill-me, grill-with-docs, ask-matt and architecture
+  analysis. Disabling implicit invocation would still leave a dollar invocation.
+- consequence: Fresh Codex discovery reports the retained source as disabled;
+  upstream file reads remain supported. Automatic approval rejected unlinking
+  the old junction (blocked by policy), so it is retained as a disabled legacy
+  loading link, not retried through another deletion mechanism. Restoring
+  discovery requires removing this local disable entry, restoring manifest
+  exposure and verifying or recreating the projection through the guarded
+  command. No second source copy is maintained.
+
+## MAN First-Release Follow-up Closed By Owner Feedback
+
+- decision: End the entire dedicated MAN first-release evaluation and optimization
+  follow-up; retain the skill, case evidence and historical records. Revisit only
+  demonstrated problems in real use.
+- date: 2026-10-31, explicit owner choice during todo closeout planning.
+- reason: The owner reports that the work is sufficiently complete and no longer
+  wants this standing evaluation queue.
+- consequence: Closure is an owner priority decision, not evidence that every
+  proposed paired or four-platform evaluation passed. The retired todo snapshot
+  is retained in PROJECT_CONTEXT/reports/man-first-release-review-closed-20261031.md.
+
 ## Personal Context Remains Separate From Writing Style
 
 - decision: Keep private personal records in an external owner-controlled Git

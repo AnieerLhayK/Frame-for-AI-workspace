@@ -496,6 +496,45 @@ tasks:
     - run the focused validator for <target-runtime-guard-test>
     - python -m scripts.workspace.workspace_cli agent status
     - git diff --check
+  hermes_skill_approval:
+    use_when:
+    - Implementing the owner-approved Hermes private-skill approval gate, guarded runtime deployment, rollback, and workbench launcher integration.
+    use_when_zh:
+    - 实施用户批准的 Hermes 私有技能审批、受控部署回退及工作台启动入口集成。
+    required:
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/git_integration_policy.md
+    - scripts/workspace/hermes_workspace_guard.py
+    - scripts/workspace/governance/hermes_approval.py
+    - packages/ai-workbench/AGENTS.md
+    - packages/ai-workbench/shared/maintenance.md
+    optional: []
+    ignore:
+    - unrelated skill contents and private corpus
+    - vendor Hermes source mutations
+    tool_profile: platform_maintenance
+    ledger: true
+    budget: {required_warn_tokens: 24000, expanded_warn_tokens: 30000}
+    write_scope:
+    - scripts/workspace/hermes_workspace_guard.py
+    - scripts/workspace/hermes_skill_approval.py
+    - scripts/workspace/hermes_skill_deployment.py
+    - scripts/workspace/governance/hermes_approval.py
+    - scripts/workspace/workspace_health.py
+    - scripts/tests/workspace/test_hermes*.py
+    - scripts/tests/workspace/test_workspace_health.py
+    - packages/ai-workbench/src/ai_workbench/windows.py
+    - packages/ai-workbench/tests/*
+    - packages/ai-workbench/docs/local-controls*.md
+    - shared/governance/agent_governance_policy.md
+    - USAGE_GUIDES/QUICK_START/hermes_skill_approval.md
+    - USAGE_GUIDES/QUICK_START/hermes.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - python -m unittest scripts.tests.workspace.test_hermes_workspace_guard scripts.tests.workspace.test_hermes_skill_approval scripts.tests.workspace.test_hermes_skill_deployment scripts.tests.workspace.test_workspace_health
+    - python -m scripts.workspace.hermes_skill_deployment status
+    - git diff --check
   shared_policy_update:
     use_when:
     - Adding or changing an optional shared policy that projects or tools adopt explicitly

@@ -776,6 +776,29 @@ def check_task_write(policy: dict, manifest: dict, *, agent_name: str,
     task = resolve_task(registration["task_type"], record["owner"].get("bindings", []))
     path = target["workspace_relative"] or target["path"]
     scopes = [*task["context"]["write_scope"], registration["path"]]
+    if (target["surface"] == "external_environment"
+            and registration["task_type"] == "cleanup_migration"
+            and kwargs.get("acting_skill") == "disk-scan-reporter"):
+        lease = kwargs.get("lease") or {}
+        bindings = record.get("owner", {}).get("bindings", [])
+        digest = next((item.partition("=")[2] for item in bindings
+                       if item.startswith("cleanup-plan=")), None)
+        if (digest and lease.get("cleanup_plan") == digest
+                and lease.get("task_id") == record_id
+                and lease.get("session_id") == record.get("owner", {}).get("session_id")
+                and lease.get("capabilities") == ["environment_write"]
+                and validate_lease(policy, lease)["active"]
+                and (datetime.fromisoformat(lease["expires_at"]) -
+                     datetime.fromisoformat(lease["starts_at"])).total_seconds() <= 3600
+                and any(item.get("id") == "disk-scan-reporter" and
+                        "environment_cleanup_apply" in item.get("authority", {}).get("allowed", [])
+                        for item in manifest.get("skills", []))):
+            for binding in bindings:
+                key, _, value = binding.partition("=")
+                if (key.startswith("cleanup-target-") and key[15:].isdigit()
+                        and is_absolute_path(value) and not any(c in value for c in "*?[]")):
+                    if normalize_relative(value).casefold() == normalize_relative(path).casefold():
+                        scopes.append(path)
     if not any(scope_matches(path, scope) for scope in scopes):
         raise ValueError("target is outside the task write scope")
     result = check_access(policy, manifest, agent_name=agent_name, operation="write", raw_path=raw_path, **kwargs)
@@ -1186,6 +1209,7 @@ def check_access(
                 "workspace_other": "source_patch",
                 "development_source": "source_patch",
                 "workflow_record": "record_write",
+                "external_environment": "environment_write",
             }.get(target["surface"])
             allowed_modes = {
                 str(value)

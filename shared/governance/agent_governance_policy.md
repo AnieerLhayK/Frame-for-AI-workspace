@@ -90,6 +90,27 @@ Hermes may invoke `style-doctor` and write a diagnosis in the declared runtime
 record scope, but it may not edit the doctor source or register a missing
 projection.
 
+### Hermes private skill approval
+
+Workspace registrations and their projections remain read-only to Hermes,
+including aliases, junction targets and attempts to shadow registered names.
+Outside those registrations, the owner permits Hermes to maintain only its
+own explicitly identified private skills through native per-change approval.
+This external operation does not expand the Workspace `record_producer` role.
+Generic file and executable tools cannot write the skill loading surface.
+
+Foreground work may suggest a change when it has clear reusable value. The
+owner agrees to preparation, reviews the exact native pending diff, and
+approves one identifier. Background reviews cannot prepare skill drafts;
+memory behavior is unchanged. The host adapter binds pending contents to the
+target and baseline, rechecks native resolution before applying, and requires
+native rollback evidence. Missing adapters, stale reviews and uncertain
+ownership deny writes. The deployment rollback restores service with skill
+and executable write tools disabled, never the former automatic skill policy.
+
+For review commands, deployment validation and safe rollback, read
+[the Hermes skill approval guide](../../USAGE_GUIDES/QUICK_START/hermes_skill_approval.md).
+
 ## Registration Lifecycle
 
 Supported states are:
@@ -185,8 +206,18 @@ Validate a proposed lease before use:
 workspace agent lease validate <lease-file>
 ```
 
-The MVP validates leases but does not issue, activate, merge, or delete them
-automatically.
+The generic lease CLI validates leases; it does not issue or activate them.
+For a user-approved `disk-scan-reporter` cleanup batch, Codex may automatically
+start a `cleanup_migration` TASK and issue an `environment_write` lease for
+only the exact approved targets, valid for at most one hour. Bind each target
+as `cleanup-target-N=<absolute-path>` and bind the approved plan digest as
+`cleanup-plan=<sha256>`. The cleanup adapter validates the TASK, acting skill,
+plan, agent and lease before every action, and revokes the lease and finalizes
+the TASK on success or failure. These target bindings add scope only to an
+external write using this acting skill and a validated cleanup lease; they do
+not grant capability or authorize a different action. No additional human
+registration or chat is needed. This exception does not grant automatic
+cleanup on a later scheduled run.
 
 ## Change Risk And Worktree Guidance
 

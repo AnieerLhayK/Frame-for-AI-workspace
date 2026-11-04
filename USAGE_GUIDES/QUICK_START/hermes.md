@@ -55,3 +55,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\platform\setup_links
 This command writes registered projections. Inspect the manifest and task scope
 before running it. Hermes may need a new session or skill reload after deployment.
 Discovery does not grant authority beyond each manifest entry and `SKILL.md`.
+
+## Private skill changes
+
+Workspace skills and projections stay read-only to Hermes. For owner-approved
+changes to Hermes-created, unregistered private skills, use the native
+per-change review flow in [skill approval and rollback](hermes_skill_approval.md).
+That guide also covers the host adapter health check and safe service rollback.

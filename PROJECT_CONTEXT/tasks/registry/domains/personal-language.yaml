@@ -1,4 +1,20 @@
 tasks:
+  personal_language_behavior_documentation:
+    use_when:
+    - Reconciling the registered personal language research project's resource-status references without processing corpus or changing implementation.
+    use_when_zh:
+    - 核对个人语言研究项目的资源状态引用，不处理语料或修改实现。
+    required:
+    - PROJECT_CONTEXT/references/external_projects.yaml
+    - shared/governance/git_integration_policy.md
+    tool_profile: platform_maintenance
+    ledger: true
+    write_scope:
+    - ${WORKSPACE_ROOT}/projects/personal_language_behavior/docs/resources.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - git diff --check
   personal_language_behavior_bootstrap:
     use_when:
     - Initializing and registering the approved personal language behavior research preparation project.

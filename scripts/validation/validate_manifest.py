@@ -182,6 +182,7 @@ def check_required_fields(manifest: dict[str, Any], state: State) -> None:
         "generator_write",
         "environment_audit",
         "environment_migration_apply",
+        "environment_cleanup_apply",
     }
     valid_execution_modes = {
         "text_only",
