@@ -1,5 +1,46 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  ci_agent_qualification:
+    use_when:
+    - Restoring the reviewed official gh-fix-ci skill and qualifying native agents against isolated synthetic GitHub Actions failures.
+    use_when_zh:
+    - 恢复已审阅的官方 gh-fix-ci，并用隔离的合成 GitHub Actions 故障验收原生 agent。
+    required:
+    - workspace_manifest.yaml
+    - shared/workspace/workspace_policy.md
+    - shared/workspace/workspace_path_policy.md
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/git_integration_policy.md
+    context_views:
+      workspace_manifest.yaml: [runtime_roots, output_roots, external_roots, platform_roots]
+    optional:
+    - reviewed upstream gh-fix-ci source and installed native runtime protocol metadata
+    ignore:
+    - real repository repair, remote Git writes, merge, publication and product UI implementation
+    tool_profile: cleanup_migration
+    ledger: true
+    write_scope:
+    - workspace_manifest.yaml
+    - external-skills/engineering/gh-fix-ci/
+    - external-skills/engineering/registry.json
+    - external-skills/THIRD_PARTY_NOTICES.txt
+    - PROJECT_CONTEXT/todo/external-skills.md
+    - PROJECT_CONTEXT/memory/decisions.md
+    - PROJECT_CONTEXT/memory/glossary.md
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - reports/current/manifest_validation_report.md
+    - reports/current/protocol_validation_report.md
+    - <qualification-staging>/
+    - <qualification-output>/
+    - <qualification-lease>
+    validation:
+    - workspace skill validate gh-fix-ci
+    - python -m scripts.validation.validate_manifest
+    - python -m scripts.validation.validate_protocols
+    - python -m unittest scripts.tests.workspace.test_startup_context_policy scripts.tests.workspace.test_resolve_task_context
+    - git diff --check
+    - verify native skill loading, real patches, independent tests and unchanged control files for each qualification case
   github_ci_governance:
     use_when:
     - Diagnosing or repairing a GitHub Actions workflow whose repository-wide test

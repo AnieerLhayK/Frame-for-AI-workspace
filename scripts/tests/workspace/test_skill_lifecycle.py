@@ -171,6 +171,36 @@ class SkillLifecycleTests(unittest.TestCase):
         result = validate_skill(self.manifest, "demo")
         self.assertEqual(result["status"], "PASS")
 
+    def test_validate_rejects_non_boolean_invocation_flag(self) -> None:
+        self.create_valid_skill()
+        skill = self.skill_source / "SKILL.md"
+        content = skill.read_text(encoding="utf-8")
+        skill.write_text(content.replace("description: Demo skill.",
+            'description: Demo skill.\ndisable-model-invocation: "true"'), encoding="utf-8")
+        result = validate_skill(self.manifest, "demo")
+        self.assertEqual(result["status"], "ERROR")
+        self.assertIn("disable-model-invocation must be a boolean", "\n".join(result["findings"]))
+
+    def test_registered_package_skill_accepts_owned_maintenance_reports(self) -> None:
+        self.skill_source = self.root / "packages" / "demo"
+        self.manifest["skills"][0]["source_path"] = "packages/demo"
+        self.manifest["skills"][0]["optional_files"] = ["reports"]
+        self.skill_source.mkdir(parents=True)
+        (self.skill_source / "SKILL.md").write_text(
+            "---\nname: demo\ndescription: Demo skill.\nmetadata:\n  hermes:\n    related_skills: []\n---\n",
+            encoding="utf-8")
+        (self.skill_source / "README.md").write_text("# demo\n", encoding="utf-8")
+        (self.skill_source / "reports").mkdir()
+        (self.skill_source / "reports" / "maintenance.md").write_text("# Maintenance\n", encoding="utf-8")
+        result = validate_skill(self.manifest, "demo")
+        self.assertEqual(result["status"], "PASS", result["findings"])
+        nested = self.skill_source / "scripts" / "reports"
+        nested.mkdir(parents=True)
+        (nested / "runtime.log").write_text("runtime output", encoding="utf-8")
+        result = validate_skill(self.manifest, "demo")
+        self.assertEqual(result["status"], "ERROR")
+        self.assertIn("runtime artifacts", "\n".join(result["findings"]))
+
     def test_validate_rejects_invocation_drift_and_runtime_artifacts(self) -> None:
         self.skill_source.mkdir(parents=True)
         (self.skill_source / "agents").mkdir()

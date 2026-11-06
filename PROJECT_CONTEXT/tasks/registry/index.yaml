@@ -200,6 +200,7 @@ task_files:
   developer_interface_tooling: domains/workspace.yaml
   failure_diagnostics_tooling: domains/workspace.yaml
   github_ci_governance: domains/skills.yaml
+  ci_agent_qualification: domains/skills.yaml
   governance_summary_tooling: domains/workspace.yaml
   governance_workflow_simplification: domains/governance.yaml
   ignore_policy_update: domains/workspace.yaml

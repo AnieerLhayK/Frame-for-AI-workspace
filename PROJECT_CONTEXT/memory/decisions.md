@@ -1,5 +1,47 @@
 # Decisions
 
+## Restore Official CI Repair Instructions Before Building The Monitor
+
+- decision: Own `gh-fix-ci` as a pinned official external skill under engineering,
+  replacing the stale `github:gh-fix-ci` plugin declaration. Keep upstream body,
+  assets and Apache-2.0 license unchanged; preserve the imported helper baseline
+  in Git and document its later repository-origin adaptation. The UI metadata
+  explicitly preserves default implicit invocation. Codex and Claude use managed
+  projections; DSH qualification loads a project-local native skill copy.
+- date: 2026-11-05, owner-approved PLAN-20261104-001 / TASK-20261104-005.
+- reason: The installed GitHub plugin no longer contains the registered skill.
+  Evaluate the existing workflow before introducing a replacement or permanent
+  coding authority for another harness.
+- consequence: Initial native qualification found correct DSH file edits but blocked
+  shell provisioning, blocked Codex execution, and a passing Claude implicit
+  case; Claude explicit repair succeeded without observable skill loading in the
+  corrected trial. These are bounded synthetic results, not general reliability
+  claims. Keep agent/model configurable and require actual tool/test receipts.
+  Future product direction is a separate muti-ai CI panel, default DSH, automatic
+  detection with manual repair start, and monitoring after window close. This
+  phase adds no monitor, UI, merge capability, or permanent DSH permission.
+  Evidence: `output_roots.workspace/ci-agent-qualification-20261104/evaluation.md`.
+
+## CI Monitoring And Repair Are Separate Explicit Actions
+
+- decision: Add a separate muti-ai CI panel with default DSH and configurable
+  agent/model/command. A detached worker detects Actions failures; a user click
+  starts one repair in an independent clone, producing a local patch and native
+  test evidence. Merge remains outside the first version.
+- date: 2026-11-05, user authorized sequenced completion without further prompts;
+  TASK-20261105-002/003.
+- reason: DSH can perform the workflow after granting WRITE_OWNER only to the
+  current owner of private synthetic roots. Codex's supported per-process
+  unelevated implementation avoids the failing elevated setup. Neither finding
+  justifies full access or permanent Workspace authority for another harness.
+- consequence: Preserve the first qualification as history. Record follow-up
+  native results separately and retain invalidated control-file trials as
+  inconclusive. Adapt gh-fix-ci's helper to validate HTTPS host and repository
+  before run/job lookup; the original imported baseline remains in commit
+  2c749c1c. A raw `/runs/number` substring is not proof of Actions origin.
+  Runtime state belongs to the workbench's private data root. This version
+  installs no OS startup task and does not perform real remote repairs or merges.
+
 ## Disk Scan Follow-up Stays In The Original Chat
 
 - decision: Keep automatic disk scans read-only, allow explicit manual deep scans

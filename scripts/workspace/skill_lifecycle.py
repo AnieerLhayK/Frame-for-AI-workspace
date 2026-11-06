@@ -217,16 +217,18 @@ def ignored_python_caches(source: Path, candidates: list[str]) -> set[str]:
     return set(result.stdout.rstrip("\0").split("\0"))
 
 
-def enhanced_contract_findings(source: Path, metadata: dict[str, Any]) -> list[str]:
+def enhanced_contract_findings(source: Path, metadata: dict[str, Any], *, allow_owned_reports: bool = False, require_contract: bool = False) -> list[str]:
     findings: list[str] = []
+    if "disable-model-invocation" in metadata and not isinstance(metadata["disable-model-invocation"], bool):
+        findings.append("disable-model-invocation must be a boolean")
     contract = metadata.get("metadata")
-    has_contract = contract is not None
-    if has_contract and not isinstance(contract, dict):
+    has_contract = isinstance(contract, dict) and (require_contract or bool({"portability", "distribution", "requires"} & contract.keys()))
+    if contract is not None and not isinstance(contract, dict):
         findings.append("frontmatter metadata must be a mapping")
 
     portability: str | None = None
     requires: list[str] | None = None
-    if isinstance(contract, dict):
+    if has_contract:
         portability = contract.get("portability")
         distribution = contract.get("distribution")
         raw_requires = contract.get("requires")
@@ -287,7 +289,8 @@ def enhanced_contract_findings(source: Path, metadata: dict[str, Any]) -> list[s
         relative = path.relative_to(source)
         if "__pycache__" in relative.parts or path.suffix == ".pyc":
             caches.append(relative.as_posix())
-        elif "reports" in relative.parts and path.is_file() and path.name != ".gitkeep":
+        elif ("reports" in relative.parts and not (allow_owned_reports and relative.parts[0] == "reports")
+              and path.is_file() and path.name != ".gitkeep"):
             pollution.append(relative.as_posix())
     pollution.extend(sorted(set(caches) - ignored_python_caches(source, caches)))
     if pollution:
@@ -435,7 +438,8 @@ def validate_skill(
                     findings.append("frontmatter description must be non-empty")
                 if source_path_requires_contract(source_value) and "metadata" not in metadata:
                     findings.append("standalone skill requires frontmatter metadata")
-                findings.extend(enhanced_contract_findings(source, metadata))
+                allow_owned_reports = bool(registered and source_value.replace("\\", "/").startswith("packages/") and "reports" in registered.get("optional_files", []))
+                findings.extend(enhanced_contract_findings(source, metadata, allow_owned_reports=allow_owned_reports, require_contract=source_path_requires_contract(source_value)))
         if registered:
             for relative in registered.get("required_files", []):
                 if not (source / Path(str(relative))).exists():
