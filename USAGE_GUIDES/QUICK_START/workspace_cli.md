@@ -59,6 +59,29 @@ workspace workflow check <task-id> --record-id <TASK-ID>
 
 `workflow check` 检查写入范围、Git diff 和工作流就绪状态；它不会代替任务的验证命令，也不会提交。Agent 权限、skill 权限/执行模式和 TASK 写入范围必须同时允许操作。
 
+### DeepSeek 受控维护
+
+受控 SDK 入口与普通 Desktop 是两个身份。先为 `deepseek-harness-workspace`
+登记当前任务并指定唯一 session，再使用同一 TASK 和 session 启动；任务正文从
+标准输入传入。`credentials-root` 是 e-Diary 的 `data_root/providers/deepseek`，
+账号或 API Key 先在 e-Diary 设置中连接。
+
+```powershell
+workspace records start --task-type ai_workbench_development --operation workspace_write `
+  --owner-agent deepseek-harness-workspace --owner-session <session-id>
+python -B scripts/workspace/deepseek_workspace_guard.py run `
+  --project <ai-workbench绝对路径> --record-id <TASK-ID> --session-id <session-id> `
+  --executable <DeepSeek-Harness.exe绝对路径> --credentials-root <凭据目录> `
+  --auth <account或api_key> --model <模型ID> --staging <staging目录>
+```
+
+输入任务正文后以 Ctrl+Z、Enter 结束标准输入。可选 `--acting-skill <已准入技能ID>`
+才能读取对应技能的指令与资源，并将该技能的权限与每次写入同时检查。支持的项目为
+`ai-workbench` 和 `character-system`；工具提供绝对路径的读取、写入、编辑和
+有上限的单层目录列表，跳过隐藏、依赖和私有语料目录。
+终端、内存管理、治理、发布和普通 Desktop 的写入授权不随此入口开放。任务完成后
+由任务负责人运行路由验证、workflow check 和记录收尾。
+
 同一状态、同一范围内，`workflow check` 已包含 `changes verify` 与未暂存/已暂存的
 diff 检查，无需再分别重复运行。整批交付加 `--include-committed`；文件、暂存区或
 提交变化后重新检查。检查其他范围、排查失败和独立测试仍按需要执行。

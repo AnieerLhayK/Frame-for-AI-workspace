@@ -147,6 +147,28 @@ adapter. Its declared role and scopes neither authorize native Workspace tool
 calls nor provide runtime protection. A supported Desktop adapter and a separate
 authority decision are required before enabling such writes.
 
+The separate `deepseek-harness-workspace` identity is limited to the guarded SDK
+entry in `scripts/workspace/deepseek_workspace_guard.py run`. It may write
+development source in character-system or ai-workbench only when its own active
+task, exact session, task scope, agent capabilities and any selected acting Skill
+all authorize the target. The bridge checks every tool call; it rejects commands,
+unknown tools, escalation and targets outside its approved roots. A curated
+Skill's instructions and resources are readable only when it is the selected
+acting Skill; selecting it does not itself authorize writes.
+No memory, governance, platform, delivery, or unguarded Desktop authority follows.
+The entry uses a fresh profile without session persistence; unsupported Harness
+versions fail closed.
+
+The relevant attack path is model-supplied file-tool arguments reaching the SDK
+filesystem. The guard validates absolute paths, rejects links, hard links,
+alternate data streams and escalation, then calls the existing task and agent
+authorization before writes. The SDK's workspace sandbox supplies an additional
+project boundary. These checks do not authenticate the operating-system user or
+protect against a concurrently privileged process changing filesystem state;
+ordinary Desktop and direct native SDK launches do not install this guard.
+The optional directory listing is nonrecursive, bounded, and omits hidden,
+dependency and private-corpus entries; it does not follow links.
+
 ## External Workspace Task Bridge
 
 An active registered agent working from a different workspace may modify this

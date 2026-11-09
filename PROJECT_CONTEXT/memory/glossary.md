@@ -265,6 +265,12 @@ The historical, local Cordis boundary for the retired Web workspace pilot.
 It is not the official Desktop runtime's authorization adapter; installing
 Desktop does not transfer the pilot's authority or enable Workspace writes.
 
+## DeepSeek Harness guarded Workspace transport
+
+A dedicated official Harness SDK session whose tool calls are checked against
+its own active Workspace task and restricted project and skill boundaries. It
+does not change the authority of the ordinary Desktop application.
+
 ## DeepSeek Harness Desktop transition
 
 Replacement of the independent browser-based Web launch path by the official

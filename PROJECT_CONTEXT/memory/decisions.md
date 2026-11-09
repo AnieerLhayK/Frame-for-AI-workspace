@@ -445,6 +445,18 @@ manifest-declared workspace output root and never changes source material.
   MCP, dynamic Cordis, subagents, remote Git, credential tools, and telemetry
   export. A separate reviewed TASK is required for permanent promotion.
 
+## DeepSeek Workspace Maintenance Uses A Separate Guarded Identity
+
+- decision: Allow the dedicated guarded DeepSeek SDK identity scoped source writes
+  in character-system and ai-workbench, after runtime verification, while the
+  ordinary Desktop identity keeps its existing authority. Skill instructions
+  and resources require an explicitly bound acting Skill for the task.
+- reason: The SDK tool guard can bind individual writes to an active task and
+  scope; the Desktop application does not provide the same Workspace adapter.
+- consequence: The guarded route cannot execute shell commands or publish, and
+  cannot manage memory or governance; unfamiliar Harness versions fail closed.
+- date if known: 2026-11-08.
+
 ## DeepSeek Harness Uses Official Desktop With Fresh Product Data
 
 - decision: Replace the independent Web/browser launch chain with the official

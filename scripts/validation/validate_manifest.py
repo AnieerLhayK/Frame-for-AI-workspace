@@ -242,6 +242,14 @@ def check_required_fields(manifest: dict[str, Any], state: State) -> None:
         )
 
         exposures = skill.get("exposures")
+        guarded_only = skill.get("discovery_mode") == "guarded_agent_only"
+        if guarded_only:
+            agents = skill.get("guarded_agents")
+            if not package_id or not isinstance(agents, list) or not agents or any(not isinstance(agent, str) or not agent for agent in agents):
+                state.add("ERROR", f"skills[{skill_id}] guarded discovery requires a package and explicit agents")
+            if exposures != []:
+                state.add("ERROR", f"skills[{skill_id}] guarded discovery must not declare platform exposures")
+            continue
         if not isinstance(exposures, list) or not exposures:
             state.add("ERROR", f"skills[{skill_id}].exposures must be a non-empty list")
             continue

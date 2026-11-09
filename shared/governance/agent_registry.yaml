@@ -180,6 +180,45 @@ agents:
       expires_at: null
     active_lease_refs: []
 
+  deepseek-harness-workspace:
+    id: deepseek-harness-workspace
+    display_name: DeepSeek Harness guarded Workspace transport
+    aliases: []
+    identity_kind: agent
+    host:
+      id: deepseek-harness-guarded-sdk
+      kind: guarded_sdk
+    status: active
+    registration_type: permanent
+    role: record_producer
+    trust_source: user_approved
+    capabilities:
+      inherit_role: true
+      allow:
+        - source_write
+    path_scopes:
+      - packages/ai-workbench/**
+      - packages/character-system/**
+    platforms: []
+    skill_access:
+      mode: curated_workspace_reads
+      platforms: []
+    storage:
+      boundary: external
+      data_root: "${DATA_ROOT}/deepseek-harness"
+      cache_root: "${DATA_ROOT}/deepseek-harness/cache"
+    session_store:
+      mode: none
+      boundary: external
+    lifecycle:
+      owner: user
+      reviewed_at: "2026-11-08T00:00:00+08:00"
+      expires_at: null
+    unresolved:
+      - Source writes are authorized only through the dedicated guarded Workspace SDK transport and a matching active task.
+      - The ordinary Desktop application does not inherit this transport's write authority.
+    active_lease_refs: []
+
   deepseek-harness:
     id: deepseek-harness
     display_name: DeepSeek Harness

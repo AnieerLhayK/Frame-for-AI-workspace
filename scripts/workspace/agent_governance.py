@@ -1216,6 +1216,16 @@ def check_access(
                 for value in skill.get("execution_modes", {}).get("allowed", [])
             }
             skill_allowed = required_mode is None or required_mode in allowed_modes
+            guarded_agent_allowed = (skill.get("discovery_mode") != "guarded_agent_only"
+                                     or resolved["agent"] in skill.get("guarded_agents", []))
+            if skill.get("discovery_mode") == "guarded_agent_only":
+                package = next((item for item in manifest.get("packages", [])
+                                if item.get("id") == skill.get("package_id")), {})
+                package_root = normalize_relative(str(package.get("source_path", ""))).rstrip("/")
+                relative = normalize_relative(str(target.get("workspace_relative") or ""))
+                guarded_agent_allowed = (guarded_agent_allowed and bool(package_root)
+                                         and relative.casefold().startswith(package_root.casefold() + "/"))
+            skill_allowed = skill_allowed and guarded_agent_allowed
             skill_authorization = {
                 "skill": skill.get("id"),
                 "role": skill.get("role"),
@@ -1225,10 +1235,10 @@ def check_access(
                 "reason": (
                     "acting skill permits the required execution mode"
                     if skill_allowed
-                    else (
+                    else ("agent or target is outside this guarded Skill's scope" if not guarded_agent_allowed else (
                         f"acting skill {skill.get('id')} does not permit "
                         f"{required_mode}"
-                    )
+                    ))
                 ),
             }
             if not skill_allowed:
