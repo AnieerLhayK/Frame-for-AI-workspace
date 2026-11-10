@@ -550,3 +550,18 @@ manifest-declared workspace output root and never changes source material.
   runtime read failures disclose the gap once and retain the consumer's own rules.
   Doctor remains character-only and advisory; maintenance/generalization ownership
   is unchanged. Only approved expression lessons enter the shared source.
+
+## DeepSeek Desktop Promotion Requires Verified Mediation
+
+- status: Owner-approved direction; implementation and Desktop validation pending.
+- decision: Prefer DeepSeek Desktop for ordinary project maintenance only after
+  its tool, terminal and plugin write paths are proven to enforce the active
+  TASK and scoped authority. If verification fails, retain the current Desktop
+  limits and use the existing guarded SDK for approved writes.
+- reason: Tool discovery, instructions and process-local plugins cannot alone
+  prove that every host-level write is mediated.
+- consequence: The owner-approved DSH skill candidate catalog is a discovery
+  input, not a grant. DSH-private memory may propose changes to Workspace memory;
+  core governance, authoritative memory, main integration and publication remain
+  separately authorized. Plugin and harness updates must not silently enlarge
+  permissions or change active rules before the required review.

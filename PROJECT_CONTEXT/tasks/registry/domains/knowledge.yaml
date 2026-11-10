@@ -380,6 +380,8 @@ tasks:
     - scripts/tests/
     validation:
     - python -m unittest scripts.tests.workspace.test_knowledge_registry scripts.tests.workspace.test_workspace_cli
+    - python -m unittest scripts.tests.workspace.test_harness_library
+    - node --test scripts/tests/workspace/test_harness_refresh.mjs
     - python -m scripts.workspace.workspace_cli knowledge validate
     - python -m scripts.workspace.workspace_cli knowledge list
     - python -m scripts.workspace.resolve_task_context workspace_engineering_knowledge --format

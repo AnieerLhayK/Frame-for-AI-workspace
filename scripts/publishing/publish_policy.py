@@ -110,6 +110,9 @@ EXCLUDED_PATHS = {
     "scripts/platform/dsh.cmd",
     "scripts/platform/Start-DeepSeekHarnessDesktop.ps1",
     "scripts/tests/platform/test_deepseek_desktop_transition.py",
+    # Owner-specific DSH candidates and local deployment paths are private.
+    "shared/governance/dsh_skill_catalog.yaml",
+    "PROJECT_CONTEXT/tasks/registry/domains/dsh-desktop.yaml",
     "WORKSPACE_ENGINEERING/evidence",
     "WORKSPACE_ENGINEERING/proposals",
     "scripts/publishing/publish_chatty_ch_system.py",

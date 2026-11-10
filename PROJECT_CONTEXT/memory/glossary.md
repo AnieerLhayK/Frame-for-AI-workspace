@@ -370,3 +370,15 @@ Task-specific expression guidance selected for a clear use, such as a stage
 review, explanation or diagnosis. A main scenario follows the requested
 deliverable; another applies only to the portion that needs it. A caller may
 provide its own supplement without activating the complete MAN skill.
+
+## harness profile
+
+A reviewed collection of host-specific agent workflow references and
+adaptations. A profile describes how to work; selecting or loading it does not
+grant the actor additional access or prove that the host enforces it.
+
+## approved DSH skill candidate
+
+A skill the owner has selected for consideration in DeepSeek Harness. Approval
+of the candidate and its intended trigger is distinct from verified discovery,
+permission to read personal material, and authority for the skill's effects.

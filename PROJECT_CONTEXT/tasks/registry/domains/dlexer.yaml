@@ -1,0 +1,23 @@
+tasks:
+  dlexer_integration:
+    use_when:
+    - Registering or maintaining the DLexer Python and PyTorch learning project and its dedicated environment.
+    use_when_zh:
+    - 登记或维护 DLexer Python 与 PyTorch 学习项目及其专属环境。
+    required:
+    - PROJECT_CONTEXT/references/external_projects.yaml
+    - shared/governance/git_integration_policy.md
+    tool_profile: cleanup_migration
+    ledger: true
+    write_scope:
+    - ${WORKSPACE_ROOT}/projects/DLexer/
+    - D:/CODER/python/anaconda/envs/dlexer/
+    - PROJECT_CONTEXT/references/external_projects.yaml
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - git diff --check
+    - python -m scripts.workspace.workspace_cli knowledge validate
+    - git -C ${WORKSPACE_ROOT}/projects/DLexer diff --check
+    - D:/CODER/python/anaconda/envs/dlexer/python.exe -m pytest -q ${WORKSPACE_ROOT}/projects/DLexer/tests
+    - D:/CODER/python/anaconda/envs/dlexer/python.exe -m ruff check ${WORKSPACE_ROOT}/projects/DLexer

@@ -362,7 +362,7 @@ tasks:
     - git diff --check
   cleanup_migration:
     context_views:
-      workspace_manifest.yaml: [workspace, platform_roots, session_stores, output_roots, runtime_roots, external_roots, shared, packages, skills, plugin_skills, projections, protocols, portability, discovery, failure_policy]
+      workspace_manifest.yaml: [workspace, platform_roots, session_stores, output_roots, runtime_roots, external_roots, shared, packages, plugin_skills, projections, protocols, portability, discovery, failure_policy]
     use_when:
     - Deleting legacy directories, moving tool binaries, migrating data, or changing
       local deployment paths.
@@ -377,6 +377,7 @@ tasks:
     - shared/workspace/workspace_path_policy.md
     - git status --short --untracked-files=all
     - explicit user approval for every destructive path
+    - when moving skills, resolve the affected skill through the manifest loader and its owner catalog
     optional:
     - selected migration planner, validator, or continuity route
     ignore:

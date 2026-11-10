@@ -177,6 +177,7 @@ default_rules:
     - shared protocol contracts
     - current git state
 task_files:
+  dlexer_integration: domains/dlexer.yaml
   workspace_portability_repair: domains/workspace.yaml
   ai_workbench_bootstrap: domains/ai-workbench.yaml
   ai_workbench_development: domains/ai-workbench.yaml

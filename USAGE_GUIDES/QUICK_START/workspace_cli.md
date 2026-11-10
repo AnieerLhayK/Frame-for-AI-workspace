@@ -61,6 +61,13 @@ workspace workflow check <task-id> --record-id <TASK-ID>
 
 ### DeepSeek 受控维护
 
+先使用 `workspace skill dsh-preview --format json` 检查已批准的候选技能、
+预期触发方式、来源和登记状态。该命令只读，不会加载技能、修改 Desktop 或授予
+权限；`adaptation_required` 提示需审查平台适配，`adaptation_ready_for_verification`
+表示已记录适配但仍需实际平台验收。`registration_required` 提示原技能未登记，
+发现入口不等于具备注册技能的执行权限。
+其中 authority 和 execution_modes 仅是登记信息，不代替逐项数据范围与副作用审查。
+
 受控 SDK 入口与普通 Desktop 是两个身份。先为 `deepseek-harness-workspace`
 登记当前任务并指定唯一 session，再使用同一 TASK 和 session 启动；任务正文从
 标准输入传入。`credentials-root` 是 e-Diary 的 `data_root/providers/deepseek`，

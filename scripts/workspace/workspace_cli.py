@@ -227,6 +227,8 @@ def build_parser() -> argparse.ArgumentParser:
     skill_list = skill_commands.add_parser("list", help="List manifest skills and projection states.")
     skill_list.add_argument("--platform")
     skill_list.add_argument("--format", choices=("text", "json"), default="text")
+    skill_dsh_preview = skill_commands.add_parser("dsh-preview", help="Preview the approved DSH skill candidates without enabling them.")
+    skill_dsh_preview.add_argument("--format", choices=("text", "json"), default="text")
     skill_expose = skill_commands.add_parser(
         "expose",
         help="Preview or create one manifest-declared platform projection.",
@@ -293,6 +295,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Check every indexed knowledge path.",
     )
     knowledge_validate.add_argument("--format", choices=("text", "json"), default="text")
+    harness_check = knowledge_commands.add_parser("harness-check", help="Compare harness sources with reviewed snapshots.")
+    harness_check.add_argument("--baseline", required=True)
+    harness_check.add_argument("--online", action="store_true")
+    harness_check.add_argument("--format", choices=("text", "json"), default="text")
 
     changes = commands.add_parser("changes", help="Plan or verify task change surfaces.")
     change_commands = changes.add_subparsers(dest="action", required=True)
@@ -532,6 +538,8 @@ def dispatch(args: argparse.Namespace) -> int:
         elif args.action == "list":
             if args.platform:
                 command.extend(["--platform", args.platform])
+        elif args.action == "dsh-preview":
+            pass
         else:
             command.append(args.skill_id)
             if args.platform:
@@ -593,6 +601,12 @@ def dispatch(args: argparse.Namespace) -> int:
             command.extend(["-ManifestPath", args.manifest_path])
         return run_command(command)
     if args.command == "knowledge":
+        if args.action == "harness-check":
+            command = [sys.executable, "-m", "scripts.workspace.harness_library", "check", "--baseline", args.baseline]
+            if args.online:
+                command.append("--online")
+            command.extend(["--format", args.format])
+            return run_command(command)
         command = [sys.executable, "-m", "scripts.workspace.knowledge_registry"]
         if args.action == "list":
             command.append("--list")

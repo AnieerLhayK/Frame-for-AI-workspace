@@ -16,6 +16,7 @@ import yaml
 from scripts.workspace.runtime import WORKSPACE_ROOT
 from scripts.workspace.manifest_loader import load_manifest as load_workspace_manifest
 MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
+DSH_SKILL_CATALOG = WORKSPACE_ROOT / "shared/governance/dsh_skill_catalog.yaml"
 SKILL_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FRONTMATTER_PATTERN = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
@@ -400,6 +401,82 @@ def list_skills(
     return {"status": "PASS", "skills": rows}
 
 
+def render_dsh_skill_pointer(row: dict[str, Any], root: Path) -> str:
+    """Render a discovery pointer; the original skill remains the authority."""
+    skill_id, trigger, source = row.get("id"), row.get("trigger"), row.get("source_path")
+    if not isinstance(skill_id, str) or not SKILL_ID_PATTERN.fullmatch(skill_id):
+        raise ValueError("invalid skill id")
+    if trigger not in {"automatic", "explicit"} or not isinstance(source, str) or not source:
+        raise ValueError("skill is not discoverable")
+    source_file = resolve_workspace_path(root.resolve(), source) / "SKILL.md"
+    description = str(row.get("description") or f"Use the approved {skill_id} workflow.")
+    disabled = "true" if trigger == "explicit" else "false"
+    adaptation = row.get("adaptation_note")
+    if adaptation is not None and (not isinstance(adaptation, str) or not adaptation.strip() or '\n' in adaptation or '\r' in adaptation):
+        raise ValueError("invalid DSH adaptation note")
+    adaptation_text = f"DSH invocation adaptation: {adaptation}\n\n" if adaptation else ""
+    return (f"---\nname: {skill_id}\ndescription: {json.dumps(description, ensure_ascii=False)}\n"
+            f"disable-model-invocation: {disabled}\nuser-invocable: true\n---\n\n"
+            f"{adaptation_text}"
+            f"Read and follow the authoritative instructions at `{source_file.as_posix()}`. "
+            "Resolve its relative links from its own directory.\n")
+
+
+def preview_dsh_skills(manifest: dict[str, Any], catalog_path: Path = DSH_SKILL_CATALOG) -> dict[str, Any]:
+    """Preview approved sources; this never modifies discovery or grants authority."""
+    try:
+        catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8-sig"))
+    except FileNotFoundError as exc:
+        raise ValueError("DSH skill catalog is not configured on this host") from exc
+    except yaml.YAMLError as exc:
+        raise ValueError(f"invalid DSH skill catalog: {exc}") from exc
+    if not isinstance(catalog, dict) or catalog.get("schema_version") != 1 or not isinstance(catalog.get("skills"), list):
+        raise ValueError("invalid DSH skill catalog")
+    root = workspace_root(manifest)
+    rows, seen, errors = [], set(), []
+    for item in catalog["skills"]:
+        if not isinstance(item, dict):
+            raise ValueError("invalid DSH skill entry")
+        skill_id, trigger = item.get("id"), item.get("trigger")
+        if not isinstance(skill_id, str) or not SKILL_ID_PATTERN.fullmatch(skill_id) or skill_id in seen:
+            raise ValueError("invalid or duplicate DSH skill id")
+        if trigger not in {"automatic", "explicit", "dependency_only"}:
+            raise ValueError(f"invalid DSH trigger for {skill_id}")
+        seen.add(skill_id)
+        registered = manifest_skill(manifest, skill_id)
+        if not registered:
+            character_root = "packages/character-system/engineering/generation/character-generator/characters"
+            if (item.get("approved_unregistered") is not True or trigger != "explicit" or
+                    item.get("source_path") != f"{character_root}/{skill_id}"):
+                raise ValueError(f"unregistered DSH skill is not approved: {skill_id}")
+        source_value = registered.get("source_path") if registered else item.get("source_path")
+        if not source_value:
+            raise ValueError(f"unregistered DSH skill lacks a source: {skill_id}")
+        source = resolve_workspace_path(root, str(source_value))
+        metadata, error = parse_frontmatter(source / "SKILL.md")
+        if error:
+            errors.append(f"{skill_id}: {error}")
+        state = "invalid" if error else ("registration_required" if registered is None else "ready_for_review")
+        if metadata and trigger == "automatic" and metadata.get("disable-model-invocation") is True:
+            state = "adaptation_required"
+        override, adaptation = item.get("description_override"), item.get("adaptation_note")
+        if override is not None or adaptation is not None:
+            if (not isinstance(override, str) or not override.strip() or '\n' in override or '\r' in override or
+                    not isinstance(adaptation, str) or not adaptation.strip() or '\n' in adaptation or '\r' in adaptation):
+                raise ValueError(f"invalid DSH adaptation for {skill_id}")
+            if state != "adaptation_required":
+                raise ValueError(f"unexpected DSH invocation adaptation for {skill_id}")
+            state = "adaptation_ready_for_verification"
+        rows.append({"id": skill_id, "trigger": trigger, "source_path": str(source_value),
+                     "registered": registered is not None, "state": state,
+                     "description": override if override is not None else metadata.get("description", "") if metadata else "",
+                     "adaptation_note": adaptation,
+                     "authority": registered.get("authority", {}) if registered else {},
+                     "execution_modes": registered.get("execution_modes", {}) if registered else {}})
+    return {"status": "ERROR" if errors else "PASS", "skills": rows, "findings": errors,
+            "activation_performed": False, "kind": "dsh_preview"}
+
+
 def validate_skill(
     manifest: dict[str, Any],
     target: str,
@@ -628,6 +705,11 @@ def render(payload: dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return
+    if payload.get("kind") == "dsh_preview":
+        print("DSH skill candidates (preview only)")
+        for skill in payload["skills"]:
+            print(f"- {skill['id']}: trigger={skill['trigger']} state={skill['state']}")
+        return
     if "skills" in payload:
         print("Skill Registry")
         for skill in payload["skills"]:
@@ -677,6 +759,9 @@ def build_parser() -> argparse.ArgumentParser:
     list_parser.add_argument("--platform")
     list_parser.add_argument("--format", choices=("text", "json"), default="text")
 
+    dsh_preview = commands.add_parser("dsh-preview")
+    dsh_preview.add_argument("--format", choices=("text", "json"), default="text")
+
     expose = commands.add_parser("expose")
     expose.add_argument("skill_id")
     expose.add_argument("--platform")
@@ -700,6 +785,8 @@ def main() -> int:
             payload = validate_skill(manifest, args.target)
         elif args.action == "list":
             payload = list_skills(manifest, platform=args.platform)
+        elif args.action == "dsh-preview":
+            payload = preview_dsh_skills(manifest)
         else:
             payload = expose_skill(
                 manifest,

@@ -10,6 +10,8 @@ from scripts.workspace.skill_lifecycle import (
     expose_skill,
     init_skill,
     list_skills,
+    preview_dsh_skills,
+    render_dsh_skill_pointer,
     projection_state,
     validate_skill,
 )
@@ -427,6 +429,83 @@ class SkillLifecycleTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "BLOCKED")
         self.assertTrue(self.link_path.is_dir())
+
+    def test_dsh_preview_lists_only_approved_skills_without_enabling_them(self) -> None:
+        self.skill_source.mkdir(parents=True)
+        (self.skill_source / "SKILL.md").write_text(
+            "---\nname: demo\ndescription: A demo.\ndisable-model-invocation: true\n---\n", encoding="utf-8"
+        )
+        dependency = self.root / "skills" / "grilling"
+        dependency.mkdir(parents=True)
+        (dependency / "SKILL.md").write_text("---\nname: grilling\ndescription: Dependency.\n---\n", encoding="utf-8")
+        self.manifest["skills"].append({"id": "grilling", "source_path": "skills/grilling"})
+        catalog = self.root / "catalog.yaml"
+        catalog.write_text("schema_version: 1\nskills:\n  - {id: demo, trigger: automatic}\n  - {id: grilling, trigger: dependency_only}\n", encoding="utf-8")
+        payload = preview_dsh_skills(self.manifest, catalog)
+        rows = {row["id"]: row for row in payload["skills"]}
+        self.assertEqual(payload["status"], "PASS")
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows["demo"]["trigger"], "automatic")
+        self.assertEqual(rows["grilling"]["trigger"], "dependency_only")
+        self.assertEqual(rows["demo"]["state"], "adaptation_required")
+        self.assertNotIn("showcase-packer", rows)
+        self.assertNotIn("putogether", rows)
+        self.assertFalse(payload["activation_performed"])
+
+    def test_dsh_pointer_preserves_source_and_explicit_trigger(self) -> None:
+        row = {"id": "demo", "trigger": "explicit", "source_path": "skills/demo", "description": "Demo trigger."}
+        pointer = render_dsh_skill_pointer(row, self.root)
+        self.assertIn("disable-model-invocation: true", pointer)
+        self.assertIn(str(self.root / "skills/demo/SKILL.md").replace('\\', '/'), pointer)
+
+    def test_dsh_pointer_explains_owner_approved_invocation_adaptation(self) -> None:
+        row = {"id": "demo", "trigger": "automatic", "source_path": "skills/demo",
+               "description": "Use for accessible responses.", "adaptation_note": "Owner approved automatic discovery despite the source's explicit invocation setting."}
+        pointer = render_dsh_skill_pointer(row, self.root)
+        self.assertIn("disable-model-invocation: false", pointer)
+        self.assertIn(row["adaptation_note"], pointer)
+
+    def test_dsh_pointer_rejects_internal_dependency_and_escape(self) -> None:
+        with self.assertRaises(ValueError):
+            render_dsh_skill_pointer({"id": "demo", "trigger": "dependency_only", "source_path": "skills/demo"}, self.root)
+        with self.assertRaises(ValueError):
+            render_dsh_skill_pointer({"id": "demo", "trigger": "automatic", "source_path": "../private"}, self.root)
+
+    def test_dsh_preview_rejects_unregistered_source(self) -> None:
+        catalog = self.root / "catalog.yaml"
+        catalog.write_text("schema_version: 1\nskills:\n  - {id: unknown, trigger: automatic, source_path: skills/demo}\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "unregistered DSH skill is not approved"):
+            preview_dsh_skills(self.manifest, catalog)
+
+    def test_dsh_preview_records_explicit_invocation_adaptation(self) -> None:
+        self.skill_source.mkdir(parents=True)
+        (self.skill_source / 'SKILL.md').write_text('---\nname: demo\ndescription: Invoke explicitly.\ndisable-model-invocation: true\n---\n', encoding='utf-8')
+        catalog = self.root / 'catalog.yaml'
+        catalog.write_text('schema_version: 1\nskills:\n  - id: demo\n    trigger: automatic\n    description_override: Accessible output.\n    adaptation_note: Owner approved automatic discovery.\n', encoding='utf-8')
+        row = preview_dsh_skills(self.manifest, catalog)['skills'][0]
+        self.assertEqual(row['state'], 'adaptation_ready_for_verification')
+        self.assertEqual(row['description'], 'Accessible output.')
+        self.assertIn('Owner approved', row['adaptation_note'])
+
+    def test_dsh_preview_reports_invalid_catalog(self) -> None:
+        catalog = self.root / "catalog.yaml"
+        catalog.write_text("schema_version: [", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid DSH skill catalog"):
+            preview_dsh_skills(self.manifest, catalog)
+
+    def test_dsh_preview_reports_missing_private_catalog(self) -> None:
+        with self.assertRaisesRegex(ValueError, "DSH skill catalog is not configured"):
+            preview_dsh_skills(self.manifest, self.root / "missing.yaml")
+
+    def test_dsh_preview_marks_approved_unregistered_skill_for_registration(self) -> None:
+        source = self.root / "packages/character-system/engineering/generation/character-generator/characters/test-character"
+        source.mkdir(parents=True)
+        (source / "SKILL.md").write_text("---\nname: test-character\ndescription: Style.\n---\n", encoding="utf-8")
+        catalog = self.root / "catalog.yaml"
+        catalog.write_text("schema_version: 1\nskills:\n  - {id: test-character, trigger: explicit, approved_unregistered: true, source_path: packages/character-system/engineering/generation/character-generator/characters/test-character}\n", encoding="utf-8")
+        result = preview_dsh_skills(self.manifest, catalog)
+        self.assertEqual(result["skills"][0]["state"], "registration_required")
+        self.assertFalse(result["activation_performed"])
 
 
 if __name__ == "__main__":
