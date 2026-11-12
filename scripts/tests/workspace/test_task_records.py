@@ -4,6 +4,9 @@ from scripts.workspace import task_record_store
 import tempfile
 import unittest
 import subprocess
+import io
+import sys
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -134,6 +137,85 @@ class TaskRecordsTests(unittest.TestCase):
             )
         self.assertEqual(final["schema_version"], "1.4")
         self.assertEqual(final["git_baseline"], baseline)
+
+    def test_active_task_update_records_progress_and_validation_without_ending_task(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            task_record_store, "RECORD_ROOT", Path(directory) / "records"
+        ), patch.object(task_ledger, "DESTINATION", Path(directory) / "ledger"):
+            record = task_records.initial_record(
+                "TASK-20261112-901", task_type="demo", started_at="2026-11-12T00:00:00Z",
+                tokens_estimated=1, operations=["workspace_write"],
+            )
+            path = task_records.record_path(record["task_id"], record["started_at"])
+            task_records.create_record(path, record)
+            updated = task_records.update(type("Args", (), {
+                "task_id": record["task_id"], "note": ["CLI acceptance started"],
+                "validation": "passed", "command": ["git status --short --branch"],
+                "evidence": ["headless CLI returned exit code 0"],
+            })())
+
+            self.assertEqual(updated["status"], "in_progress")
+            self.assertIsNone(updated["ended_at"])
+            self.assertEqual(updated["notes"], ["CLI acceptance started"])
+            self.assertEqual(updated["validation"], {
+                "status": "passed", "commands": ["git status --short --branch"],
+                "evidence": ["headless CLI returned exit code 0"],
+            })
+            self.assertFalse(task_records.validate_record(updated))
+            finalized = task_records.finalize(type("FinalizeArgs", (), {
+                "task_id": record["task_id"], "ended_at": "2026-11-12T00:01:00Z",
+                "status": "successful", "validation": "passed", "usability": "usable",
+                "human_edit_rounds": 0, "command": ["workspace workflow check demo"],
+                "tokens_actual": None, "currency_cost": None,
+            })())
+            self.assertEqual(finalized["validation"]["commands"], [
+                "git status --short --branch", "workspace workflow check demo",
+            ])
+            self.assertEqual(finalized["validation"]["evidence"], ["headless CLI returned exit code 0"])
+
+    def test_active_task_update_requires_a_change_and_rejects_finalized_tasks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            task_record_store, "RECORD_ROOT", Path(directory) / "records"
+        ):
+            record = task_records.initial_record(
+                "TASK-20261112-902", task_type="demo", started_at="2026-11-12T00:00:00Z",
+                tokens_estimated=1, operations=["workspace_write"],
+            )
+            path = task_records.record_path(record["task_id"], record["started_at"])
+            task_records.create_record(path, record)
+            with self.assertRaisesRegex(ValueError, "at least one update"):
+                task_records.update(type("Args", (), {
+                    "task_id": record["task_id"], "note": [], "validation": None,
+                    "command": [], "evidence": [],
+                })())
+            record["status"] = "successful"
+            task_record_store.write_record(path, record)
+            with self.assertRaisesRegex(ValueError, "active task"):
+                task_records.update(type("Args", (), {
+                    "task_id": record["task_id"], "note": ["late"], "validation": None,
+                    "command": [], "evidence": [],
+                })())
+
+    def test_task_update_cli_records_progress_for_active_task(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            task_record_store, "RECORD_ROOT", Path(directory) / "records"
+        ):
+            record = task_records.initial_record(
+                "TASK-20261112-903", task_type="demo", started_at="2026-11-12T00:00:00Z",
+                tokens_estimated=1, operations=["workspace_write"],
+            )
+            path = task_records.record_path(record["task_id"], record["started_at"])
+            task_records.create_record(path, record)
+            args = ["task_records", "update", record["task_id"], "--note", "plugin loaded",
+                "--validation", "passed", "--command", "node --test", "--evidence", "exit code 0"]
+            with patch.object(sys, "argv", args), redirect_stdout(io.StringIO()):
+                self.assertEqual(task_records.main(), 0)
+            _, updated = task_record_store.read_record(record["task_id"])
+
+        self.assertEqual(updated["status"], "in_progress")
+        self.assertEqual(updated["notes"], ["plugin loaded"])
+        self.assertEqual(updated["validation"]["commands"], ["node --test"])
+        self.assertEqual(updated["validation"]["evidence"], ["exit code 0"])
 
 
     def test_legacy_saved_tokens_validate_but_finalize_does_not_write_them(self) -> None:

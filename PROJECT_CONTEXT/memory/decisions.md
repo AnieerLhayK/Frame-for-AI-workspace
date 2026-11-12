@@ -445,17 +445,20 @@ manifest-declared workspace output root and never changes source material.
   MCP, dynamic Cordis, subagents, remote Git, credential tools, and telemetry
   export. A separate reviewed TASK is required for permanent promotion.
 
-## DeepSeek Workspace Maintenance Uses A Separate Guarded Identity
+## DeepSeek Workspace Access Uses The Shared Runtime Guard
 
-- decision: Allow the dedicated guarded DeepSeek SDK identity scoped source writes
-  in character-system and ai-workbench, after runtime verification, while the
-  ordinary Desktop identity keeps its existing authority. Skill instructions
-  and resources require an explicitly bound acting Skill for the task.
-- reason: The SDK tool guard can bind individual writes to an active task and
-  scope; the Desktop application does not provide the same Workspace adapter.
-- consequence: The guarded route cannot execute shell commands or publish, and
-  cannot manage memory or governance; unfamiliar Harness versions fail closed.
-- date if known: 2026-11-08.
+- decision: Retire the dedicated guarded SDK identity and transport. Register
+  Desktop (`deepseek-harness`) and headless CLI (`deepseek-harness-cli`)
+  separately as `structural_maintainer`, with both using the shared DSH host
+  guard and Workspace TASK, path and Git checks. Preserve explicit acting-Skill
+  binding for package skills.
+- reason: Users need the normal Desktop and terminal entry points to share
+  current Workspace capabilities while keeping each DSH session attributable
+  and all writes and Git delivery behind Workspace policy.
+- consequence: No `deepseek-harness-workspace` SDK compatibility route remains.
+  New DSH host tools default to deny until classified; the shared guard fails
+  closed when identity, TASK, path, or Git preflight checks are unavailable.
+- date if known: 2026-11-12; supersedes the 2026-11-08 dedicated SDK decision.
 
 ## DeepSeek Harness Uses Official Desktop With Fresh Product Data
 

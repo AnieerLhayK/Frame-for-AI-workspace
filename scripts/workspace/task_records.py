@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Record, validate, and gate durable workspace task outcomes.
+"""Record, update, validate, and gate durable workspace task outcomes.
 
 The public interface is deliberately small: ``start``, ``external-start``,
-``report-usage``, ``init``, ``require``, ``finalize``, ``show``, ``summary``,
+``report-usage``, ``init``, ``require``, ``update``, ``finalize``, ``show``, ``summary``,
 and ``validate``.  ``require`` is the single seam used by write gates; callers
 do not need to know record storage or registration compatibility details.
 """
@@ -443,6 +443,39 @@ def report_usage(args: argparse.Namespace) -> dict[str, Any]:
     return record
 
 
+def update(args: argparse.Namespace) -> dict[str, Any]:
+    """Append progress or validation evidence to one active TASK."""
+    path, record = read_record(args.task_id)
+    if record.get("status") != "in_progress":
+        raise ValueError("updates require an active task")
+    notes = list(getattr(args, "note", []) or [])
+    commands = list(getattr(args, "command", []) or [])
+    evidence = list(getattr(args, "evidence", []) or [])
+    validation = getattr(args, "validation", None)
+    if not (notes or commands or evidence or validation):
+        raise ValueError("at least one update is required")
+    for label, values in (("note", notes), ("command", commands), ("evidence", evidence)):
+        if len(values) > 20 or any(
+            not isinstance(value, str) or not value.strip() or len(value) > 4000
+            or any(ord(char) < 32 and char not in "\t" for char in value)
+            for value in values
+        ):
+            raise ValueError(f"{label} updates must be non-empty text of at most 4000 characters (20 entries max)")
+    record.setdefault("notes", []).extend(notes)
+    validation_record = record.setdefault(
+        "validation", {"status": "not_run", "commands": [], "evidence": []}
+    )
+    if validation:
+        validation_record["status"] = validation
+    validation_record.setdefault("commands", []).extend(commands)
+    validation_record.setdefault("evidence", []).extend(evidence)
+    errors = validate_record(record)
+    if errors:
+        raise ValueError("; ".join(errors))
+    write_record(path, record)
+    return record
+
+
 def finalize(args: argparse.Namespace) -> dict[str, Any]:
     path, record = read_record(args.task_id)
     record.update(
@@ -453,7 +486,7 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
         }
     )
     record["validation"]["status"] = args.validation
-    record["validation"]["commands"] = args.command
+    record["validation"].setdefault("commands", []).extend(args.command)
     record["usability"]["status"] = args.usability
     record.setdefault("schema_version", "1.3")
     usage = host_usage(record["task_id"])
@@ -611,6 +644,12 @@ def main() -> int:
     p.add_argument("--ended-at")
     p.add_argument("--tokens-actual", type=int)
     p.add_argument("--currency-cost", type=float)
+    p = sub.add_parser("update", help="Record progress or validation evidence for an active task.")
+    p.add_argument("task_id")
+    p.add_argument("--note", action="append", default=[])
+    p.add_argument("--validation", choices=sorted(VALIDATIONS))
+    p.add_argument("--command", action="append", default=[])
+    p.add_argument("--evidence", action="append", default=[])
     p = sub.add_parser("report-usage", help="Write verified external-host usage into an active external task.")
     p.add_argument("task_id")
     p.add_argument("--agent", required=True)
@@ -657,6 +696,8 @@ def main() -> int:
                 require_task_actor(args.task_id, args.agent, args.operation)
         elif args.action == "finalize":
             output = finalize(args)
+        elif args.action == "update":
+            output = update(args)
         elif args.action == "report-usage":
             output = report_usage(args)
         elif args.action == "note-merge-review":

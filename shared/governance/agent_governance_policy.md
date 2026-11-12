@@ -135,39 +135,52 @@ is invoking it.
 
 ## Platform Adapters And Candidates
 
-DeepSeek Harness, Hermes, and OpenCode retain the `record_producer` role. Hermes
-hooks and an OpenCode plugin plus project permissions enforce their registered
-workspace boundaries.
+Hermes and OpenCode retain the `record_producer` role. Hermes hooks and an
+OpenCode plugin plus project permissions enforce their registered workspace
+boundaries.
 
 DeepSeek Harness uses the official Desktop application with a fresh managed home.
 Its old independent Web/browser entry and workspace-pilot adapter are retired.
 Desktop still requires its own internal local Host; that component is not the
-retired Web service. Desktop has no registered workspace runtime-enforcement
-adapter. Its declared role and scopes neither authorize native Workspace tool
-calls nor provide runtime protection. A supported Desktop adapter and a separate
-authority decision are required before enabling such writes.
+retired Web service. DSH Desktop (`deepseek-harness`) and the headless CLI
+(`deepseek-harness-cli`) now have separate `structural_maintainer` registrations
+so TASK ownership records which entry acted. Their effective Workspace
+capabilities match Codex, while the runtime still requires an active TASK,
+Workspace path authorization, and the host's Workspace sandbox.
 
-The separate `deepseek-harness-workspace` identity is limited to the guarded SDK
-entry in `scripts/workspace/deepseek_workspace_guard.py run`. It may write
-development source in character-system or ai-workbench only when its own active
-task, exact session, task scope, agent capabilities and any selected acting Skill
-all authorize the target. The bridge checks every tool call; it rejects commands,
-unknown tools, escalation and targets outside its approved roots. A curated
-Skill's instructions and resources are readable only when it is the selected
-acting Skill; selecting it does not itself authorize writes.
-No memory, governance, platform, delivery, or unguarded Desktop authority follows.
-The entry uses a fresh profile without session persistence; unsupported Harness
-versions fail closed.
+Both DSH entries load the shared `scripts/platform/dsh_workspace_kit/index.mjs`
+guard. It binds file writes and TASK tools to the calling DSH session, checks
+write paths through `workspace agent check`, denies unclassified host tools,
+limits shell commands to registered Git and Workspace operations, test runners
+and read-only commands, and restricts Git to explicit `origin/dev` and gated
+`origin/main` flows. It fails closed if the guard cannot register. The Desktop
+profile defaults new sessions to `workspace-write-quiet`; the headless launcher
+uses `workspace-write` and grants Git metadata only through the Workspace `.git`
+directory. Neither permission preset grants Workspace authority by itself.
 
-The relevant attack path is model-supplied file-tool arguments reaching the SDK
-filesystem. The guard validates absolute paths, rejects links, hard links,
-alternate data streams and escalation, then calls the existing task and agent
-authorization before writes. The SDK's workspace sandbox supplies an additional
-project boundary. These checks do not authenticate the operating-system user or
-protect against a concurrently privileged process changing filesystem state;
-ordinary Desktop and direct native SDK launches do not install this guard.
-The optional directory listing is nonrecursive, bounded, and omits hidden,
-dependency and private-corpus entries; it does not follow links.
+DSH may create, inspect, update, validate and finalize its own TASK through the guarded
+`workspace_task_*` tools. Another session's TASK stays read-only unless the
+owner has explicitly delegated that exact task. Mainline integration requires
+the registered merge preflight and audit-close evidence; it cannot substitute
+for an independent Standards and Spec review. Registered public publishers
+still require their separate `external_write` authorization and publisher
+checks.
+
+The former `deepseek-harness-workspace` SDK identity and transport are retired.
+DeepSeek Desktop and CLI use their separately registered identities and the
+shared host guard. Do not restore the old bridge as a compatibility path; any
+new host entry must use the current registry, TASK, path and Git controls.
+
+The shared `workspace-kit` guard is installed through the registered DSH Desktop
+and headless CLI profiles. It validates model-supplied file paths, rejects links,
+hard links, alternate data streams, credentials and protected dependency or
+private-corpus paths, then checks TASK and agent authorization before writes.
+The host sandbox supplies an additional project boundary. Direct or unregistered
+SDK launches are unsupported Workspace entry points and receive no Workspace
+write authority. These checks do not authenticate the operating-system user or
+protect against a concurrently privileged process changing filesystem state.
+The optional directory listing is nonrecursive, bounded, omits hidden,
+dependency and private-corpus entries, and does not follow links.
 
 ## External Workspace Task Bridge
 

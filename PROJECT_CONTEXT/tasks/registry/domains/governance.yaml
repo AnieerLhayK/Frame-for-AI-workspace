@@ -447,6 +447,11 @@ tasks:
     - scripts/platform/Start-DeepSeekHarnessDesktop.ps1
     - scripts/platform/dsh.cmd
     - scripts/tests/platform/test_deepseek_desktop_transition.py
+    - scripts/platform/dsh_workspace_kit/**
+    - scripts/platform/dsh-workspace-cli.cmd
+    - scripts/tests/platform/test_dsh_workspace_kit.mjs
+    - packages/ai-workbench/package_manifest.json
+    - WORKSPACE_ENGINEERING/methods/harness_profiles/dsh.md
     validation:
     - python -m unittest scripts.tests.reporting.test_ci_run scripts.tests.workspace.test_agent_governance
       scripts.tests.workspace.test_hermes_workspace_guard scripts.tests.platform.test_platform_agent_guards

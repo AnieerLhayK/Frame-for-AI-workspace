@@ -68,26 +68,31 @@ workspace workflow check <task-id> --record-id <TASK-ID>
 发现入口不等于具备注册技能的执行权限。
 其中 authority 和 execution_modes 仅是登记信息，不代替逐项数据范围与副作用审查。
 
-受控 SDK 入口与普通 Desktop 是两个身份。先为 `deepseek-harness-workspace`
-登记当前任务并指定唯一 session，再使用同一 TASK 和 session 启动；任务正文从
-标准输入传入。`credentials-root` 是 e-Diary 的 `data_root/providers/deepseek`，
-账号或 API Key 先在 e-Diary 设置中连接。
+DSH 日常终端入口是 headless CLI；Desktop 保留相同的 Workspace TASK 与路径权限。
+两个身份分别为 `deepseek-harness-cli` 和 `deepseek-harness`，由统一的
+`workspace-kit` host guard 执行检查。CLI 启动器会从 Workspace 根目录启动，使用
+`workspace-write` 沙箱，并额外开放 `.git` 元数据目录。文件工具访问 Workspace
+之外的路径时，必须有当前活动 TASK，且逐路径 `workspace agent check` 通过该 TASK
+范围和外部写入能力/Lease 检查；没有授权就拒绝。链接、凭据、私有语料、依赖和
+`.git` 目录仍不能通过普通文件工具访问：
 
 ```powershell
-workspace records start --task-type ai_workbench_development --operation workspace_write `
-  --owner-agent deepseek-harness-workspace --owner-session <session-id>
-python -B scripts/workspace/deepseek_workspace_guard.py run `
-  --project <ai-workbench绝对路径> --record-id <TASK-ID> --session-id <session-id> `
-  --executable <DeepSeek-Harness.exe绝对路径> --credentials-root <凭据目录> `
-  --auth <account或api_key> --model <模型ID> --staging <staging目录>
+scripts/platform/dsh-workspace-cli.cmd "按已解析的 Workspace TASK 执行工作"
 ```
 
-输入任务正文后以 Ctrl+Z、Enter 结束标准输入。可选 `--acting-skill <已准入技能ID>`
-才能读取对应技能的指令与资源，并将该技能的权限与每次写入同时检查。支持的项目为
-`ai-workbench` 和 `character-system`；工具提供绝对路径的读取、写入、编辑和
-有上限的单层目录列表，跳过隐藏、依赖和私有语料目录。
-终端、内存管理、治理、发布和普通 Desktop 的写入授权不随此入口开放。任务完成后
-由任务负责人运行路由验证、workflow check 和记录收尾。
+在 DSH 会话中先调用 `workspace_task_start`，选择已登记的 TASK 类型；写入前解析
+该 TASK 的必需上下文。`workspace_task_status` 查看当前 TASK，
+`workspace_task_validate` 执行严格的变更范围和工作流检查，最后用
+`workspace_task_finalize` 记录结果。守卫只接受当前 DSH session 自己拥有的活动 TASK；
+其他会话的 TASK 默认只读。文件写入还会逐路径调用 `workspace agent check`。如需委派另一
+TASK，负责人必须把准确 ID 写入 DSH `workspace-kit` 的 `delegatedTaskIds` 配置；这个本机
+配置不在沙箱可写范围内。
+
+Desktop 新会话默认使用 `workspace-write-quiet`。更改插件或 profile 后，完整退出并重启
+DSH；已有会话保留旧权限选择。若守卫缺失、身份不匹配或 Workspace CLI 校验失败，写入和
+Git 修改会被拒绝。禁止强推、重写历史、切换共享 worktree 分支以及写入未登记远端。
+`origin/main` 集成必须通过合并预检、独立 Standards/Spec 代码审查和 audit-close；
+无法提供独立审查凭据时停止在 main 集成之前。
 
 同一状态、同一范围内，`workflow check` 已包含 `changes verify` 与未暂存/已暂存的
 diff 检查，无需再分别重复运行。整批交付加 `--include-committed`；文件、暂存区或
