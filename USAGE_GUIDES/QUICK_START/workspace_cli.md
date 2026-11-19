@@ -68,29 +68,30 @@ workspace workflow check <task-id> --record-id <TASK-ID>
 发现入口不等于具备注册技能的执行权限。
 其中 authority 和 execution_modes 仅是登记信息，不代替逐项数据范围与副作用审查。
 
-DSH 日常终端入口是 headless CLI；Desktop 保留相同的 Workspace TASK 与路径权限。
-两个身份分别为 `deepseek-harness-cli` 和 `deepseek-harness`，由统一的
-`workspace-kit` host guard 执行检查。CLI 启动器会从 Workspace 根目录启动，使用
-`workspace-write` 沙箱，并额外开放 `.git` 元数据目录。文件工具访问 Workspace
-之外的路径时，必须有当前活动 TASK，且逐路径 `workspace agent check` 通过该 TASK
-范围和外部写入能力/Lease 检查；没有授权就拒绝。链接、凭据、私有语料、依赖和
-`.git` 目录仍不能通过普通文件工具访问：
+`workspace skill dsh-sync` 对照 catalog 预览 DSH 指针及多余目录；加 `--skill ambition`
+可只预览一个已登记技能。写入必须同时指定 `--apply --record-id <TASK-ID> --skill <id>`，
+并通过逐路径授权；
+需要临时能力时传 `--lease <lease-file>`。已有指针漂移时停止，审查后可用
+`--overwrite <skill-id>` 明确选择覆盖；未登记目录仅报告并保留。
+
+DSH 日常终端入口是 headless CLI；Desktop 使用同一套 TASK 纪律。
+两个身份分别为 `deepseek-harness-cli` 和 `deepseek-harness`，TASK 归属按身份记录。
+CLI 启动器会从 Workspace 根目录启动，使用 `workspace-write` 沙箱，并额外开放
+`.git` 元数据目录：
 
 ```powershell
 scripts/platform/dsh-workspace-cli.cmd "按已解析的 Workspace TASK 执行工作"
 ```
 
-在 DSH 会话中先调用 `workspace_task_start`，选择已登记的 TASK 类型；写入前解析
-该 TASK 的必需上下文。`workspace_task_status` 查看当前 TASK，
-`workspace_task_validate` 执行严格的变更范围和工作流检查，最后用
-`workspace_task_finalize` 记录结果。守卫只接受当前 DSH session 自己拥有的活动 TASK；
-其他会话的 TASK 默认只读。文件写入还会逐路径调用 `workspace agent check`。如需委派另一
-TASK，负责人必须把准确 ID 写入 DSH `workspace-kit` 的 `delegatedTaskIds` 配置；这个本机
-配置不在沙箱可写范围内。
+在 DSH 会话中先用 `workspace records start` 建 TASK，写入前解析该 TASK 的必需上下文，
+完成后用 `workspace records finalize` 记录结果；`changes verify` 与 `workflow check`
+仍会在提交和推送前审查变更范围。DSH 的文件系统边界由所选 permission preset 决定：
+原来的 `workspace-kit` host 守卫已于 2026-11-13 退役（原因与替代机制见
+`PROJECT_CONTEXT/memory/decisions.md`）；需要跨目录作业时，用工作区根会话或切到
+「完全访问」（`danger-full-access`）preset。
 
 Desktop 新会话默认使用 `workspace-write-quiet`。更改插件或 profile 后，完整退出并重启
-DSH；已有会话保留旧权限选择。若守卫缺失、身份不匹配或 Workspace CLI 校验失败，写入和
-Git 修改会被拒绝。禁止强推、重写历史、切换共享 worktree 分支以及写入未登记远端。
+DSH；已有会话保留旧权限选择。禁止强推、重写历史、切换共享 worktree 分支以及写入未登记远端。
 `origin/main` 集成必须通过合并预检、独立 Standards/Spec 代码审查和 audit-close；
 无法提供独立审查凭据时停止在 main 集成之前。
 

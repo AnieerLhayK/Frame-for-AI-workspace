@@ -72,7 +72,13 @@ The mode alone does not authorize cleanup. A skill declaring
 batch in the same chat, with an active TASK and scoped environment capability.
 The approval must name each action's disposition, impacts, and recovery or
 irreversibility; approving an explicitly described permanent deletion with its
-backup status accepts that recovery limit. Automated scans remain read-only.
+backup status accepts that recovery limit. Automated scans remain read-only over
+scanned targets. The only standing scheduled-deletion exception is the precise
+30-day disk-scan report-retention rule recorded in
+`skills/governance/disk-scan-reporter/references/cleanup.md`; it is limited to
+generated report files below the manifest-resolved external reports directory,
+requires an active scoped TASK and lease, and explicitly accepts that expired
+historical reports are not recoverable.
 
 Agent identity, task records, capabilities, leases, surface classification, and
 write checks are defined by `shared/governance/agent_governance.yaml` and

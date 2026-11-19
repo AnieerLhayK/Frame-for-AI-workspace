@@ -216,8 +216,9 @@ agents:
     unresolved:
       - Official Desktop replaced the retired Web and workspace-pilot entrypoints
         with fresh state; no previous sessions, settings or credentials were imported.
-      - Native tool access is effective only through the task-bound DSH Workspace guard
-        and the registered workspace-write sandbox; missing or unhealthy guards fail closed.
+      - Native tool access is bounded by the selected DSH permission preset and
+        reviewed by the Workspace CLI checks at commit and push; the host guard
+        was retired on 2026-11-13.
     active_lease_refs: []
 
   deepseek-harness-cli:
@@ -253,6 +254,58 @@ agents:
       reviewed_at: "2026-11-12T16:00:00+08:00"
       expires_at: null
     unresolved:
-      - CLI Workspace writes are mediated by the task-bound DSH Workspace guard and
-        the workspace-write sandbox; unguarded launch paths are denied.
+      - CLI Workspace writes are bounded by the workspace-write sandbox and
+        reviewed by the Workspace CLI checks at commit and push; the host guard
+        was retired on 2026-11-13.
+    active_lease_refs: []
+
+  doubao:
+    id: doubao
+    display_name: 豆包
+    aliases:
+      - doubao-desktop
+    identity_kind: agent
+    host:
+      id: doubao-desktop
+      kind: desktop_app
+    status: active
+    registration_type: permanent
+    role: consumer
+    trust_source: user_approved
+    usage:
+      classification: "展示／纯办公类 Agent"
+      purpose: >
+        The Workspace's sole presentation and office agent. Prepare slides,
+        report summaries, and defense materials, and organize selected Office
+        documents, text files, or images.
+      material_boundary: >
+        Work primarily in projects outside the Workspace. For occasional
+        Workspace project use, provide only the files and presentation task
+        explicitly selected for that engagement. Project rules guide the owner
+        in selecting inputs, choosing an output destination, and authorizing
+        edits, moves, or renames of originals.
+      enforcement: >
+        This entry records intended use. The owner controls what is handed to
+        Doubao Desktop. Workspace registration does not enforce desktop file
+        isolation.
+    capabilities:
+      inherit_role: false
+      allow: []
+    path_scopes:
+      - reports/agent-requests/**
+    platforms: []
+    skill_access:
+      mode: none
+      platforms: []
+    storage:
+      boundary: external
+      data_root: "${DATA_ROOT}/doubao/desktop/User Data"
+      cache_root: unconfirmed
+    session_store:
+      mode: platform_managed
+      boundary: external
+    lifecycle:
+      owner: user
+      reviewed_at: "2026-11-18T16:58:52+08:00"
+      expires_at: null
     active_lease_refs: []

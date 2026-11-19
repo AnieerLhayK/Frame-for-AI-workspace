@@ -360,6 +360,44 @@ tasks:
     - Verify official installer identity, native Desktop launch and fresh managed home without model requests.
     - Verify approved legacy data targets and browser launch chain are absent; preserve all source worktrees.
     - git diff --check
+  doubao_desktop_storage:
+    use_when:
+    - Performing the owner-approved two-path Doubao Desktop junction migration.
+    use_when_zh:
+    - 执行用户批准的两处豆包桌面数据目录 junction 迁移。
+    required:
+    - shared/governance/agent_registry.yaml
+    - shared/workspace/workspace_path_policy.md
+    - skills/governance/windows-ai-storage-governor/SKILL.md
+    - skills/governance/windows-ai-storage-governor/references/safety-policy.md
+    - skills/governance/windows-ai-storage-governor/references/migration-runbook.md
+    ignore:
+    - account credentials and conversation contents
+    - Doubao CLI, the application installation, and LinkRouter
+    tool_profile: cleanup_migration
+    ledger: true
+    budget: {required_warn_tokens: 12000, expanded_warn_tokens: 16000}
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - shared/governance/agent_registry.yaml
+    # Bracket matches keep these individual directory entries exact.
+    - '${USER_HOME}/AppData/Local/Doubao/User Dat[a]'
+    - '${USER_HOME}/AppData/Local/Doubao/User Data.workspace-rollback-2026111[8]'
+    - '${USER_HOME}/AppData/Roaming/Douba[o]'
+    - '${USER_HOME}/AppData/Roaming/Doubao.workspace-rollback-2026111[8]'
+    - '${DATA_ROOT}/douba[o]'
+    - '${DATA_ROOT}/doubao/deskto[p]'
+    - '${DATA_ROOT}/doubao/desktop/User Dat[a]'
+    - '${DATA_ROOT}/doubao/desktop/Roamin[g]'
+    - ${DATA_ROOT}/doubao/desktop/User Data/**
+    - ${DATA_ROOT}/doubao/desktop/Roaming/**
+    - ${DATA_ROOT}/codex/cache/staging/doubao-desktop-storage-20261118
+    - ${DATA_ROOT}/out/workspace/external-reports/2026-11/doubao-desktop-storage
+    validation:
+    - workspace agent validate doubao
+    - Verify both exact junction targets, application restart, target writes, and rollback-copy integrity.
+    - git diff --check
   cleanup_migration:
     context_views:
       workspace_manifest.yaml: [workspace, platform_roots, session_stores, output_roots, runtime_roots, external_roots, shared, packages, plugin_skills, projections, protocols, portability, discovery, failure_policy]
@@ -421,6 +459,37 @@ tasks:
       change
     - python -m scripts.workspace.workspace_cli sessions audit when source paths used by agents
       move
+  disk_scan_report_retention:
+    use_when:
+    - Writing disk-scan reports and applying the approved 30-day retention rule to generated reports only.
+    use_when_zh:
+    - 写入磁盘扫描报告，并仅对生成的报告执行已批准的 30 天保留规则。
+    required:
+    - workspace_manifest.yaml
+    - shared/workspace/workspace_policy.md
+    - shared/governance/agent_governance_policy.md
+    - skills/governance/disk-scan-reporter/references/cleanup.md
+    - the exact manifest-resolved disk-scan report directory
+    - an active TASK and lease for the exact report directory
+    ignore:
+    - scanned disk targets and all non-report files
+    - nested directories, links and reparse points
+    - reports younger than 30 days
+    - nonmatching report filenames
+    tool_profile: cleanup_migration
+    ledger: true
+    write_scope:
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    - <report-retention-root>/
+    - <report-retention-root>/**
+    - <report-retention-lease>
+    validation:
+    - validate the TASK and lease before report writes and each deletion
+    - delete only direct regular files matching disk_report_YYYY-MM-DD_HHMMSS.md or .json older than 30 days
+    - verify deleted targets are absent and report the exact paths
+    - workspace records validate
+    - git diff --check
   cleanup_migration_audit:
     use_when:
     - Auditing explicitly named cleanup or migration targets and producing a reversible plan without moving or deleting anything.

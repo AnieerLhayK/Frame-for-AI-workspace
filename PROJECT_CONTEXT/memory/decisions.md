@@ -433,7 +433,9 @@ manifest-declared workspace output root and never changes source material.
 ## DeepSeek Harness Uses A Two-Phase, Default-Deny Promotion Path
 
 - status: Historical Web-pilot decision; the 2026-10-09 Desktop transition retires
-  that launch path and does not carry forward its temporary authority.
+  that launch path and does not carry forward its temporary authority. The
+  2026-11-12 shared-runtime-guard decision supersedes its `record_producer`
+  registration; retained as history.
 - decision: Keep DeepSeek Harness registered as `record_producer`; permit only
   a separately leased, at-most-24-hour `structural_write` pilot in an isolated
   worktree, protected by the local Cordis governance adapter.
@@ -568,3 +570,27 @@ manifest-declared workspace output root and never changes source material.
   core governance, authoritative memory, main integration and publication remain
   separately authorized. Plugin and harness updates must not silently enlarge
   permissions or change active rules before the required review.
+
+## Retire The DSH Host Workspace Guard
+
+- decision: Retire the `workspace-kit` host authorization guard from both DSH
+  profiles and remove `scripts/platform/dsh_workspace_kit/` and its test from
+  HEAD. Keep the TASK rule in `AGENTS.md` and the profile methodology; rely on
+  `workspace records`, `changes verify` and `workflow check` at commit and push.
+  The source stays in Git history as the rollback path.
+- date: 2026-11-13, user-approved retirement; TASK-20261112-033.
+- reason: The guard failed closed on its own allowlist and root policy. Its tool allowlist
+  admitted only its TASK/external tools and a short safe list, so every other
+  host tool (memory, todo, subagent, job control, session tools) was denied, and
+  shell commands required an active TASK plus a narrow command allowlist. An
+  earlier revision omitted even its own TASK tools and deadlocked sessions that
+  had no TASK. Its fixed workspace root blocked work in other directories (for
+  example a Vivado project or an external course PDF), and the lease-backed
+  external-write path added a second permission system on top of the DSH
+  sandbox.
+- consequence: DSH filesystem access is bounded by the selected permission preset
+  again; the removed guard no longer enforces pre-write TASK binding or Git
+  force-push limits, so those remain written rules reviewed at commit time.
+  `workspace_task_*` and `workspace_external_*` tools no longer exist. Restoring
+  the guard requires reverting the retirement commit, not just re-enabling a
+  profile row.

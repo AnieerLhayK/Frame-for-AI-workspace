@@ -36,7 +36,8 @@ in older ledgers remain unchanged and are explained by the context index.
 - Change-surface planning and exact task routing.
 - Report freshness, failure diagnostics, health checks, and governance summaries.
 - A user-level `workspace` launcher for the developer interface.
-- Claude Code startup compatibility through root `CLAUDE.md -> AGENTS.md`.
+- Claude Code startup compatibility originally used a root `CLAUDE.md` import;
+  that shim is retired. See `USAGE_GUIDES/QUICK_START/claude_code.md` for current loading.
 - Tracked Claude project rules and write guards under `.claude/`.
 - Explicit `claude-workspace` and `claude-cnn` launchers backed by a machine-local project registry.
 - Platform exposure represented by `skills[].exposures[]`, `platform_roots`, and `projections[]`.

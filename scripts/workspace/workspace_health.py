@@ -395,11 +395,13 @@ def check_platform_agent_guards(
         findings.append("OpenCode project governance plugin is missing")
 
     agents = registry.get("agents", {})
-    for agent_id in ("deepseek-harness", "opencode"):
-        entry = agents.get(agent_id, {})
-        if entry.get("status") != "active" or entry.get("role") != "record_producer":
-            findings.append(f"{agent_id} is not an active record_producer")
-    for agent_id, role in (("codex", "structural_maintainer"), ("claude", "development_maintainer")):
+    for agent_id, role in (
+        ("deepseek-harness", "structural_maintainer"),
+        ("deepseek-harness-cli", "structural_maintainer"),
+        ("opencode", "record_producer"),
+        ("codex", "structural_maintainer"),
+        ("claude", "development_maintainer"),
+    ):
         entry = agents.get(agent_id, {})
         if entry.get("status") != "active" or entry.get("role") != role:
             findings.append(f"{agent_id} is not an active {role}")
@@ -413,7 +415,7 @@ def check_platform_agent_guards(
     return CheckResult(
         "platform-agent-guards",
         "PASS",
-        "Codex is a structural maintainer; Claude is a development maintainer; DeepSeek Harness and OpenCode are registered record producers.",
+        "Codex and DeepSeek Harness/CLI are structural maintainers; Claude is a development maintainer; OpenCode is a registered record producer.",
     )
 
 
@@ -436,7 +438,7 @@ def check_deepseek_desktop_contract(workspace_root: Path | None = None) -> Check
         )
     if agent.get("host", {}).get("kind") != "desktop_app":
         findings.append("DeepSeek host is not registered as Desktop")
-    if agent.get("role") != "record_producer" or agent.get("capabilities", {}).get("allow") != []:
+    if agent.get("role") != "structural_maintainer" or agent.get("capabilities", {}).get("allow") != []:
         findings.append("Desktop role or additional capabilities drifted")
     if agent.get("active_lease_refs") != []:
         findings.append("Desktop retains a legacy pilot lease reference")

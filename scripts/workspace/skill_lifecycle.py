@@ -5,6 +5,7 @@ import ast
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -37,6 +38,17 @@ def workspace_root(manifest: dict[str, Any]) -> Path:
     if not value:
         raise ValueError("manifest workspace.source_of_truth is missing")
     return Path(str(value)).resolve()
+
+
+def dsh_skill_root(manifest: dict[str, Any]) -> Path:
+    runtime_roots = manifest.get("runtime_roots")
+    value = runtime_roots.get("dsh_skills") if isinstance(runtime_roots, dict) else None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("manifest runtime_roots.dsh_skills is missing")
+    target = Path(os.path.expandvars(value))
+    if not target.is_absolute():
+        raise ValueError("manifest runtime_roots.dsh_skills must be an absolute path")
+    return target.resolve()
 
 
 def resolve_workspace_path(root: Path, value: str) -> Path:
@@ -218,8 +230,61 @@ def ignored_python_caches(source: Path, candidates: list[str]) -> set[str]:
     return set(result.stdout.rstrip("\0").split("\0"))
 
 
-def enhanced_contract_findings(source: Path, metadata: dict[str, Any], *, allow_owned_reports: bool = False, require_contract: bool = False) -> list[str]:
+def generated_character_exclusions(source: Path, enabled: bool) -> tuple[set[str], str | None]:
+    """Prune ignored generated characters without traversing their private contents."""
+    root = source / "characters"
+    if not enabled:
+        return set(), None
+    try:
+        try:
+            info = root.lstat()
+        except FileNotFoundError:
+            return set(), None
+        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400):
+            return {"characters"}, "generated character directory is a reparse point or symbolic link"
+        if not stat.S_ISDIR(info.st_mode):
+            return {"characters"}, "generated character path is not a directory"
+        candidates = [f"characters/{entry.name}" for entry in root.iterdir()]
+        tracked = subprocess.run(
+            ["git", "ls-files", "-z", "--", "characters"], cwd=source,
+            capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
+        )
+        ignored = subprocess.run(
+            ["git", "check-ignore", "--stdin", "-z"], cwd=source,
+            input="\0".join(candidates) + ("\0" if candidates else ""),
+            capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
+        )
+        if tracked.returncode != 0 or ignored.returncode not in (0, 1):
+            raise ValueError("Git could not verify generated character exclusions")
+        tracked_paths = [path.replace("\\", "/").casefold() for path in tracked.stdout.split("\0") if path]
+        ignored_paths = {path.casefold() for path in ignored.stdout.split("\0") if path}
+        placeholder = "characters/.gitkeep"
+        unexpected_tracked = [path for path in tracked_paths if path != placeholder]
+        unexpected_unignored = [path for path in candidates if path.casefold() not in ignored_paths and not (path.casefold() == placeholder and placeholder in tracked_paths)]
+        if unexpected_tracked or unexpected_unignored:
+            return set(candidates), "runtime artifacts or unignored entries in generated character directory"
+        return set(candidates), None
+    except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+        return {"characters"}, f"cannot verify generated character exclusions: {error}"
+
+
+def skill_source_paths(source: Path, exclusions: set[str]) -> list[Path]:
+    """Enumerate owned source without descending into excluded generated trees."""
+    paths: list[Path] = []
+    for root, dirs, files in os.walk(source, followlinks=False):
+        base = Path(root)
+        dirs[:] = [name for name in dirs if (base / name).relative_to(source).as_posix() not in exclusions]
+        paths.extend(base / name for name in dirs)
+        paths.extend(base / name for name in files if (base / name).relative_to(source).as_posix() not in exclusions)
+    return paths
+
+
+def enhanced_contract_findings(source: Path, metadata: dict[str, Any], *, allow_owned_reports: bool = False, allow_generated_characters: bool = False, require_contract: bool = False) -> list[str]:
     findings: list[str] = []
+    exclusions, exclusion_error = generated_character_exclusions(source, allow_generated_characters)
+    if exclusion_error:
+        findings.append(exclusion_error)
+    source_paths = skill_source_paths(source, exclusions)
     if "disable-model-invocation" in metadata and not isinstance(metadata["disable-model-invocation"], bool):
         findings.append("disable-model-invocation must be a boolean")
     contract = metadata.get("metadata")
@@ -269,7 +334,7 @@ def enhanced_contract_findings(source: Path, metadata: dict[str, Any], *, allow_
                     f"SKILL.md invocation policy ({str(expected).lower()})"
                 )
 
-    for markdown in source.rglob("*.md"):
+    for markdown in (path for path in source_paths if path.suffix.lower() == ".md" and path.is_file()):
         if "reports" in markdown.relative_to(source).parts:
             continue
         try:
@@ -286,7 +351,7 @@ def enhanced_contract_findings(source: Path, metadata: dict[str, Any], *, allow_
 
     pollution = []
     caches = []
-    for path in source.rglob("*"):
+    for path in source_paths:
         relative = path.relative_to(source)
         if "__pycache__" in relative.parts or path.suffix == ".pyc":
             caches.append(relative.as_posix())
@@ -477,6 +542,61 @@ def preview_dsh_skills(manifest: dict[str, Any], catalog_path: Path = DSH_SKILL_
             "activation_performed": False, "kind": "dsh_preview"}
 
 
+def sync_dsh_skills(manifest: dict[str, Any], target: Path, *, catalog_path: Path = DSH_SKILL_CATALOG,
+                    apply: bool = False, overwrite: str | None = None, skill_id: str | None = None,
+                    authorize: Callable[[Path], None] | None = None) -> dict[str, Any]:
+    if apply and not skill_id:
+        return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'apply requires an explicit skill selection'}
+    if target.is_symlink() or getattr(target, 'is_junction', lambda: False)():
+        return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'DSH projection root is a link'}
+    preview = preview_dsh_skills(manifest, catalog_path)
+    if preview['status'] != 'PASS':
+        return preview
+    root = workspace_root(manifest)
+    rows = [row for row in preview['skills'] if row['trigger'] != 'dependency_only' and row['state'] != 'registration_required']
+    if skill_id:
+        rows = [row for row in rows if row['id'] == skill_id]
+        if not rows:
+            return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'selected skill is not a discoverable catalog entry'}
+    if any(row['state'] not in {'ready_for_review', 'adaptation_ready_for_verification'} for row in rows):
+        return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'catalog contains unresolved candidates'}
+    if overwrite and overwrite not in {row['id'] for row in rows}:
+        return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'overwrite id is not a discoverable catalog entry'}
+    changes = []
+    for row in rows:
+        path = target / row['id'] / 'SKILL.md'
+        expected = render_dsh_skill_pointer(row, root)
+        if path.is_symlink() or (path.parent.exists() and (path.parent.is_symlink() or getattr(path.parent, 'is_junction', lambda: False)() or not path.parent.is_dir())):
+            state = 'blocked'
+        elif not path.exists():
+            state = 'missing'
+        elif not path.is_file():
+            state = 'blocked'
+        else:
+            state = 'current' if path.read_text(encoding='utf-8-sig') == expected else 'drift'
+        changes.append({'id': row['id'], 'state': state, 'path': str(path), 'content': expected})
+    extras = sorted(p.name for p in target.iterdir() if p.is_dir() and p.name not in {r['id'] for r in preview['skills']}) if target.is_dir() else []
+    blocked = [c for c in changes if c['state'] == 'blocked' or (c['state'] == 'drift' and c['id'] != overwrite)]
+    if apply and blocked:
+        status = 'BLOCKED'
+    elif apply:
+        writes = [c for c in changes if c['state'] == 'missing' or (c['state'] == 'drift' and c['id'] == overwrite)]
+        if authorize is None:
+            raise ValueError('write authorization is required')
+        for item in writes:
+            authorize(Path(item['path']))
+        for item in writes:
+            path = Path(item['path'])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(item['content'], encoding='utf-8', newline='\n')
+        status = 'APPLIED'
+    else:
+        status = 'PLAN'
+    for item in changes:
+        del item['content']
+    return {'status': status, 'kind': 'dsh_sync', 'changes': changes, 'extra_directories': extras}
+
+
 def validate_skill(
     manifest: dict[str, Any],
     target: str,
@@ -516,7 +636,8 @@ def validate_skill(
                 if source_path_requires_contract(source_value) and "metadata" not in metadata:
                     findings.append("standalone skill requires frontmatter metadata")
                 allow_owned_reports = bool(registered and source_value.replace("\\", "/").startswith("packages/") and "reports" in registered.get("optional_files", []))
-                findings.extend(enhanced_contract_findings(source, metadata, allow_owned_reports=allow_owned_reports, require_contract=source_path_requires_contract(source_value)))
+                allow_generated_characters = bool(registered and source_value.replace("\\", "/").startswith("packages/") and "characters" in registered.get("optional_files", []))
+                findings.extend(enhanced_contract_findings(source, metadata, allow_owned_reports=allow_owned_reports, allow_generated_characters=allow_generated_characters, require_contract=source_path_requires_contract(source_value)))
         if registered:
             for relative in registered.get("required_files", []):
                 if not (source / Path(str(relative))).exists():
@@ -705,6 +826,16 @@ def render(payload: dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return
+    if payload.get("kind") == "dsh_sync":
+        print(f"DSH sync: {payload['status']}")
+        for item in payload.get('changes', []):
+            if item['state'] != 'current':
+                print(f"- {item['id']}: {item['state']}")
+        for item in payload.get('extra_directories', []):
+            print(f"- {item}: unregistered (preserved)")
+        if payload.get('message'):
+            print(payload['message'])
+        return
     if payload.get("kind") == "dsh_preview":
         print("DSH skill candidates (preview only)")
         for skill in payload["skills"]:
@@ -762,6 +893,15 @@ def build_parser() -> argparse.ArgumentParser:
     dsh_preview = commands.add_parser("dsh-preview")
     dsh_preview.add_argument("--format", choices=("text", "json"), default="text")
 
+    dsh_sync = commands.add_parser("dsh-sync")
+    dsh_sync.add_argument("--apply", action="store_true")
+    dsh_sync.add_argument("--overwrite")
+    dsh_sync.add_argument("--skill")
+    dsh_sync.add_argument("--record-id")
+    dsh_sync.add_argument("--agent", default="codex")
+    dsh_sync.add_argument("--lease")
+    dsh_sync.add_argument("--format", choices=("text", "json"), default="text")
+
     expose = commands.add_parser("expose")
     expose.add_argument("skill_id")
     expose.add_argument("--platform")
@@ -787,6 +927,19 @@ def main() -> int:
             payload = list_skills(manifest, platform=args.platform)
         elif args.action == "dsh-preview":
             payload = preview_dsh_skills(manifest)
+        elif args.action == "dsh-sync":
+            if args.apply and (not args.record_id or not args.skill):
+                raise ValueError('--apply requires --record-id and --skill')
+            def authorize(path: Path) -> None:
+                command = [sys.executable, '-m', 'scripts.workspace.workspace_cli', 'agent', 'check',
+                           '--agent', args.agent, '--operation', 'write', '--path', str(path), '--record-id', args.record_id]
+                if args.lease:
+                    command += ['--lease', args.lease]
+                result = subprocess.run(command, capture_output=True, text=True)
+                if result.returncode:
+                    raise ValueError(result.stdout.strip() or result.stderr.strip() or 'authorization denied')
+            payload = sync_dsh_skills(manifest, dsh_skill_root(manifest), apply=args.apply,
+                                      overwrite=args.overwrite, skill_id=args.skill, authorize=authorize if args.apply else None)
         else:
             payload = expose_skill(
                 manifest,

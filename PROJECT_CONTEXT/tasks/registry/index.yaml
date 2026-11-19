@@ -191,9 +191,11 @@ task_files:
   claude_notification_hooks: domains/governance.yaml
   claude_project_boundary: domains/governance.yaml
   cleanup_migration: domains/continuity.yaml
+  disk_scan_report_retention: domains/continuity.yaml
   cleanup_policy_diagnosis: domains/continuity.yaml
   registered_ai_tool_update: domains/continuity.yaml
   deepseek_desktop_transition: domains/continuity.yaml
+  doubao_desktop_storage: domains/continuity.yaml
   reasonix_hermes_ci_repair: domains/continuity.yaml
   reasonix_retirement: domains/continuity.yaml
   cleanup_migration_audit: domains/continuity.yaml

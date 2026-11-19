@@ -148,8 +148,10 @@ EXCLUDED_PATHS = {
     "scripts/tests/workspace/test_hermes_skill_deployment.py",
     "scripts/tests/workspace/test_hermes_skill_approval.py",
     "scripts/workspace/disk_scan_cleanup.py",
+    "scripts/workspace/disk_scan_report_runtime.py",
     "scripts/workspace/disk_scan_cleanup_native.ps1",
     "scripts/tests/workspace/test_disk_scan_cleanup.py",
+    "scripts/tests/workspace/test_disk_scan_report_runtime.py",
     # These project-private tests rely on governance capabilities and TASK
     # records that the public projection intentionally scrubs.
     "scripts/tests/workspace/test_merge_safety.py",
@@ -211,6 +213,7 @@ EXCLUDED_PATHS = {
 }
 
 SCRUB_FILES: set[str] = {
+    "WORKSPACE_ENGINEERING/methods/harness_profiles/dsh.md",
     "workspace_manifest.yaml",
     "AGENTS.md",
     "shared/governance/agent_registry.yaml",

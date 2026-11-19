@@ -2,6 +2,34 @@
   "schema_version": "1.0",
   "purpose": "Remote-only external repositories retained on GitHub after local checkout retirement.",
   "repositories": {
+    "math-modeling-pro": {
+      "display_name": "math-modeling--Pro",
+      "github_url": "https://github.com/AnieerLhayK/math-modeling--Pro",
+      "default_branch": "main",
+      "original_local_path": "${WORKSPACE_ROOT}/projects/数学建模-第二弹",
+      "status": "remote_only",
+      "source": "Owner requested remote-only retirement after archiving the repository.",
+      "retired_at": "2026-11-19T10:43:07.844866+00:00",
+      "restore": {
+        "clone_url": "https://github.com/AnieerLhayK/math-modeling--Pro",
+        "branch": "main",
+        "suggested_path": "${WORKSPACE_ROOT}/projects/数学建模-第二弹"
+      },
+      "verification": {
+        "status": "verified",
+        "commit": "9ec4d88f8b788bd2d4f26ffd3ed646c273683a7a",
+        "verified_at": "2026-11-19T10:43:07.844866+00:00",
+        "failure_code": null
+      },
+      "resource_receipt": [
+        {
+          "relative_path": "工作区",
+          "action": "recycle",
+          "file_count": 665,
+          "total_bytes": 50609983
+        }
+      ]
+    },
     "cnn": {
       "display_name": "CNN",
       "github_url": "https://github.com/AnieerLhayK/cppCNN_vibecoding",
@@ -27,9 +55,9 @@
       "github_url": "https://github.com/egg-pikaq/YellowRiver_Inkstone_LLM",
       "default_branch": "main",
       "original_local_path": "${WORKSPACE_ROOT}/projects/YellowRiver_InkStone",
-      "status": "local_directory_retired",
-      "source": "remote-only-repositories handoff; no deletion has been authorized",
-      "retired_at": "2026-09-03T14:45:06.231175+00:00",
+      "status": "remote_only",
+      "source": "Owner authorized recycling the remaining empty local directory; remote retained.",
+      "retired_at": "2026-11-18T14:28:14+00:00",
       "restore": {
         "clone_url": "https://github.com/egg-pikaq/YellowRiver_Inkstone_LLM",
         "branch": "main",
@@ -40,12 +68,6 @@
         "commit": "a4f5a38c1cad11bacd3d245d58e810347f327738",
         "verified_at": "2026-09-03T14:45:06.231175+00:00",
         "failure_code": null
-      },
-      "local_directory_receipt": {
-        "retained_paths": [],
-        "file_count": 0,
-        "file_manifest_sha256": "602e35a92eec4bc0a2ec6ae113f07bfc6933322fb69fe8dee416e5a67217e2a2",
-        "recreated_at": "2026-09-03T14:45:06.231175+00:00"
       }
     }
   }

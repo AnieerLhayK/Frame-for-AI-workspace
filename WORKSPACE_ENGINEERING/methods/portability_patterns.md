@@ -38,9 +38,9 @@ bootstrap -> validate manifest -> migration dry-run -> validate protocols -> che
 
 ### Claude Code Handoff Compatibility
 
-When adding Claude Code as a new platform (2026-06-13), the workspace needed compatibility without changing its architecture:
+When adding Claude Code as a new platform (2026-06-13), the workspace used the following compatibility arrangement. The root import shim has since been retired; current loading is documented in `USAGE_GUIDES/QUICK_START/claude_code.md`.
 
-1. Root `CLAUDE.md` imports `AGENTS.md` via `@AGENTS.md` — no policy duplication.
+1. Root `CLAUDE.md` imported `AGENTS.md` via `@AGENTS.md` — no policy duplication.
 2. `.claude/project-boundary.json` declares allowed workspace layers.
 3. `.claude/hooks/workspace_boundary_guard.ps1` prevents writes outside allowed layers.
 4. `.claude/rules/workspace-boundary.md` reminds agents to resolve tasks before broad discovery.

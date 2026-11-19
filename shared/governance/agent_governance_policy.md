@@ -80,10 +80,15 @@ Agent Registration Contract
 
 | Agent class | Default agents | Allowed durable effects |
 | --- | --- | --- |
-| Structural maintainer | Codex | Records, source, core governance and reviewed platform deployment |
+| Structural maintainer | Codex, DeepSeek Harness, DeepSeek Harness CLI | Records, source, core governance and reviewed platform deployment |
 | Development maintainer | Claude Code | Ordinary source and records, reviewed delivery through registered publishers |
-| Record producer | DeepSeek Harness, Hermes, OpenCode | Scoped diagnosis, handoff, agent report, and change request records |
+| Record producer | Hermes, OpenCode | Scoped diagnosis, handoff, agent report, and change request records |
 | Consumer | Unregistered agents | Read, temporary invocation, and change requests only |
+
+DeepSeek Harness and DeepSeek Harness CLI are registered as structural maintainers
+for ordinary source, records and reviewed delivery under the shared host guard.
+Core-governance edits and approvals remain Codex or explicit user authority, as
+required by AGENTS.md and the Git integration policy.
 
 Agent identity does not replace a skill's own role and authority. For example,
 Hermes may invoke `style-doctor` and write a diagnosis in the declared runtime
@@ -145,42 +150,40 @@ Desktop still requires its own internal local Host; that component is not the
 retired Web service. DSH Desktop (`deepseek-harness`) and the headless CLI
 (`deepseek-harness-cli`) now have separate `structural_maintainer` registrations
 so TASK ownership records which entry acted. Their effective Workspace
-capabilities match Codex, while the runtime still requires an active TASK,
-Workspace path authorization, and the host's Workspace sandbox.
+capabilities match Codex, while write authority still follows the shared TASK,
+path, and agent checks; on DSH those checks run through the Workspace CLI at
+commit and push, and the host sandbox supplies the project boundary.
 
-Both DSH entries load the shared `scripts/platform/dsh_workspace_kit/index.mjs`
-guard. It binds file writes and TASK tools to the calling DSH session, checks
-write paths through `workspace agent check`, denies unclassified host tools,
-limits shell commands to registered Git and Workspace operations, test runners
-and read-only commands, and restricts Git to explicit `origin/dev` and gated
-`origin/main` flows. It fails closed if the guard cannot register. The Desktop
-profile defaults new sessions to `workspace-write-quiet`; the headless launcher
-uses `workspace-write` and grants Git metadata only through the Workspace `.git`
-directory. Neither permission preset grants Workspace authority by itself.
+DSH uses the DSH permission preset for filesystem isolation and the ordinary
+Workspace CLI checks for authority. A session inspects Git status, resolves the
+task route, creates its TASK with `workspace records start`, runs the routed
+validation, and finalizes the record; `changes verify` and `workflow check` still
+review the batch before commit and push. The Desktop profile defaults new
+sessions to `workspace-write-quiet`; the headless launcher uses
+`workspace-write` and grants Git metadata only through the Workspace `.git`
+directory. Neither permission preset grants Workspace authority by itself. The
+former host-level `workspace-kit` tool guard was retired on 2026-11-13: its
+allowlist denied most host tools and its fixed workspace root blocked work
+outside the Workspace; its source remains in Git history and no runtime guard
+is installed.
 
-DSH may create, inspect, update, validate and finalize its own TASK through the guarded
-`workspace_task_*` tools. Another session's TASK stays read-only unless the
-owner has explicitly delegated that exact task. Mainline integration requires
+DSH creates, inspects, updates, validates and finalizes its own TASK through the
+Workspace CLI. Another session's TASK stays read-only. Mainline integration requires
 the registered merge preflight and audit-close evidence; it cannot substitute
 for an independent Standards and Spec review. Registered public publishers
 still require their separate `external_write` authorization and publisher
 checks.
 
 The former `deepseek-harness-workspace` SDK identity and transport are retired.
-DeepSeek Desktop and CLI use their separately registered identities and the
-shared host guard. Do not restore the old bridge as a compatibility path; any
-new host entry must use the current registry, TASK, path and Git controls.
+DeepSeek Desktop and CLI use their separately registered identities. Do not
+restore the old bridge as a compatibility path; any new host entry must use the
+current registry, TASK, path and Git controls.
 
-The shared `workspace-kit` guard is installed through the registered DSH Desktop
-and headless CLI profiles. It validates model-supplied file paths, rejects links,
-hard links, alternate data streams, credentials and protected dependency or
-private-corpus paths, then checks TASK and agent authorization before writes.
-The host sandbox supplies an additional project boundary. Direct or unregistered
-SDK launches are unsupported Workspace entry points and receive no Workspace
-write authority. These checks do not authenticate the operating-system user or
-protect against a concurrently privileged process changing filesystem state.
-The optional directory listing is nonrecursive, bounded, omits hidden,
-dependency and private-corpus entries, and does not follow links.
+Filesystem access is bounded by the selected DSH permission preset, not by a host
+tool guard. Direct or unregistered SDK launches are unsupported Workspace entry
+points and receive no Workspace write authority. These checks do not authenticate
+the operating-system user or protect against a concurrently privileged process
+changing filesystem state.
 
 ## External Workspace Task Bridge
 
@@ -252,7 +255,11 @@ the TASK on success or failure. These target bindings add scope only to an
 external write using this acting skill and a validated cleanup lease; they do
 not grant capability or authorize a different action. No additional human
 registration or chat is needed. This exception does not grant automatic
-cleanup on a later scheduled run.
+cleanup on a later scheduled run, except for the narrowly scoped 30-day
+disk-scan report-retention policy in
+`skills/governance/disk-scan-reporter/references/cleanup.md`. That exception
+still requires the dedicated TASK route, active lease, exact report-root scope,
+strict generated-report filename checks and per-file authorization checks.
 
 ## Change Risk And Worktree Guidance
 
@@ -279,6 +286,14 @@ A platform that can mutate files must connect its tool dispatcher to
 `workspace agent check` or an equivalent in-process authorization call before
 the write occurs.
 
+DSH Desktop and the headless CLI are the recorded exception. Their in-process
+tool-dispatcher guard failed closed on its own allowlist and fixed root, and was retired on
+2026-11-13 with the owner's explicit approval, so on that host the Workspace CLI
+checks run at commit and push and the selected permission preset bounds the
+filesystem. This is an accepted reduction for one host, not a precedent: any
+other platform, or a re-enabled DSH guard, must satisfy the requirement above
+before it is treated as a governed entry point.
+
 Native project permissions and MCP root restrictions should narrow the surface
 before the shared authorization check. They are defense in depth, not a
 replacement for Agent and acting-Skill authority.
@@ -299,7 +314,7 @@ Any DENY blocks the tool before mutation. `workspace agent check` requires
 the target path. Post-change verification accepts `--agent` and `--skill` so
 Git evidence can be checked against the same identity and Skill contracts.
 Prompt or memory guidance may explain the route, but it must never be the only
-boundary.
+boundary; the DSH exception above is the one recorded acceptance.
 
 ## Lifecycle
 

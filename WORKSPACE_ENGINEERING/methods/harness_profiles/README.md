@@ -38,11 +38,9 @@ but is not independent proof of reviewer identity or authority. The command
 never creates or changes a baseline or activates a profile. Network fetches are
 restricted to the listed official HTTPS hosts, including redirects.
 
-On the owner-local DSH Desktop profile, `workspace-kit` starts a read-only
-online check at startup and every 24 hours while the host remains running. The
-`workspace_harness_status` tool shows its most recent result and bounded diffs;
-an explicit refresh runs it again. The first snapshots are a pending-review
-candidate in DSH-private state, so their status stays `UNREVIEWED`, even when
-the source matches. They may still show diffs. No automatic check edits a
-baseline, installs an update, or changes a profile. Actual authenticated
-Desktop loading must still be verified; a mocked-host integration check passed.
+On the owner-local DSH Desktop profile, a `workspace-kit` plugin previously
+started a read-only online check at startup and every 24 hours while the host
+remained running, exposing `workspace_harness_status`. That plugin was replaced
+by a short-lived host authorization guard and the whole `workspace-kit` plugin
+was retired on 2026-11-13; no startup drift check runs now. The baseline and
+review mechanics above remain the procedure when a check is run manually.

@@ -19,8 +19,8 @@ tasks:
     - scripts/workspace/workflow_check.py
     - scripts/tests/workspace/test_agent_governance.py
     - scripts/tests/workspace/test_merge_safety.py
-    - scripts/tests/workspace/test_task_records.py
     optional:
+    - task-record tests when changing task-record behavior
     - selected CLI delegation when changing command dispatch
     - explicitly selected reporting policy when changing report production
     - shared/schemas/package_protocol_manifest.schema.json
@@ -188,7 +188,7 @@ tasks:
     use_when_zh:
     - 修改 Claude Code 项目根、.claude 规则、边界钩子或项目切换启动器
     required:
-    - CLAUDE.md
+    - AGENTS.md
     - .claude/project-boundary.json
     - .claude/rules/workspace-boundary.md
     - .claude/settings.json
@@ -447,9 +447,7 @@ tasks:
     - scripts/platform/Start-DeepSeekHarnessDesktop.ps1
     - scripts/platform/dsh.cmd
     - scripts/tests/platform/test_deepseek_desktop_transition.py
-    - scripts/platform/dsh_workspace_kit/**
     - scripts/platform/dsh-workspace-cli.cmd
-    - scripts/tests/platform/test_dsh_workspace_kit.mjs
     - packages/ai-workbench/package_manifest.json
     - WORKSPACE_ENGINEERING/methods/harness_profiles/dsh.md
     validation:
@@ -480,10 +478,10 @@ tasks:
     - 修改单个运行时授权守卫、平台适配器、审批状态或聚焦测试，但不修改 Agent 登记
     required:
     - shared/governance/agent_governance.yaml
-    - scripts/workspace/agent_governance.py
     - <target-runtime-guard>
     - <target-runtime-guard-test>
-    optional: []
+    optional:
+    - relevant central dispatch implementation in scripts/workspace/agent_governance.py when changing its contract
     ignore:
     - agent registration schema
     - public publishers

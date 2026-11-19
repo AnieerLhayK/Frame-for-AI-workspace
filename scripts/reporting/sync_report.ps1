@@ -319,7 +319,8 @@ function Get-SkillExposureSummary {
   )
 
   $items = @()
-  foreach ($exposure in @($Skill.exposures)) {
+  $exposures = if ($null -ne $Skill.PSObject.Properties["exposures"]) { @($Skill.exposures) } else { @() }
+  foreach ($exposure in $exposures) {
     $projection = $Manifest.projections |
       Where-Object { [string]$_.id -eq [string]$exposure.projection_id } |
       Select-Object -First 1
@@ -328,7 +329,10 @@ function Get-SkillExposureSummary {
   }
 
   if ($items.Count -eq 0) {
-    return "$([string]$Skill.platform) (legacy) -> $([string]$Skill.projection_path)"
+    if ($null -ne $Skill.PSObject.Properties["platform"] -and $null -ne $Skill.PSObject.Properties["projection_path"]) {
+      return "$([string]$Skill.platform) (legacy) -> $([string]$Skill.projection_path)"
+    }
+    return "not exposed"
   }
   return $items -join "<br>"
 }
@@ -455,8 +459,8 @@ Add-Table -Lines $setupLines -Rows ($manifest.skills | ForEach-Object {
     Package = if ($_.PSObject.Properties.Name -contains "package_id") { $_.package_id } else { "" }
     Source = $_.source_path
     Exposures = Get-SkillExposureSummary -Skill $_ -Manifest $manifest
-    LegacyPlatform = $_.platform
-    LegacyProjection = $_.projection_path
+    LegacyPlatform = if ($null -ne $_.PSObject.Properties["platform"]) { $_.platform } else { "" }
+    LegacyProjection = if ($null -ne $_.PSObject.Properties["projection_path"]) { $_.projection_path } else { "" }
     Protocols = if ($null -ne $_.PSObject.Properties["protocol_dependencies"]) { ($_.protocol_dependencies -join ", ") } else { "" }
   }
 }) -Headers @("Skill", "Package", "Role", "Authority", "Execution", "Source", "Exposures", "LegacyPlatform", "LegacyProjection", "Protocols")

@@ -229,6 +229,14 @@ def build_parser() -> argparse.ArgumentParser:
     skill_list.add_argument("--format", choices=("text", "json"), default="text")
     skill_dsh_preview = skill_commands.add_parser("dsh-preview", help="Preview the approved DSH skill candidates without enabling them.")
     skill_dsh_preview.add_argument("--format", choices=("text", "json"), default="text")
+    skill_dsh_sync = skill_commands.add_parser("dsh-sync", help="Preview or synchronize approved DSH skill pointers.")
+    skill_dsh_sync.add_argument("--apply", action="store_true")
+    skill_dsh_sync.add_argument("--overwrite")
+    skill_dsh_sync.add_argument("--skill")
+    skill_dsh_sync.add_argument("--record-id")
+    skill_dsh_sync.add_argument("--agent", default="codex")
+    skill_dsh_sync.add_argument("--lease")
+    skill_dsh_sync.add_argument("--format", choices=("text", "json"), default="text")
     skill_expose = skill_commands.add_parser(
         "expose",
         help="Preview or create one manifest-declared platform projection.",
@@ -540,6 +548,12 @@ def dispatch(args: argparse.Namespace) -> int:
                 command.extend(["--platform", args.platform])
         elif args.action == "dsh-preview":
             pass
+        elif args.action == "dsh-sync":
+            if args.apply:
+                command.append('--apply')
+            for flag, value in (('--overwrite', args.overwrite), ('--skill', args.skill), ('--record-id', args.record_id), ('--agent', args.agent), ('--lease', args.lease)):
+                if value:
+                    command.extend([flag, value])
         else:
             command.append(args.skill_id)
             if args.platform:

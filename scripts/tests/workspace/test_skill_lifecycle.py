@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import subprocess
+import contextlib
+import io
+import json
+import stat
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from scripts.workspace.skill_lifecycle import (
@@ -18,6 +24,74 @@ from scripts.workspace.skill_lifecycle import (
 
 
 class SkillLifecycleTests(unittest.TestCase):
+    def run_dsh_sync_command(self, catalog, *args, allow=True):
+        from scripts.workspace import skill_lifecycle as lifecycle
+        original_preview = lifecycle.preview_dsh_skills
+        output = io.StringIO()
+        auth = subprocess.CompletedProcess([], 0 if allow else 2, stdout='' if allow else 'denied', stderr='')
+        with patch.object(lifecycle, 'load_manifest', return_value=self.manifest), \
+             patch.object(lifecycle, 'preview_dsh_skills', side_effect=lambda manifest, _: original_preview(manifest, catalog)), \
+             patch.object(lifecycle.subprocess, 'run', return_value=auth), \
+             patch.object(sys, 'argv', ['workspace-skill', 'dsh-sync', '--format', 'json', *args]), \
+             contextlib.redirect_stdout(output):
+            code = lifecycle.main()
+        return code, json.loads(output.getvalue())
+
+    def test_dsh_sync_preview_does_not_create_pointer(self) -> None:
+        self.create_valid_skill()
+        catalog = self.root / 'catalog.yaml'
+        catalog.write_text('schema_version: 1\nskills:\n  - {id: demo, trigger: explicit}\n', encoding='utf-8')
+        target = self.root / 'dsh'
+        _, result = self.run_dsh_sync_command(catalog)
+        self.assertEqual(result['changes'][0]['state'], 'missing')
+        self.assertFalse(target.exists())
+
+    def test_dsh_sync_creates_and_preserves_drift_until_targeted_overwrite(self) -> None:
+        self.create_valid_skill()
+        catalog = self.root / 'catalog.yaml'
+        catalog.write_text('schema_version: 1\nskills:\n  - {id: demo, trigger: explicit}\n', encoding='utf-8')
+        target = self.root / 'dsh'
+        def sync(*args):
+            return self.run_dsh_sync_command(catalog, '--apply', '--record-id', 'TASK-1', '--skill', 'demo', *args)[1]
+        self.assertEqual(sync()['status'], 'APPLIED')
+        pointer = target / 'demo' / 'SKILL.md'
+        self.assertIn('user-invocable: true', pointer.read_text(encoding='utf-8'))
+        self.assertEqual(sync()['changes'][0]['state'], 'current')
+        pointer.write_text('custom', encoding='utf-8')
+        (target / 'unmanaged').mkdir()
+        blocked = sync()
+        self.assertEqual(blocked['status'], 'BLOCKED')
+        self.assertEqual(pointer.read_text(encoding='utf-8'), 'custom')
+        self.assertEqual(blocked['extra_directories'], ['unmanaged'])
+        self.assertEqual(sync('--overwrite', 'demo')['status'], 'APPLIED')
+
+    def test_dsh_sync_denied_authorization_leaves_pointer_absent(self) -> None:
+        self.create_valid_skill()
+        catalog = self.root / 'catalog.yaml'
+        catalog.write_text('schema_version: 1\nskills:\n  - {id: demo, trigger: explicit}\n', encoding='utf-8')
+        code, result = self.run_dsh_sync_command(catalog, '--apply', '--record-id', 'TASK-1', '--skill', 'demo', allow=False)
+        self.assertNotEqual(code, 0)
+        self.assertIn('denied', result['message'])
+        self.assertFalse((self.root / 'dsh').exists())
+
+    def test_dsh_sync_rejects_outside_source_before_creating_files(self) -> None:
+        self.manifest['skills'][0]['source_path'] = '../outside'
+        catalog = self.root / 'catalog.yaml'
+        catalog.write_text('schema_version: 1\nskills:\n  - {id: demo, trigger: explicit}\n', encoding='utf-8')
+        code, result = self.run_dsh_sync_command(catalog, '--apply', '--record-id', 'TASK-1', '--skill', 'demo')
+        self.assertNotEqual(code, 0)
+        self.assertIn('inside workspace', result['message'])
+        self.assertFalse((self.root / 'dsh').exists())
+
+    def test_dsh_sync_rejects_unknown_selected_skill(self) -> None:
+        self.create_valid_skill()
+        catalog = self.root / 'catalog.yaml'
+        catalog.write_text('schema_version: 1\nskills:\n  - {id: demo, trigger: explicit}\n', encoding='utf-8')
+        code, result = self.run_dsh_sync_command(catalog, '--apply', '--record-id', 'TASK-1', '--skill', 'unknown')
+        self.assertNotEqual(code, 0)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse((self.root / 'dsh').exists())
+
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
@@ -25,6 +99,7 @@ class SkillLifecycleTests(unittest.TestCase):
         self.link_path = self.root / "platform" / "demo"
         self.manifest = {
             "workspace": {"source_of_truth": str(self.root)},
+            "runtime_roots": {"dsh_skills": str(self.root / "dsh")},
             "skills": [
                 {
                     "id": "demo",
@@ -201,6 +276,70 @@ class SkillLifecycleTests(unittest.TestCase):
         (nested / "runtime.log").write_text("runtime output", encoding="utf-8")
         result = validate_skill(self.manifest, "demo")
         self.assertEqual(result["status"], "ERROR")
+        self.assertIn("runtime artifacts", "\n".join(result["findings"]))
+
+    def test_registered_package_ignores_generated_characters_but_checks_source(self) -> None:
+        self.skill_source = self.root / "packages" / "demo"
+        self.manifest["skills"][0]["source_path"] = "packages/demo"
+        self.manifest["skills"][0]["optional_files"] = ["characters"]
+        self.create_valid_skill()
+        subprocess.run(["git", "init", "--quiet", str(self.root)], check=True)
+        (self.skill_source / ".gitignore").write_text("characters/*\n!characters/.gitkeep\n", encoding="utf-8")
+        generated = self.skill_source / "characters" / "sample"
+        (generated / "reports").mkdir(parents=True)
+        placeholder = self.skill_source / "characters" / ".gitkeep"
+        placeholder.write_text("", encoding="utf-8")
+        subprocess.run(["git", "add", "--", str(placeholder)], cwd=self.root, check=True)
+        (generated / "reports" / "result.md").write_text("generated", encoding="utf-8")
+        (generated / "generated.md").write_text("[private](missing.md)", encoding="utf-8")
+        result = validate_skill(self.manifest, "demo")
+        self.assertEqual(result["status"], "PASS", result["findings"])
+        source_reports = self.skill_source / "scripts" / "reports"
+        source_reports.mkdir(parents=True)
+        (source_reports / "runtime.log").write_text("unowned", encoding="utf-8")
+        result = validate_skill(self.manifest, "demo")
+        self.assertIn("runtime artifacts", "\n".join(result["findings"]))
+
+    def test_validate_checks_mixed_case_markdown_links(self) -> None:
+        self.create_valid_skill()
+        (self.skill_source / "Guide.MD").write_text("[missing](nope.md)", encoding="utf-8")
+        result = validate_skill(self.manifest, "demo")
+        self.assertIn("broken local Markdown link: Guide.MD", "\n".join(result["findings"]))
+
+    def test_generated_character_reparse_root_is_not_enumerated(self) -> None:
+        self.skill_source = self.root / "packages" / "demo"
+        self.manifest["skills"][0]["source_path"] = "packages/demo"
+        self.manifest["skills"][0]["optional_files"] = ["characters"]
+        self.create_valid_skill()
+        generated_root = self.skill_source / "characters"
+        generated_root.mkdir()
+        original_lstat = Path.lstat
+        original_iterdir = Path.iterdir
+        def guarded_lstat(path, *args, **kwargs):
+            if path == generated_root:
+                return SimpleNamespace(st_mode=stat.S_IFDIR, st_file_attributes=0x400)
+            return original_lstat(path, *args, **kwargs)
+        def guarded_iterdir(path):
+            if path == generated_root:
+                raise AssertionError("generated reparse point was enumerated")
+            return original_iterdir(path)
+        with patch.object(Path, "lstat", guarded_lstat), patch.object(Path, "iterdir", guarded_iterdir):
+            result = validate_skill(self.manifest, "demo")
+        self.assertEqual(result["status"], "ERROR")
+        self.assertIn("reparse", "\n".join(result["findings"]).lower())
+
+    def test_generated_character_exclusion_does_not_hide_tracked_files(self) -> None:
+        self.skill_source = self.root / "packages" / "demo"
+        self.manifest["skills"][0]["source_path"] = "packages/demo"
+        self.manifest["skills"][0]["optional_files"] = ["characters"]
+        self.create_valid_skill()
+        subprocess.run(["git", "init", "--quiet", str(self.root)], check=True)
+        (self.skill_source / ".gitignore").write_text("characters/*\n", encoding="utf-8")
+        report = self.skill_source / "characters" / "sample" / "reports" / "result.md"
+        report.parent.mkdir(parents=True)
+        report.write_text("tracked artifact", encoding="utf-8")
+        subprocess.run(["git", "add", "-f", "--", str(report)], cwd=self.root, check=True)
+        result = validate_skill(self.manifest, "demo")
         self.assertIn("runtime artifacts", "\n".join(result["findings"]))
 
     def test_validate_rejects_invocation_drift_and_runtime_artifacts(self) -> None:
