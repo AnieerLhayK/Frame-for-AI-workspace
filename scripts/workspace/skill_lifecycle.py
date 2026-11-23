@@ -1,0 +1,957 @@
+from __future__ import annotations
+
+import argparse
+import ast
+import json
+import os
+import re
+import stat
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any, Callable
+
+import yaml
+
+
+from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.manifest_loader import load_manifest as load_workspace_manifest
+MANIFEST_PATH = WORKSPACE_ROOT / "workspace_manifest.yaml"
+DSH_SKILL_CATALOG = WORKSPACE_ROOT / "shared/governance/dsh_skill_catalog.yaml"
+SKILL_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+FRONTMATTER_PATTERN = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
+MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+PORTABILITY_VALUES = {"portable", "host-adapted", "workspace-bound"}
+DISTRIBUTION_VALUES = {"internal-only", "review-required", "redistributable"}
+RUNTIME_SCAN_DIRECTORIES = ("scripts", "config", "agents")
+RUNTIME_SCAN_SUFFIXES = {".py", ".ps1", ".sh", ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg"}
+HOST_REQUIREMENTS = {"windows", "windows-powershell", "workspace-cli", "optional-workspace-manifest"}
+HOST_REQUIREMENT_PREFIXES = ("host-",)
+
+
+def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
+    return load_workspace_manifest(path)
+
+
+def workspace_root(manifest: dict[str, Any]) -> Path:
+    value = manifest.get("workspace", {}).get("source_of_truth")
+    if not value:
+        raise ValueError("manifest workspace.source_of_truth is missing")
+    return Path(str(value)).resolve()
+
+
+def dsh_skill_root(manifest: dict[str, Any]) -> Path:
+    runtime_roots = manifest.get("runtime_roots")
+    value = runtime_roots.get("dsh_skills") if isinstance(runtime_roots, dict) else None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("manifest runtime_roots.dsh_skills is missing")
+    target = Path(os.path.expandvars(value))
+    if not target.is_absolute():
+        raise ValueError("manifest runtime_roots.dsh_skills must be an absolute path")
+    return target.resolve()
+
+
+def resolve_workspace_path(root: Path, value: str) -> Path:
+    candidate = Path(value)
+    resolved = candidate.resolve() if candidate.is_absolute() else (root / candidate).resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"path must stay inside workspace source root: {value}") from exc
+    return resolved
+
+
+def manifest_skill(manifest: dict[str, Any], skill_id: str) -> dict[str, Any] | None:
+    return next(
+        (
+            skill
+            for skill in manifest.get("skills", [])
+            if isinstance(skill, dict) and str(skill.get("id")) == skill_id
+        ),
+        None,
+    )
+
+
+def manifest_skill_by_source(
+    manifest: dict[str, Any],
+    source_path: str,
+) -> dict[str, Any] | None:
+    normalized = source_path.replace("\\", "/").strip("/")
+    return next(
+        (
+            skill
+            for skill in manifest.get("skills", [])
+            if isinstance(skill, dict)
+            and str(skill.get("source_path", "")).replace("\\", "/").strip("/")
+            == normalized
+        ),
+        None,
+    )
+
+
+def source_path_requires_contract(source_path: str) -> bool:
+    """Standalone source packages live under the manifest's skills/ root."""
+    normalized = source_path.replace("\\", "/").strip("/")
+    return normalized.startswith("skills/")
+
+
+def projection_by_id(manifest: dict[str, Any], projection_id: str) -> dict[str, Any] | None:
+    return next(
+        (
+            projection
+            for projection in manifest.get("projections", [])
+            if isinstance(projection, dict) and str(projection.get("id")) == projection_id
+        ),
+        None,
+    )
+
+
+def parse_frontmatter(path: Path) -> tuple[dict[str, Any] | None, str | None]:
+    try:
+        text = path.read_text(encoding="utf-8-sig")
+    except OSError as exc:
+        return None, str(exc)
+    match = FRONTMATTER_PATTERN.match(text)
+    if not match:
+        return None, "SKILL.md must start with YAML frontmatter"
+    try:
+        payload = yaml.safe_load(match.group(1))
+    except yaml.YAMLError as exc:
+        return None, f"invalid YAML frontmatter: {exc}"
+    if not isinstance(payload, dict):
+        return None, "YAML frontmatter must be a mapping"
+    return payload, None
+
+
+def runtime_contract_files(source: Path) -> list[Path]:
+    """Return executable/configuration surfaces, excluding documentation examples."""
+    files = [source / "SKILL.md"]
+    for directory_name in RUNTIME_SCAN_DIRECTORIES:
+        directory = source / directory_name
+        if not directory.is_dir():
+            continue
+        for path in directory.rglob("*"):
+            relative = path.relative_to(source)
+            if not path.is_file() or "__pycache__" in relative.parts:
+                continue
+            if path.suffix.lower() in RUNTIME_SCAN_SUFFIXES:
+                files.append(path)
+    return files
+
+
+def assignment_strings(path: Path) -> list[str]:
+    """Extract literal Python assignment values, not detector expressions or prose."""
+    if path.suffix.lower() != ".py":
+        return []
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeError, SyntaxError):
+        return []
+    values: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        names = [target.id.lower() for target in targets if isinstance(target, ast.Name)]
+        if any(name.endswith(("_markers", "_patterns")) for name in names):
+            continue
+        if node.value is None:
+            continue
+        if any(
+            isinstance(child, ast.Call)
+            and isinstance(child.func, ast.Attribute)
+            and isinstance(child.func.value, ast.Name)
+            and child.func.value.id == "re"
+            and child.func.attr == "compile"
+            for child in ast.walk(node.value)
+        ):
+            continue
+        for child in ast.walk(node.value):
+            if isinstance(child, ast.Constant) and isinstance(child.value, str):
+                values.append(child.value)
+    return values
+
+
+def normalized_host_couplings(source: Path) -> set[str]:
+    """Find host-bound runtime references without treating reference material as code."""
+    couplings: set[str] = set()
+    for path in runtime_contract_files(source):
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError):
+            continue
+        values = assignment_strings(path) if path.suffix.lower() == ".py" else [text]
+        normalized_values = [
+            re.sub(r"/+", "/", value.replace("\\", "/").lower()) for value in values
+        ]
+        if any(re.search(r"\b[a-z]:/", value) for value in normalized_values):
+            couplings.add("windows-path")
+        if any("workspace_manifest.yaml" in value for value in normalized_values):
+            couplings.add("workspace-manifest")
+        if any(
+            re.search(r"(?:^|[^a-z0-9_-])workspace(?:\.cmd)?\s+(?:records|task|agent|skill)\b", value)
+            for value in normalized_values
+        ):
+            couplings.add("workspace-cli")
+    return couplings
+
+
+def has_host_requirement(requires: list[str]) -> bool:
+    return any(
+        requirement in HOST_REQUIREMENTS
+        or requirement.startswith(HOST_REQUIREMENT_PREFIXES)
+        for requirement in requires
+    )
+
+
+def ignored_python_caches(source: Path, candidates: list[str]) -> set[str]:
+    """Ignore local bytecode only when Git excludes it from source delivery.
+
+    check-ignore consults the index, so force-added bytecode still fails validation.
+    Standalone packages and failed Git checks retain the strict artifact check.
+    """
+    if not candidates:
+        return set()
+    try:
+        result = subprocess.run(
+            ["git", "check-ignore", "--stdin", "-z"],
+            cwd=source,
+            input="\0".join(candidates) + "\0",
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return set()
+    if result.returncode not in (0, 1):
+        return set()
+    return set(result.stdout.rstrip("\0").split("\0"))
+
+
+def generated_character_exclusions(source: Path, enabled: bool) -> tuple[set[str], str | None]:
+    """Prune ignored generated characters without traversing their private contents."""
+    root = source / "characters"
+    if not enabled:
+        return set(), None
+    try:
+        try:
+            info = root.lstat()
+        except FileNotFoundError:
+            return set(), None
+        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400):
+            return {"characters"}, "generated character directory is a reparse point or symbolic link"
+        if not stat.S_ISDIR(info.st_mode):
+            return {"characters"}, "generated character path is not a directory"
+        candidates = [f"characters/{entry.name}" for entry in root.iterdir()]
+        tracked = subprocess.run(
+            ["git", "ls-files", "-z", "--", "characters"], cwd=source,
+            capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
+        )
+        ignored = subprocess.run(
+            ["git", "check-ignore", "--stdin", "-z"], cwd=source,
+            input="\0".join(candidates) + ("\0" if candidates else ""),
+            capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
+        )
+        if tracked.returncode != 0 or ignored.returncode not in (0, 1):
+            raise ValueError("Git could not verify generated character exclusions")
+        tracked_paths = [path.replace("\\", "/").casefold() for path in tracked.stdout.split("\0") if path]
+        ignored_paths = {path.casefold() for path in ignored.stdout.split("\0") if path}
+        placeholder = "characters/.gitkeep"
+        unexpected_tracked = [path for path in tracked_paths if path != placeholder]
+        unexpected_unignored = [path for path in candidates if path.casefold() not in ignored_paths and not (path.casefold() == placeholder and placeholder in tracked_paths)]
+        if unexpected_tracked or unexpected_unignored:
+            return set(candidates), "runtime artifacts or unignored entries in generated character directory"
+        return set(candidates), None
+    except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+        return {"characters"}, f"cannot verify generated character exclusions: {error}"
+
+
+def skill_source_paths(source: Path, exclusions: set[str]) -> list[Path]:
+    """Enumerate owned source without descending into excluded generated trees."""
+    paths: list[Path] = []
+    for root, dirs, files in os.walk(source, followlinks=False):
+        base = Path(root)
+        dirs[:] = [name for name in dirs if (base / name).relative_to(source).as_posix() not in exclusions]
+        paths.extend(base / name for name in dirs)
+        paths.extend(base / name for name in files if (base / name).relative_to(source).as_posix() not in exclusions)
+    return paths
+
+
+def enhanced_contract_findings(source: Path, metadata: dict[str, Any], *, allow_owned_reports: bool = False, allow_generated_characters: bool = False, require_contract: bool = False) -> list[str]:
+    findings: list[str] = []
+    exclusions, exclusion_error = generated_character_exclusions(source, allow_generated_characters)
+    if exclusion_error:
+        findings.append(exclusion_error)
+    source_paths = skill_source_paths(source, exclusions)
+    if "disable-model-invocation" in metadata and not isinstance(metadata["disable-model-invocation"], bool):
+        findings.append("disable-model-invocation must be a boolean")
+    contract = metadata.get("metadata")
+    has_contract = isinstance(contract, dict) and (require_contract or bool({"portability", "distribution", "requires"} & contract.keys()))
+    if contract is not None and not isinstance(contract, dict):
+        findings.append("frontmatter metadata must be a mapping")
+
+    portability: str | None = None
+    requires: list[str] | None = None
+    if has_contract:
+        portability = contract.get("portability")
+        distribution = contract.get("distribution")
+        raw_requires = contract.get("requires")
+        if portability not in PORTABILITY_VALUES:
+            findings.append(
+                "metadata.portability must be one of: " + ", ".join(sorted(PORTABILITY_VALUES))
+            )
+        if distribution not in DISTRIBUTION_VALUES:
+            findings.append(
+                "metadata.distribution must be one of: " + ", ".join(sorted(DISTRIBUTION_VALUES))
+            )
+        if not isinstance(raw_requires, list) or any(
+            not isinstance(item, str) or not item.strip() for item in raw_requires
+        ):
+            findings.append("metadata.requires must be a list of non-empty strings")
+        elif len(raw_requires) != len(set(raw_requires)):
+            findings.append("metadata.requires must not contain duplicates")
+        else:
+            requires = raw_requires
+
+    openai_path = source / "agents" / "openai.yaml"
+    if not openai_path.is_file():
+        if has_contract:
+            findings.append("missing required file: agents/openai.yaml")
+    else:
+        try:
+            openai = yaml.safe_load(openai_path.read_text(encoding="utf-8-sig"))
+        except (OSError, yaml.YAMLError) as exc:
+            findings.append(f"invalid agents/openai.yaml: {exc}")
+        else:
+            policy = openai.get("policy") if isinstance(openai, dict) else None
+            actual = policy.get("allow_implicit_invocation") if isinstance(policy, dict) else None
+            expected = metadata.get("disable-model-invocation") is not True
+            if actual is not expected:
+                findings.append(
+                    "agents/openai.yaml policy.allow_implicit_invocation must mirror "
+                    f"SKILL.md invocation policy ({str(expected).lower()})"
+                )
+
+    for markdown in (path for path in source_paths if path.suffix.lower() == ".md" and path.is_file()):
+        if "reports" in markdown.relative_to(source).parts:
+            continue
+        try:
+            content = markdown.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError):
+            continue
+        for match in MARKDOWN_LINK_PATTERN.finditer(content):
+            target = match.group(1).split("#", 1)[0].strip()
+            if not target or target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            if not (markdown.parent / target).exists():
+                relative = markdown.relative_to(source).as_posix()
+                findings.append(f"broken local Markdown link: {relative} -> {target}")
+
+    pollution = []
+    caches = []
+    for path in source_paths:
+        relative = path.relative_to(source)
+        if "__pycache__" in relative.parts or path.suffix == ".pyc":
+            caches.append(relative.as_posix())
+        elif ("reports" in relative.parts and not (allow_owned_reports and relative.parts[0] == "reports")
+              and path.is_file() and path.name != ".gitkeep"):
+            pollution.append(relative.as_posix())
+    pollution.extend(sorted(set(caches) - ignored_python_caches(source, caches)))
+    if pollution:
+        findings.append("runtime artifacts must stay outside the skill source: " + ", ".join(sorted(pollution)[:10]))
+
+    if portability in PORTABILITY_VALUES and requires is not None:
+        couplings = normalized_host_couplings(source)
+        if portability == "portable":
+            host_requirements = [
+                requirement
+                for requirement in requires
+                if requirement in HOST_REQUIREMENTS
+                or requirement.startswith(HOST_REQUIREMENT_PREFIXES)
+            ]
+            if host_requirements:
+                findings.append(
+                    "portable skill cannot require host capabilities: "
+                    + ", ".join(sorted(host_requirements))
+                )
+            if couplings:
+                findings.append(
+                    "portable skill contains host coupling in runtime surfaces: "
+                    + ", ".join(sorted(couplings))
+                )
+        elif couplings and not has_host_requirement(requires):
+            findings.append(
+                "host-coupled skill metadata.requires must declare a host capability: "
+                + ", ".join(sorted(couplings))
+            )
+        if "workspace-cli" in couplings and "workspace-cli" not in requires:
+            findings.append("Workspace CLI coupling requires metadata.requires to include workspace-cli")
+        if "workspace-manifest" in couplings and not {"workspace-cli", "workspace-manifest", "optional-workspace-manifest"}.intersection(requires):
+            findings.append(
+                "Workspace manifest coupling requires metadata.requires to include optional-workspace-manifest"
+            )
+        if "windows-path" in couplings and not {"windows", "windows-powershell"}.intersection(requires):
+            findings.append(
+                "Windows path coupling requires metadata.requires to include windows or windows-powershell"
+            )
+    return findings
+
+
+def projection_state(link_path: Path, target_path: Path) -> str:
+    if not target_path.is_dir():
+        return "MISSING_TARGET"
+    if not os.path.lexists(link_path):
+        return "MISSING"
+    try:
+        current = os.path.normcase(os.path.abspath(os.path.realpath(link_path)))
+        expected = os.path.normcase(os.path.abspath(target_path))
+        if current == expected:
+            return "OK"
+    except OSError:
+        pass
+    return "BLOCKED_EXISTING_ITEM"
+
+
+def list_skills(
+    manifest: dict[str, Any],
+    *,
+    platform: str | None = None,
+) -> dict[str, Any]:
+    root = workspace_root(manifest)
+    rows: list[dict[str, Any]] = []
+    for skill in manifest.get("skills", []):
+        if not isinstance(skill, dict):
+            continue
+        exposures = [
+            exposure
+            for exposure in skill.get("exposures", [])
+            if isinstance(exposure, dict)
+            and (platform is None or str(exposure.get("platform")) == platform)
+        ]
+        if platform is not None and not exposures:
+            continue
+        source = resolve_workspace_path(root, str(skill.get("source_path", "")))
+        projections: list[dict[str, str]] = []
+        for exposure in exposures:
+            projection = projection_by_id(manifest, str(exposure.get("projection_id", "")))
+            if not projection:
+                projections.append(
+                    {
+                        "platform": str(exposure.get("platform", "")),
+                        "projection_id": str(exposure.get("projection_id", "")),
+                        "state": "MISSING_MANIFEST_ENTRY",
+                    }
+                )
+                continue
+            link = Path(os.path.abspath(str(projection.get("link_path", ""))))
+            target = resolve_workspace_path(root, str(projection.get("target_path", "")))
+            projections.append(
+                {
+                    "platform": str(projection.get("platform", "")),
+                    "projection_id": str(projection.get("id", "")),
+                    "state": projection_state(link, target),
+                }
+            )
+        rows.append(
+            {
+                "id": str(skill.get("id", "")),
+                "role": str(skill.get("role", "")),
+                "source_path": str(skill.get("source_path", "")),
+                "source_state": "OK" if source.is_dir() else "MISSING",
+                "projections": projections,
+            }
+        )
+    return {"status": "PASS", "skills": rows}
+
+
+def render_dsh_skill_pointer(row: dict[str, Any], root: Path) -> str:
+    """Render a discovery pointer; the original skill remains the authority."""
+    skill_id, trigger, source = row.get("id"), row.get("trigger"), row.get("source_path")
+    if not isinstance(skill_id, str) or not SKILL_ID_PATTERN.fullmatch(skill_id):
+        raise ValueError("invalid skill id")
+    if trigger not in {"automatic", "explicit"} or not isinstance(source, str) or not source:
+        raise ValueError("skill is not discoverable")
+    source_file = resolve_workspace_path(root.resolve(), source) / "SKILL.md"
+    description = str(row.get("description") or f"Use the approved {skill_id} workflow.")
+    disabled = "true" if trigger == "explicit" else "false"
+    adaptation = row.get("adaptation_note")
+    if adaptation is not None and (not isinstance(adaptation, str) or not adaptation.strip() or '\n' in adaptation or '\r' in adaptation):
+        raise ValueError("invalid DSH adaptation note")
+    adaptation_text = f"DSH invocation adaptation: {adaptation}\n\n" if adaptation else ""
+    return (f"---\nname: {skill_id}\ndescription: {json.dumps(description, ensure_ascii=False)}\n"
+            f"disable-model-invocation: {disabled}\nuser-invocable: true\n---\n\n"
+            f"{adaptation_text}"
+            f"Read and follow the authoritative instructions at `{source_file.as_posix()}`. "
+            "Resolve its relative links from its own directory.\n")
+
+
+def preview_dsh_skills(manifest: dict[str, Any], catalog_path: Path = DSH_SKILL_CATALOG) -> dict[str, Any]:
+    """Preview approved sources; this never modifies discovery or grants authority."""
+    try:
+        catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8-sig"))
+    except FileNotFoundError as exc:
+        raise ValueError("DSH skill catalog is not configured on this host") from exc
+    except yaml.YAMLError as exc:
+        raise ValueError(f"invalid DSH skill catalog: {exc}") from exc
+    if not isinstance(catalog, dict) or catalog.get("schema_version") != 1 or not isinstance(catalog.get("skills"), list):
+        raise ValueError("invalid DSH skill catalog")
+    root = workspace_root(manifest)
+    rows, seen, errors = [], set(), []
+    for item in catalog["skills"]:
+        if not isinstance(item, dict):
+            raise ValueError("invalid DSH skill entry")
+        skill_id, trigger = item.get("id"), item.get("trigger")
+        if not isinstance(skill_id, str) or not SKILL_ID_PATTERN.fullmatch(skill_id) or skill_id in seen:
+            raise ValueError("invalid or duplicate DSH skill id")
+        if trigger not in {"automatic", "explicit", "dependency_only"}:
+            raise ValueError(f"invalid DSH trigger for {skill_id}")
+        seen.add(skill_id)
+        registered = manifest_skill(manifest, skill_id)
+        if not registered:
+            character_root = "packages/character-system/engineering/generation/character-generator/characters"
+            if (item.get("approved_unregistered") is not True or trigger != "explicit" or
+                    item.get("source_path") != f"{character_root}/{skill_id}"):
+                raise ValueError(f"unregistered DSH skill is not approved: {skill_id}")
+        source_value = registered.get("source_path") if registered else item.get("source_path")
+        if not source_value:
+            raise ValueError(f"unregistered DSH skill lacks a source: {skill_id}")
+        source = resolve_workspace_path(root, str(source_value))
+        metadata, error = parse_frontmatter(source / "SKILL.md")
+        if error:
+            errors.append(f"{skill_id}: {error}")
+        state = "invalid" if error else ("registration_required" if registered is None else "ready_for_review")
+        if metadata and trigger == "automatic" and metadata.get("disable-model-invocation") is True:
+            state = "adaptation_required"
+        override, adaptation = item.get("description_override"), item.get("adaptation_note")
+        if override is not None or adaptation is not None:
+            if (not isinstance(override, str) or not override.strip() or '\n' in override or '\r' in override or
+                    not isinstance(adaptation, str) or not adaptation.strip() or '\n' in adaptation or '\r' in adaptation):
+                raise ValueError(f"invalid DSH adaptation for {skill_id}")
+            if state != "adaptation_required":
+                raise ValueError(f"unexpected DSH invocation adaptation for {skill_id}")
+            state = "adaptation_ready_for_verification"
+        rows.append({"id": skill_id, "trigger": trigger, "source_path": str(source_value),
+                     "registered": registered is not None, "state": state,
+                     "description": override if override is not None else metadata.get("description", "") if metadata else "",
+                     "adaptation_note": adaptation,
+                     "authority": registered.get("authority", {}) if registered else {},
+                     "execution_modes": registered.get("execution_modes", {}) if registered else {}})
+    return {"status": "ERROR" if errors else "PASS", "skills": rows, "findings": errors,
+            "activation_performed": False, "kind": "dsh_preview"}
+
+
+def sync_dsh_skills(manifest: dict[str, Any], target: Path, *, catalog_path: Path = DSH_SKILL_CATALOG,
+                    apply: bool = False, overwrite: str | None = None, skill_id: str | None = None,
+                    authorize: Callable[[Path], None] | None = None) -> dict[str, Any]:
+    if apply and not skill_id:
+        return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'apply requires an explicit skill selection'}
+    if target.is_symlink() or getattr(target, 'is_junction', lambda: False)():
+        return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'DSH projection root is a link'}
+    preview = preview_dsh_skills(manifest, catalog_path)
+    if preview['status'] != 'PASS':
+        return preview
+    root = workspace_root(manifest)
+    rows = [row for row in preview['skills'] if row['trigger'] != 'dependency_only' and row['state'] != 'registration_required']
+    if skill_id:
+        rows = [row for row in rows if row['id'] == skill_id]
+        if not rows:
+            return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'selected skill is not a discoverable catalog entry'}
+    if any(row['state'] not in {'ready_for_review', 'adaptation_ready_for_verification'} for row in rows):
+        return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'catalog contains unresolved candidates'}
+    if overwrite and overwrite not in {row['id'] for row in rows}:
+        return {'status': 'BLOCKED', 'kind': 'dsh_sync', 'message': 'overwrite id is not a discoverable catalog entry'}
+    changes = []
+    for row in rows:
+        path = target / row['id'] / 'SKILL.md'
+        expected = render_dsh_skill_pointer(row, root)
+        if path.is_symlink() or (path.parent.exists() and (path.parent.is_symlink() or getattr(path.parent, 'is_junction', lambda: False)() or not path.parent.is_dir())):
+            state = 'blocked'
+        elif not path.exists():
+            state = 'missing'
+        elif not path.is_file():
+            state = 'blocked'
+        else:
+            state = 'current' if path.read_text(encoding='utf-8-sig') == expected else 'drift'
+        changes.append({'id': row['id'], 'state': state, 'path': str(path), 'content': expected})
+    extras = sorted(p.name for p in target.iterdir() if p.is_dir() and p.name not in {r['id'] for r in preview['skills']}) if target.is_dir() else []
+    blocked = [c for c in changes if c['state'] == 'blocked' or (c['state'] == 'drift' and c['id'] != overwrite)]
+    if apply and blocked:
+        status = 'BLOCKED'
+    elif apply:
+        writes = [c for c in changes if c['state'] == 'missing' or (c['state'] == 'drift' and c['id'] == overwrite)]
+        if authorize is None:
+            raise ValueError('write authorization is required')
+        for item in writes:
+            authorize(Path(item['path']))
+        for item in writes:
+            path = Path(item['path'])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(item['content'], encoding='utf-8', newline='\n')
+        status = 'APPLIED'
+    else:
+        status = 'PLAN'
+    for item in changes:
+        del item['content']
+    return {'status': status, 'kind': 'dsh_sync', 'changes': changes, 'extra_directories': extras}
+
+
+def validate_skill(
+    manifest: dict[str, Any],
+    target: str,
+) -> dict[str, Any]:
+    root = workspace_root(manifest)
+    registered = manifest_skill(manifest, target) or manifest_skill_by_source(
+        manifest, target
+    )
+    source_value = str(registered.get("source_path")) if registered else target
+    try:
+        source = resolve_workspace_path(root, source_value)
+    except ValueError as exc:
+        return {"status": "ERROR", "target": target, "findings": [str(exc)]}
+
+    expected_id = str(registered.get("id")) if registered else source.name
+    findings: list[str] = []
+    warnings: list[str] = []
+    if not source.is_dir():
+        findings.append(f"missing skill source directory: {source}")
+    else:
+        skill_md = source / "SKILL.md"
+        if not skill_md.is_file():
+            findings.append("missing required file: SKILL.md")
+        else:
+            metadata, error = parse_frontmatter(skill_md)
+            if error:
+                findings.append(error)
+            else:
+                name = str(metadata.get("name", "")).strip()
+                description = str(metadata.get("description", "")).strip()
+                if name != expected_id:
+                    findings.append(
+                        f"frontmatter name must match skill id '{expected_id}', found '{name}'"
+                    )
+                if not description:
+                    findings.append("frontmatter description must be non-empty")
+                if source_path_requires_contract(source_value) and "metadata" not in metadata:
+                    findings.append("standalone skill requires frontmatter metadata")
+                allow_owned_reports = bool(registered and source_value.replace("\\", "/").startswith("packages/") and "reports" in registered.get("optional_files", []))
+                allow_generated_characters = bool(registered and source_value.replace("\\", "/").startswith("packages/") and "characters" in registered.get("optional_files", []))
+                findings.extend(enhanced_contract_findings(source, metadata, allow_owned_reports=allow_owned_reports, allow_generated_characters=allow_generated_characters, require_contract=source_path_requires_contract(source_value)))
+        if registered:
+            for relative in registered.get("required_files", []):
+                if not (source / Path(str(relative))).exists():
+                    findings.append(f"missing manifest-required file: {relative}")
+        else:
+            readme = source / "README.md"
+            if not readme.is_file():
+                warnings.append(
+                    "README.md is absent; standalone SKILL.md packages may omit it"
+                )
+            warnings.append(
+                "skill is not registered in workspace_manifest.yaml; validation covered only the source package"
+            )
+
+    return {
+        "status": "ERROR" if findings else ("WARN" if warnings else "PASS"),
+        "target": target,
+        "skill_id": expected_id,
+        "source_path": str(source),
+        "registered": registered is not None,
+        "findings": findings,
+        "warnings": warnings,
+    }
+
+
+def init_skill(
+    manifest: dict[str, Any],
+    skill_id: str,
+    source_path: str,
+    description: str,
+) -> dict[str, Any]:
+    if not SKILL_ID_PATTERN.fullmatch(skill_id):
+        return {
+            "status": "ERROR",
+            "message": "skill id must use lowercase letters, numbers, and hyphens",
+        }
+    if manifest_skill(manifest, skill_id):
+        return {"status": "BLOCKED", "message": f"skill is already registered: {skill_id}"}
+    root = workspace_root(manifest)
+    try:
+        source = resolve_workspace_path(root, source_path)
+    except ValueError as exc:
+        return {"status": "BLOCKED", "message": str(exc)}
+    if source.exists():
+        return {"status": "BLOCKED", "message": f"source path already exists: {source}"}
+
+    files = {
+        "SKILL.md": (
+            "---\n"
+            f"name: {skill_id}\n"
+            f"description: {json.dumps(description, ensure_ascii=False)}\n"
+            "---\n\n"
+            f"# {skill_id}\n\n"
+            "## Use When\n\n"
+            "- Define the tasks that should trigger this skill.\n\n"
+            "## Workflow\n\n"
+            "1. Read only the references required for the current task.\n"
+            "2. Perform the bounded skill workflow.\n"
+            "3. Validate the result before returning it.\n\n"
+            "## Boundaries\n\n"
+            "- Do not expand authority beyond this skill's declared task contract.\n"
+        ),
+        "README.md": (
+            f"# {skill_id}\n\n"
+            f"{description}\n\n"
+            "This package is source code. Register it in `workspace_manifest.yaml` "
+            "before platform exposure.\n"
+        ),
+        "references/README.md": "# References\n\nAdd knowledge that should be loaded only when needed.\n",
+        "scripts/README.md": "# Scripts\n\nAdd deterministic helpers here when the workflow needs them.\n",
+        "tests/README.md": "# Tests\n\nAdd focused structure and behavior tests here.\n",
+        "assets/README.md": "# Assets\n\nAdd reusable templates or static assets here.\n",
+    }
+    for relative, content in files.items():
+        path = source / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    return {
+        "status": "CREATED",
+        "skill_id": skill_id,
+        "source_path": str(source),
+        "created_files": sorted(files),
+        "next": [
+            "Review and replace the scaffold placeholders.",
+            "Register the skill and its projections in workspace_manifest.yaml.",
+            f"Run workspace skill validate {skill_id} after registration.",
+            f"Run workspace skill expose {skill_id} --platform <platform> before adding --apply.",
+        ],
+    }
+
+
+def create_projection(link_path: Path, target_path: Path) -> None:
+    link_path.parent.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        result = subprocess.run(
+            ["cmd.exe", "/d", "/c", "mklink", "/J", str(link_path), str(target_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise OSError(result.stderr.strip() or result.stdout.strip())
+        return
+    os.symlink(target_path, link_path, target_is_directory=True)
+
+
+def expose_skill(
+    manifest: dict[str, Any],
+    skill_id: str,
+    platform: str | None,
+    *,
+    apply: bool = False,
+    creator: Callable[[Path, Path], None] = create_projection,
+) -> dict[str, Any]:
+    skill = manifest_skill(manifest, skill_id)
+    if not skill:
+        return {"status": "ERROR", "message": f"skill is not registered: {skill_id}"}
+    exposures = [
+        exposure
+        for exposure in skill.get("exposures", [])
+        if isinstance(exposure, dict)
+        and (platform is None or str(exposure.get("platform")) == platform)
+    ]
+    if not exposures:
+        return {
+            "status": "ERROR",
+            "message": f"no manifest exposure for skill '{skill_id}'"
+            + (f" on platform '{platform}'" if platform else ""),
+        }
+    if platform is None and len(exposures) > 1:
+        choices = sorted(str(item.get("platform", "")) for item in exposures)
+        return {
+            "status": "BLOCKED",
+            "message": "multiple platforms are registered; pass --platform",
+            "platforms": choices,
+        }
+
+    exposure = exposures[0]
+    projection_id = str(exposure.get("projection_id", ""))
+    projection = projection_by_id(manifest, projection_id)
+    if not projection:
+        return {
+            "status": "ERROR",
+            "message": f"missing manifest projection: {projection_id}",
+        }
+    root = workspace_root(manifest)
+    source = resolve_workspace_path(root, str(projection.get("target_path", "")))
+    link = Path(os.path.abspath(str(projection.get("link_path", ""))))
+    state = projection_state(link, source)
+    payload = {
+        "status": state,
+        "skill_id": skill_id,
+        "platform": str(projection.get("platform", "")),
+        "projection_id": projection_id,
+        "source_path": str(source),
+        "link_path": str(link),
+        "apply": apply,
+    }
+    if state == "MISSING_TARGET":
+        payload["status"] = "BLOCKED"
+        payload["message"] = "manifest-selected source directory is missing"
+        return payload
+    if state == "OK":
+        payload["message"] = "projection already points to the manifest-selected source"
+        return payload
+    if state == "BLOCKED_EXISTING_ITEM":
+        payload["status"] = "BLOCKED"
+        payload["message"] = "existing file, directory, or incorrect link was preserved"
+        return payload
+    if not apply:
+        payload["status"] = "PLAN"
+        payload["message"] = "projection is missing; rerun with --apply to create it"
+        return payload
+    try:
+        creator(link, source)
+    except OSError as exc:
+        payload["status"] = "ERROR"
+        payload["message"] = f"failed to create projection: {exc}"
+        return payload
+    payload["status"] = "CREATED"
+    payload["message"] = "projection created from manifest"
+    return payload
+
+
+def render(payload: dict[str, Any], output_format: str) -> None:
+    if output_format == "json":
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+    if payload.get("kind") == "dsh_sync":
+        print(f"DSH sync: {payload['status']}")
+        for item in payload.get('changes', []):
+            if item['state'] != 'current':
+                print(f"- {item['id']}: {item['state']}")
+        for item in payload.get('extra_directories', []):
+            print(f"- {item}: unregistered (preserved)")
+        if payload.get('message'):
+            print(payload['message'])
+        return
+    if payload.get("kind") == "dsh_preview":
+        print("DSH skill candidates (preview only)")
+        for skill in payload["skills"]:
+            print(f"- {skill['id']}: trigger={skill['trigger']} state={skill['state']}")
+        return
+    if "skills" in payload:
+        print("Skill Registry")
+        for skill in payload["skills"]:
+            projection_text = ", ".join(
+                f"{item['platform']}={item['state']}" for item in skill["projections"]
+            ) or "(none)"
+            print(
+                f"- {skill['id']}: source={skill['source_state']} "
+                f"role={skill['role']} projections={projection_text}"
+            )
+        return
+    print(f"Status: {payload['status']}")
+    for key in ("skill_id", "source_path", "platform", "link_path", "message"):
+        if payload.get(key):
+            print(f"{key.replace('_', ' ').title()}: {payload[key]}")
+    for finding in payload.get("findings", []):
+        print(f"ERROR: {finding}")
+    for warning in payload.get("warnings", []):
+        print(f"WARNING: {warning}")
+    for item in payload.get("next", []):
+        print(f"NEXT: {item}")
+
+
+def exit_code(payload: dict[str, Any]) -> int:
+    if payload.get("status") in {"ERROR", "BLOCKED"}:
+        return 1
+    if payload.get("status") == "WARN":
+        return 2
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Manage workspace skill source packages.")
+    commands = parser.add_subparsers(dest="action", required=True)
+
+    init = commands.add_parser("init")
+    init.add_argument("skill_id")
+    init.add_argument("--source-path", required=True)
+    init.add_argument("--description", required=True)
+    init.add_argument("--format", choices=("text", "json"), default="text")
+
+    validate = commands.add_parser("validate")
+    validate.add_argument("target")
+    validate.add_argument("--format", choices=("text", "json"), default="text")
+
+    list_parser = commands.add_parser("list")
+    list_parser.add_argument("--platform")
+    list_parser.add_argument("--format", choices=("text", "json"), default="text")
+
+    dsh_preview = commands.add_parser("dsh-preview")
+    dsh_preview.add_argument("--format", choices=("text", "json"), default="text")
+
+    dsh_sync = commands.add_parser("dsh-sync")
+    dsh_sync.add_argument("--apply", action="store_true")
+    dsh_sync.add_argument("--overwrite")
+    dsh_sync.add_argument("--skill")
+    dsh_sync.add_argument("--record-id")
+    dsh_sync.add_argument("--agent", default="codex")
+    dsh_sync.add_argument("--lease")
+    dsh_sync.add_argument("--format", choices=("text", "json"), default="text")
+
+    expose = commands.add_parser("expose")
+    expose.add_argument("skill_id")
+    expose.add_argument("--platform")
+    expose.add_argument("--apply", action="store_true")
+    expose.add_argument("--format", choices=("text", "json"), default="text")
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    try:
+        manifest = load_manifest()
+        if args.action == "init":
+            payload = init_skill(
+                manifest,
+                args.skill_id,
+                args.source_path,
+                args.description,
+            )
+        elif args.action == "validate":
+            payload = validate_skill(manifest, args.target)
+        elif args.action == "list":
+            payload = list_skills(manifest, platform=args.platform)
+        elif args.action == "dsh-preview":
+            payload = preview_dsh_skills(manifest)
+        elif args.action == "dsh-sync":
+            if args.apply and (not args.record_id or not args.skill):
+                raise ValueError('--apply requires --record-id and --skill')
+            def authorize(path: Path) -> None:
+                command = [sys.executable, '-m', 'scripts.workspace.workspace_cli', 'agent', 'check',
+                           '--agent', args.agent, '--operation', 'write', '--path', str(path), '--record-id', args.record_id]
+                if args.lease:
+                    command += ['--lease', args.lease]
+                result = subprocess.run(command, capture_output=True, text=True)
+                if result.returncode:
+                    raise ValueError(result.stdout.strip() or result.stderr.strip() or 'authorization denied')
+            payload = sync_dsh_skills(manifest, dsh_skill_root(manifest), apply=args.apply,
+                                      overwrite=args.overwrite, skill_id=args.skill, authorize=authorize if args.apply else None)
+        else:
+            payload = expose_skill(
+                manifest,
+                args.skill_id,
+                args.platform,
+                apply=args.apply,
+            )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        payload = {"status": "ERROR", "message": str(exc)}
+    render(payload, args.format)
+    return exit_code(payload)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

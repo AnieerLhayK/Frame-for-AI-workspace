@@ -1,0 +1,4 @@
+# Local MCP installs and runtime artifacts. Keep README.md and configs/*.json
+# tracked as reproducible setup notes and templates.
+/servers/
+/downloads/
