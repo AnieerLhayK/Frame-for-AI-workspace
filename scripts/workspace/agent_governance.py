@@ -5,9 +5,11 @@ import fnmatch
 import json
 import os
 import subprocess
-from datetime import datetime, timezone
+import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
+from uuid import uuid4
 
 import yaml
 
@@ -773,6 +775,11 @@ def check_task_write(policy: dict, manifest: dict, *, agent_name: str,
     operation = "external_write" if target["surface"] == "external_environment" or target.get("requires_external_write") else "workspace_write"
     registration = require_task_actor(record_id, agent_name, operation)
     _, record = read_record(record_id)
+    lease = kwargs.get('lease')
+    if lease and ('task_id' in lease or 'session_id' in lease):
+        if (lease.get('task_id') != record_id or
+                lease.get('session_id') != (record.get('owner') or {}).get('session_id')):
+            raise ValueError('lease task or session does not match the active task')
     task = resolve_task(registration["task_type"], record["owner"].get("bindings", []))
     path = target["workspace_relative"] or target["path"]
     scopes = [*task["context"]["write_scope"], registration["path"]]
@@ -922,6 +929,167 @@ def check_managed_platform_publish(
             "managed publisher authorization denied: " + delivery["reason"]
         )
     return authorization
+
+
+def issue_lease(*, task_id: str, session_id: str, agent: str, capabilities: list[str],
+                paths: list[str], hours: float, approval: str, purpose: str,
+                isolation: dict[str, Any], policy: dict[str, Any] | None = None,
+                lease_id: str | None = None, now: datetime | None = None,
+                extra: dict[str, Any] | None = None,
+                include_children: bool = False,
+                external_client_root: str | None = None,
+                issuer_task_id: str | None = None,
+                issuer_session_id: str | None = None) -> tuple[Path, dict[str, Any]]:
+    """Issue an attributed lease; approval text is an operator attestation."""
+    from scripts.workspace.plan_change_surface import resolve_task
+    from scripts.workspace.verify_change_scope import scope_matches
+
+    policy = policy or load_yaml(POLICY_PATH)
+    if not all(value.strip() for value in (task_id, session_id, agent, approval, purpose)):
+        raise ValueError("task, session, agent, approval and purpose are required")
+    issuer_task_id = issuer_task_id or (task_id if agent == 'codex' else '')
+    issuer_session_id = issuer_session_id or (session_id if agent == 'codex' else '')
+    if not issuer_task_id or not issuer_session_id:
+        raise ValueError('a Codex issuer task and session are required')
+    if agent == 'codex' and issuer_task_id == task_id and issuer_session_id != session_id:
+        raise ValueError('issuer session must match the task session')
+    if issuer_task_id != task_id or agent != 'codex':
+        require_task_actor(issuer_task_id, 'codex', 'workspace_write')
+        _, issuer_record = read_record(issuer_task_id)
+        if (issuer_record.get('owner') or {}).get('session_id') != issuer_session_id:
+            raise ValueError('issuer session does not match Codex task owner')
+    if not paths or any(not is_absolute_path(p) or any(c in p for c in '*?[]')
+                        or '..' in PureWindowsPath(p).parts or '..' in PurePosixPath(p).parts
+                        for p in paths):
+        raise ValueError("paths must be exact absolute paths without traversal or wildcards")
+    if len(capabilities) != 1:
+        raise ValueError('issue one capability per lease')
+    _, record = read_record(task_id)
+    origin = record.get('origin') or {}
+    external = origin.get('kind') == 'external_workspace'
+    owner = record.get('owner') or {}
+    if external:
+        if not external_client_root:
+            raise ValueError('external task requires external client root')
+        active_external_registration(task_id, agent=agent, client_root=external_client_root)
+    elif owner.get('session_id') != session_id:
+        raise ValueError('session does not match task owner')
+    actor = effective_registration(policy, load_registry(), load_manifest(), agent)
+    if not actor['registered'] or actor['registration_status'] != 'active' or actor['degraded']:
+        raise ValueError('lease recipient must be an active registered agent')
+    bindings = origin.get('bindings', []) if external else owner.get('bindings', [])
+    manifest = load_manifest()
+    task = resolve_task(record['task_type'], bindings)
+    scopes = task['context']['write_scope']
+    if capabilities == ['structural_write']:
+        branch_policy = policy.get('git_branch_governance', {})
+        if isolation.get('branch') in {branch_policy.get('development_branch', 'dev'),
+                                        branch_policy.get('integration_branch', 'main')}:
+            raise ValueError('structural isolation cannot use the development or integration branch')
+    lease_scopes = []
+    for path in paths:
+        classify_target = path
+        if capabilities == ['structural_write']:
+            relative = absolute_path_relative_to(path, str(isolation.get('worktree_path', '')))
+            if relative is None or not relative:
+                raise ValueError('structural lease targets must be inside the isolated worktree')
+            classify_target = str(WORKSPACE_ROOT / Path(relative))
+        target = classify_path(policy, manifest, classify_target)
+        operation = 'external_write' if target['surface'] == 'external_environment' or target.get('requires_external_write') else 'workspace_write'
+        if external:
+            active_registration(task_id, operation, allow_external_origin=True)
+        else:
+            require_task_actor(task_id, agent, operation)
+        candidate = target['workspace_relative'] or target['path']
+        if target['required_capability'] not in capabilities:
+            raise ValueError('capability does not cover target surface')
+        cleanup = (record['task_type'] == 'cleanup_migration' and
+                   capabilities == ['environment_write'] and hours <= 1 and extra and
+                   extra.get('cleanup_plan') and
+                   f"cleanup-plan={extra['cleanup_plan']}" in bindings and
+                   any(key.startswith('cleanup-target-') and absolute_paths_equal(value, path)
+                       for key, _, value in (binding.partition('=') for binding in bindings)))
+        if not cleanup and not any(scope_matches(candidate, scope) for scope in scopes):
+            raise ValueError(f'target is outside task scope: {path}')
+        lease_scopes.append(candidate)
+    issued = now or datetime.now(timezone.utc)
+    if issued.tzinfo is None or not 0 < hours <= float(policy['lease_policy']['maximum_duration_hours']):
+        raise ValueError('invalid issue time or duration')
+    name = lease_id or f"lease-{uuid4().hex}"
+    if not name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in name):
+        raise ValueError('invalid lease id')
+    if include_children and record.get('task_type') != 'disk_scan_report_retention':
+        raise ValueError('recursive scope is reserved for report retention')
+    if include_children:
+        report_roots = [value for key, _, value in (binding.partition('=') for binding in bindings)
+                        if key == 'report-retention-root']
+        lease_paths = [value for key, _, value in (binding.partition('=') for binding in bindings)
+                       if key == 'report-retention-lease']
+        expected_path = Path(policy['lease_policy']['external_store']) / f'{name}.json'
+        if (len(paths) != 1 or len(report_roots) != 1 or len(lease_paths) != 1 or
+                not absolute_paths_equal(paths[0], report_roots[0]) or
+                not absolute_paths_equal(str(expected_path), lease_paths[0]) or hours > 1 or
+                capabilities != ['environment_write']):
+            raise ValueError('report retention lease must match the exact task bindings')
+    if 'structural_write' in capabilities:
+        worktree = isolation.get('worktree_path', '')
+        branch = isolation.get('branch', '')
+        if not is_absolute_path(str(worktree)) or not branch:
+            raise ValueError('structural_write requires an absolute worktree path and branch')
+        branch_policy = policy.get('git_branch_governance', {})
+        if branch in {branch_policy.get('development_branch', 'dev'),
+                      branch_policy.get('integration_branch', 'main')}:
+            raise ValueError('structural isolation cannot use the development or integration branch')
+        result = subprocess.run(['git', 'worktree', 'list', '--porcelain'], cwd=WORKSPACE_ROOT,
+                                capture_output=True, text=True, check=True)
+        entries = [block.splitlines() for block in result.stdout.strip().split('\n\n')]
+        if not any(lines and lines[0].startswith('worktree ') and
+                   absolute_paths_equal(lines[0][9:], str(worktree)) and
+                   f'branch refs/heads/{branch}' in lines for lines in entries):
+            raise ValueError('structural isolation must name a registered worktree and its branch')
+        if absolute_paths_equal(str(worktree), str(WORKSPACE_ROOT)):
+            raise ValueError('structural isolation cannot use the shared worktree')
+    if include_children:
+        lease_scopes = [scope for path in lease_scopes
+                        for scope in (path, normalize_relative(path).rstrip('/') + '/**')]
+    lease = {'schema_version': 1, 'lease_id': name, 'agent': agent, 'issued_by': 'codex',
+             'approval': {'approver': 'user', 'approved_at': issued.isoformat(), 'evidence': approval},
+             'purpose': purpose, 'capabilities': capabilities, 'path_scopes': lease_scopes,
+             'starts_at': issued.isoformat(), 'expires_at': (issued + timedelta(hours=hours)).isoformat(),
+             'status': 'active', 'isolation': isolation, 'task_id': task_id, 'session_id': session_id}
+    if extra:
+        if set(extra) & set(lease):
+            raise ValueError('extra fields may not override lease fields')
+        lease.update(extra)
+    lease['issuer_task_id'] = issuer_task_id
+    lease['issuer_session_id'] = issuer_session_id
+    validation = validate_lease(policy, lease, now=issued)
+    if not validation['active']:
+        raise ValueError(f"lease rejected: {validation['errors']}")
+    path = Path(policy['lease_policy']['external_store']) / f'{name}.json'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('x', encoding='utf-8', newline='\n') as handle:
+        json.dump(lease, handle, ensure_ascii=False, indent=2)
+        handle.write('\n')
+    return path, lease
+
+
+def revoke_issued_lease(path: Path, *, task_id: str, session_id: str, agent: str,
+                        policy: dict[str, Any] | None = None) -> bool:
+    policy = policy or load_yaml(POLICY_PATH)
+    store = Path(policy['lease_policy']['external_store']).resolve()
+    if path.resolve().parent != store:
+        raise ValueError('lease must be in configured external store')
+    lease = json.loads(path.read_text(encoding='utf-8'))
+    if (lease.get('task_id'), lease.get('session_id'), lease.get('agent'), lease.get('lease_id')) != (task_id, session_id, agent, path.stem):
+        raise PermissionError('lease identity does not match')
+    if lease.get('status') == 'revoked':
+        return True
+    if lease.get('status') != 'active':
+        raise ValueError('lease is not active')
+    lease['status'] = 'revoked'
+    path.write_text(json.dumps(lease, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
+    return True
 
 
 def validate_lease(
@@ -1642,6 +1810,15 @@ def render(payload: dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         print(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
         return
+    if 'error' in payload:
+        print(f"Error: {payload['error']}", file=sys.stderr)
+        return
+    if 'lease_status' in payload or 'lease' in payload:
+        print(f"Lease: {payload['status']}")
+        print(f"Path: {payload['path']}")
+        if 'lease_status' in payload:
+            print(f"Status: {payload['lease_status']}")
+        return
     if "agents" in payload:
         title = "Agent Registry" if payload["agents"] and "display_name" in payload["agents"][0] else "Agent Governance"
         print(title)
@@ -1708,6 +1885,35 @@ def render(payload: dict[str, Any], output_format: str) -> None:
         print(f"Next: {payload['next_action']}")
 
 
+def add_lease_commands(commands: Any, *, destination: str) -> None:
+    actions = commands.add_subparsers(dest=destination, required=True)
+    validate = actions.add_parser('validate', help='Validate a lease.')
+    validate.add_argument('lease_file')
+    issue = actions.add_parser('issue', help='Issue a lease after explicit user approval.')
+    issue.add_argument('--task-id', required=True)
+    issue.add_argument('--session-id', required=True)
+    issue.add_argument('--agent', required=True)
+    issue.add_argument('--capability', required=True)
+    issue.add_argument('--path', action='append', required=True)
+    issue.add_argument('--hours', type=float, required=True)
+    issue.add_argument('--approval', required=True, help='Exact user approval text.')
+    issue.add_argument('--purpose', required=True)
+    issue.add_argument('--isolation', choices=('none', 'exact_paths', 'worktree'), default='none')
+    issue.add_argument('--branch')
+    issue.add_argument('--worktree-path')
+    issue.add_argument('--cleanup-plan', help='Approved cleanup plan digest, when applicable.')
+    issue.add_argument('--external-client-root')
+    issue.add_argument('--issuer-task-id', help='Active Codex issuer task when granting another agent.')
+    issue.add_argument('--issuer-session-id', help='Session owning the Codex issuer task.')
+    revoke = actions.add_parser('revoke', help='Revoke an owned lease.')
+    revoke.add_argument('lease_file')
+    revoke.add_argument('--task-id', required=True)
+    revoke.add_argument('--session-id', required=True)
+    revoke.add_argument('--agent', required=True)
+    for parser in (validate, issue, revoke):
+        parser.add_argument('--format', choices=('text', 'json'), default='text')
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Inspect and route workspace agent authority."
@@ -1769,11 +1975,8 @@ def build_parser() -> argparse.ArgumentParser:
     hermes_approval.add_argument("--record-id")
     hermes_approval.add_argument("--format", choices=("text", "json"), default="text")
 
-    lease = commands.add_parser("lease", help="Validate an external capability lease.")
-    lease_commands = lease.add_subparsers(dest="action", required=True)
-    lease_validate = lease_commands.add_parser("validate")
-    lease_validate.add_argument("lease_file")
-    lease_validate.add_argument("--format", choices=("text", "json"), default="text")
+    lease = commands.add_parser("lease", help="Manage external capability leases.")
+    add_lease_commands(lease, destination='action')
     return parser
 
 
@@ -1836,7 +2039,10 @@ def main() -> int:
             )
             if registration:
                 payload["task_registration"] = registration
-                if not args.external_client_root:
+                if args.external_client_root and lease and ('task_id' in lease or 'session_id' in lease):
+                    if lease.get('task_id') != args.record_id:
+                        registration_error = 'lease task does not match the active external task'
+                elif not args.external_client_root:
                     try:
                         payload = check_task_write(
                             policy, manifest, agent_name=args.agent,
@@ -1868,9 +2074,29 @@ def main() -> int:
                 record_id=args.record_id,
                 approve=args.approve,
             )
+        elif args.command == 'lease' and args.action == 'issue':
+            isolation = {'mode': args.isolation}
+            if args.branch:
+                isolation['branch'] = args.branch
+            if args.worktree_path:
+                isolation['worktree_path'] = args.worktree_path
+            path, lease = issue_lease(task_id=args.task_id, session_id=args.session_id,
+                                      agent=args.agent, capabilities=[args.capability], paths=args.path,
+                                      hours=args.hours, approval=args.approval, purpose=args.purpose,
+                                      isolation=isolation, policy=policy,
+                                      extra={'cleanup_plan': args.cleanup_plan} if args.cleanup_plan else None,
+                                      external_client_root=args.external_client_root,
+                                      issuer_task_id=args.issuer_task_id,
+                                      issuer_session_id=args.issuer_session_id)
+            payload = {'status': 'CREATED', 'path': str(path), 'lease': lease}
+        elif args.command == 'lease' and args.action == 'revoke':
+            revoke_issued_lease(Path(args.lease_file), task_id=args.task_id,
+                                session_id=args.session_id, agent=args.agent, policy=policy)
+            payload = {'status': 'PASS', 'path': args.lease_file, 'lease_status': 'revoked'}
         else:
             payload = validate_lease(policy, load_yaml(Path(args.lease_file)))
-    except (OSError, ValueError, yaml.YAMLError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError,
+            yaml.YAMLError, json.JSONDecodeError) as exc:
         payload = {"status": "ERROR", "error": str(exc)}
 
     render(payload, args.format)

@@ -51,6 +51,27 @@ workspace agent request --agent codex --mode review_only `
 workspace agent lease validate <lease-file>
 ```
 
+用户在当前聊天明确批准能力、精确路径、时长和用途后，可签发租约：
+
+```powershell
+workspace agent lease issue --task-id <TASK-ID> --session-id <session-id> `
+  --agent codex --capability environment_write --path <absolute-path> `
+  --hours 1 --purpose "<用途>" --approval "<用户批准原文>"
+workspace agent lease revoke <lease-file> --task-id <TASK-ID> `
+  --session-id <session-id> --agent codex
+```
+
+每次签发仅包含一种能力；结构写入还须提供 `--isolation worktree`、
+`--branch` 和已登记的 `--worktree-path`。批准文字是执行者记录的证据，
+命令本身不构成用户批准。磁盘报告保留继续使用已批准的常设规则。
+签发给其他代理时，`--agent`、`--task-id` 和 `--session-id` 指定接收者，
+并用 `--issuer-task-id`、`--issuer-session-id` 指定签发者 Codex 的活动任务。
+结构写入的 `--path` 应指向隔离 worktree 中的实际目标。
+外部来源任务需提供
+`--external-client-root`；此类任务不记录会话，命令中的会话标识由执行者填写。
+外部来源任务不能签发外部写入租约；应另建 Codex 负责且登记
+`external_write` 的工作区 TASK。
+
 执行期间保持 TASK 有效。完成后运行登记的验证和：
 
 ```powershell

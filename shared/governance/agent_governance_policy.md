@@ -244,7 +244,26 @@ Validate a proposed lease before use:
 workspace agent lease validate <lease-file>
 ```
 
-The generic lease CLI validates leases; it does not issue or activate them.
+`workspace agent lease issue` creates a lease after explicit user approval of
+the capability, exact paths, duration and purpose. Record the current session
+and the user's approval text in the command. The command checks the active
+TASK owner, session, scope, capability and lease policy; its approval text is
+an operator attestation, not independent proof of the conversation. Never
+invent approval or treat running the command as user approval. Issue one
+capability per lease. Structural leases must name a registered isolated
+worktree and its branch. Use `workspace agent lease revoke` with the same
+TASK, session and agent to close a lease. Repeated revocation is safe.
+Task-mediated authorization checks leases carrying TASK/session bindings
+against the active TASK and its owner session. Legacy leases carrying neither
+binding retain their existing validation behavior. External-origin TASKs do
+not record a session, so their checks bind the lease to the TASK only.
+Codex issues leases. When the recipient is another agent, the command also
+requires an active Codex-owned issuer TASK and its session; the recipient's
+TASK and session are checked separately. An external-origin TASK also requires its registered client root;
+its supplied session is recorded as an attestation because external-start
+does not record a session. External-origin records cannot issue leases for
+external writes: use a separately registered Codex-owned workspace TASK with
+`external_write` for that purpose.
 For a user-approved `disk-scan-reporter` cleanup batch, Codex may automatically
 start a `cleanup_migration` TASK and issue an `environment_write` lease for
 only the exact approved targets, valid for at most one hour. Bind each target

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Sequence
 
 from scripts.workspace.runtime import WORKSPACE_ROOT
+from scripts.workspace.agent_governance import add_lease_commands
 
 
 def powershell_executable() -> str:
@@ -209,10 +210,7 @@ def build_parser() -> argparse.ArgumentParser:
     agent_hermes_approval.add_argument("--record-id")
     agent_hermes_approval.add_argument("--format", choices=("text", "json"), default="text")
     agent_lease = agent_commands.add_parser("lease", help="Manage temporary capability leases.")
-    lease_commands = agent_lease.add_subparsers(dest="lease_action", required=True)
-    lease_validate = lease_commands.add_parser("validate", help="Validate an external lease file.")
-    lease_validate.add_argument("lease_file")
-    lease_validate.add_argument("--format", choices=("text", "json"), default="text")
+    add_lease_commands(agent_lease, destination='lease_action')
 
     skill = commands.add_parser("skill", help="Create, inspect, validate, or expose skills.")
     skill_commands = skill.add_subparsers(dest="action", required=True)
@@ -522,7 +520,31 @@ def dispatch(args: argparse.Namespace) -> int:
         elif args.action in {"show", "validate", "doctor"}:
             command.append(args.agent_id)
         elif args.action == "lease":
-            command.extend([args.lease_action, args.lease_file])
+            command.append(args.lease_action)
+            if args.lease_action in ('validate', 'revoke'):
+                command.append(args.lease_file)
+            if args.lease_action in ('issue', 'revoke'):
+                for flag, value in (('--task-id', args.task_id), ('--session-id', args.session_id), ('--agent', args.agent)):
+                    command.extend([flag, value])
+            if args.lease_action == 'issue':
+                for flag, value in (('--capability', args.capability), ('--hours', str(args.hours)),
+                                    ('--approval', args.approval), ('--purpose', args.purpose),
+                                    ('--isolation', args.isolation)):
+                    command.extend([flag, value])
+                for path in args.path:
+                    command.extend(['--path', path])
+                if args.branch:
+                    command.extend(['--branch', args.branch])
+                if args.worktree_path:
+                    command.extend(['--worktree-path', args.worktree_path])
+                if args.cleanup_plan:
+                    command.extend(['--cleanup-plan', args.cleanup_plan])
+                if args.external_client_root:
+                    command.extend(['--external-client-root', args.external_client_root])
+                if args.issuer_task_id:
+                    command.extend(['--issuer-task-id', args.issuer_task_id])
+                if args.issuer_session_id:
+                    command.extend(['--issuer-session-id', args.issuer_session_id])
         command.extend(["--format", args.format])
         return run_command(command)
     if args.command == "skill":
