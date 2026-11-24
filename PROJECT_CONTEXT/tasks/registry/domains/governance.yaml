@@ -113,8 +113,8 @@ tasks:
     ledger: true
     budget:
       required_warn_tokens: 28000
-      expanded_warn_tokens: 30000
-      hard_max_tokens: 30000
+      expanded_warn_tokens: 32000
+      hard_max_tokens: 32000
     write_scope:
     - shared/governance/agent_registry.yaml
     - shared/schemas/agent_registration.schema.json

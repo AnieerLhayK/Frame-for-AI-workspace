@@ -1,5 +1,31 @@
 # Canonical task definitions for the PROJECT_CONTEXT task domain.
 tasks:
+  ruff_cache_relocation:
+    use_when:
+    - Relocating Ruff cache to the owner-approved external cache root and configuring the current user's RUFF_CACHE_DIR.
+    use_when_zh:
+    - 将 Ruff 缓存迁移至用户批准的外部缓存根并配置当前用户的 RUFF_CACHE_DIR。
+    required:
+    - shared/workspace/workspace_path_policy.md
+    - shared/governance/agent_governance_policy.md
+    - shared/governance/git_integration_policy.md
+    optional: []
+    ignore:
+    - unrelated caches, source files and environment variables
+    tool_profile: cleanup_migration
+    ledger: true
+    budget: {required_warn_tokens: 10000, expanded_warn_tokens: 14000}
+    write_scope:
+    - .ruff_cache/
+    - ${DATA_ROOT}/cache/ruff/
+    - ${DATA_ROOT}/cache/ruff/**
+    - PROJECT_CONTEXT/tasks/records/**
+    - PROJECT_CONTEXT/tasks/ledger/**
+    validation:
+    - Verify user RUFF_CACHE_DIR and Ruff behavior from the workspace and a subproject.
+    - Verify the former workspace cache is absent.
+    - workspace records validate
+    - git diff --check
   cleanup_policy_diagnosis:
     use_when:
     - Diagnosing tool-policy rejection through the current exec entrypoint using only newly created ordinary synthetic staging files.
