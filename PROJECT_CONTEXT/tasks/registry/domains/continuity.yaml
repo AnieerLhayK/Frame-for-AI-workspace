@@ -17,6 +17,7 @@ tasks:
     budget: {required_warn_tokens: 10000, expanded_warn_tokens: 14000}
     write_scope:
     - .ruff_cache/
+    - pyproject.toml
     - ${DATA_ROOT}/cache/ruff/
     - ${DATA_ROOT}/cache/ruff/**
     - PROJECT_CONTEXT/tasks/records/**

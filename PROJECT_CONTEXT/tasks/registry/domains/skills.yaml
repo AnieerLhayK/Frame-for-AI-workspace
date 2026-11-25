@@ -88,6 +88,7 @@ tasks:
     - scripts/tests/reporting/test_ci_run.py
     - scripts/workspace/agent_governance.py
     - scripts/tests/workspace/test_agent_governance.py
+    - scripts/tests/workspace/test_disk_scan_cleanup.py
     - scripts/tests/workspace/test_workspace_cli.py
     - scripts/validation/validate_manifest.py
     - scripts/validation/validate_protocols.py
