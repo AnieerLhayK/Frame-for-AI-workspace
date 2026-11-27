@@ -1,5 +1,6 @@
 """Public projection selection and machine-path scrubbing policy."""
 from __future__ import annotations
+import json
 import re
 import yaml
 
@@ -169,6 +170,7 @@ EXCLUDED_PATHS = {
     "PROJECT_CONTEXT/todo",
     "PROJECT_CONTEXT/references/external_projects.yaml",
     "PROJECT_CONTEXT/tasks/registry/domains/personal-archive.yaml",
+    "PROJECT_CONTEXT/tasks/registry/domains/private-character.yaml",
     "PROJECT_CONTEXT/reports/history",
     "PROJECT_CONTEXT/tasks/ledger",
     "PROJECT_CONTEXT/tasks/records",
@@ -286,6 +288,15 @@ def scrub_content(text: str) -> str:
     """Replace all known absolute-path patterns with template variables."""
     for pattern, repl in _compile_substitutions():
         text = pattern.sub(repl, text)
+    if text.lstrip().startswith("{"):
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            payload = None
+        if isinstance(payload, dict) and isinstance(payload.get("migrations"), list):
+            payload["migrations"] = [item for item in payload["migrations"]
+                                     if not isinstance(item, dict) or item.get("private") is not True]
+            text = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     # A private task body must not leave an unresolved route in the public index.
     if re.search(r"(?m)^task_files:\s*$", text):
         payload = yaml.safe_load(text)

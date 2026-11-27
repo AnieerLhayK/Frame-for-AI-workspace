@@ -55,12 +55,12 @@ class RuntimeLoggingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "workspace_manifest.yaml").write_text(json.dumps({"runtime_roots": {"workspace_logs": str(root / "logs")}}))
-            with patch.dict(os.environ, {}, clear=True):
+            with patch("scripts.workspace.runtime_logging.os.environ", {}):
                 self.assertEqual(routing_events_path(root), root / "logs/routing_events.ndjson")
-            with patch.dict(os.environ, {"AI_TOOL_STAGING_DIR": str(root / "override")}):
+            with patch("scripts.workspace.runtime_logging.os.environ", {"AI_TOOL_STAGING_DIR": str(root / "override")}):
                 self.assertEqual(routing_events_path(root), root / "override/routing_events.ndjson")
             (root / "workspace_manifest.yaml").write_text("{}")
-            with patch.dict(os.environ, {}, clear=True), self.assertRaises(ValueError):
+            with patch("scripts.workspace.runtime_logging.os.environ", {}), self.assertRaises(ValueError):
                 routing_events_path(root)
 
     def test_handler_failure_does_not_escape_and_resolver_remains_best_effort(self):

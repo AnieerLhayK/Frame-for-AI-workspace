@@ -341,6 +341,23 @@ class SkillLifecycleTests(unittest.TestCase):
         subprocess.run(["git", "add", "-f", "--", str(report)], cwd=self.root, check=True)
         result = validate_skill(self.manifest, "demo")
         self.assertIn("runtime artifacts", "\n".join(result["findings"]))
+        self.manifest["skills"][0]["approved_generated_characters"] = ["sample"]
+        result = validate_skill(self.manifest, "demo")
+        self.assertEqual(result["status"], "PASS", result["findings"])
+        corpus = self.skill_source / "characters" / "sample" / "corpus" / "private.txt"
+        corpus.parent.mkdir()
+        corpus.write_text("private", encoding="utf-8")
+        subprocess.run(["git", "add", "-f", "--", str(corpus)], cwd=self.root, check=True)
+        self.assertIn("prohibited tracked material", "\n".join(validate_skill(self.manifest, "demo")["findings"]))
+        subprocess.run(["git", "rm", "--cached", "-q", "--", str(corpus)], cwd=self.root, check=True)
+        blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=self.root,
+                              input="../outside", text=True, capture_output=True, check=True).stdout.strip()
+        subprocess.run(["git", "update-index", "--add", "--cacheinfo", "120000", blob,
+                        "packages/demo/characters/sample/link"], cwd=self.root, check=True)
+        self.assertIn("prohibited tracked material", "\n".join(validate_skill(self.manifest, "demo")["findings"]))
+        self.manifest["skills"][0]["approved_generated_characters"] = ["../sample"]
+        result = validate_skill(self.manifest, "demo")
+        self.assertIn("invalid approved generated character", "\n".join(result["findings"]))
 
     def test_validate_rejects_invocation_drift_and_runtime_artifacts(self) -> None:
         self.skill_source.mkdir(parents=True)
@@ -631,6 +648,15 @@ class SkillLifecycleTests(unittest.TestCase):
         catalog.write_text("schema_version: [", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "invalid DSH skill catalog"):
             preview_dsh_skills(self.manifest, catalog)
+
+    def test_dsh_alias_resolves_registered_authority(self) -> None:
+        self.create_valid_skill()
+        catalog = self.root / "catalog.yaml"
+        catalog.write_text("schema_version: 1\nskills:\n  - {id: legacy, trigger: explicit, registered_skill_id: demo}\n", encoding="utf-8")
+        row = preview_dsh_skills(self.manifest, catalog)["skills"][0]
+        self.assertTrue(row["registered"])
+        self.assertEqual(row["source_path"], "skills/demo")
+        self.assertEqual(row["state"], "ready_for_review")
 
     def test_dsh_preview_reports_missing_private_catalog(self) -> None:
         with self.assertRaisesRegex(ValueError, "DSH skill catalog is not configured"):

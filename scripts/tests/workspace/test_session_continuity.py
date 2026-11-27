@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sqlite3
 import tempfile
 import unittest
@@ -10,6 +11,42 @@ from scripts.workspace.session_continuity import run_audit
 
 
 class SessionContinuityTests(unittest.TestCase):
+    def test_backup_only_requires_verified_transcripts(self) -> None:
+        from scripts.workspace.session_continuity import audit_claude
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            backup = root / "backup"
+            bucket = backup / "workspace"
+            bucket.mkdir(parents=True)
+            transcript = bucket / "old.jsonl"
+            transcript.write_text('{"cwd":"old"}\n', encoding="utf-8")
+            checksum = hashlib.sha256(transcript.read_bytes()).hexdigest()
+            (backup / "migration-map.json").write_text("{}", encoding="utf-8")
+            map_checksum = hashlib.sha256((backup / "migration-map.json").read_bytes()).hexdigest()
+            (backup / "SHA256.json").write_text(json.dumps([
+                {"Path": "workspace/old.jsonl", "SHA256": checksum},
+                {"Path": "migration-map.json", "SHA256": map_checksum},
+            ]), encoding="utf-8")
+            details = {"claude": {"project_bucket": "workspace", "backup_path": str(backup),
+                                   "expected_transcript_files": 1, "availability": "backup_only"}}
+            result = audit_claude({"data_root": str(root)}, details)
+            self.assertEqual(result["status"], "PASS")
+            self.assertEqual(result["live_backup_matches"], 0)
+            transcript.write_text("tampered", encoding="utf-8")
+            self.assertEqual(audit_claude({"data_root": str(root)}, details)["status"], "FAIL")
+
+    def test_unrecorded_session_evidence_is_not_reported_as_a_failed_store(self) -> None:
+        from scripts.workspace.session_continuity import audit_migration
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / 'new').mkdir()
+            result = audit_migration({}, {'id': 'old', 'path_mappings': [{'old': 'old', 'new': 'new'}]}, root)
+        self.assertEqual(result['status'], 'WARN')
+        self.assertEqual(result['claude']['status'], 'NOT_RECORDED')
+        self.assertEqual(result['opencode']['status'], 'NOT_RECORDED')
+
     def test_audit_passes_with_live_sessions_and_backups(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -28,7 +65,9 @@ class SessionContinuityTests(unittest.TestCase):
             backup_bucket = claude_backup / "workspace"
             backup_bucket.mkdir(parents=True)
             (backup_bucket / "session.jsonl").write_text("{}\n", encoding="utf-8")
-            (claude_backup / "SHA256.json").write_text("[]", encoding="utf-8")
+            (claude_backup / "SHA256.json").write_text(json.dumps({
+                "workspace/session.jsonl": hashlib.sha256((backup_bucket / "session.jsonl").read_bytes()).hexdigest()
+            }), encoding="utf-8")
             (claude_backup / "migration-map.json").write_text("{}", encoding="utf-8")
 
             opencode_root = root / "opencode"
@@ -51,9 +90,13 @@ class SessionContinuityTests(unittest.TestCase):
             exports = opencode_backup / "exports"
             exports.mkdir(parents=True)
             (opencode_backup / "opencode.db").write_bytes(database.read_bytes())
-            (opencode_backup / "SHA256.json").write_text("[]", encoding="utf-8")
             (opencode_backup / "migration-map.json").write_text("{}", encoding="utf-8")
             (exports / "session.json").write_text("{}", encoding="utf-8")
+            export_hash = hashlib.sha256((exports / "session.json").read_bytes()).hexdigest()
+            (opencode_backup / "SHA256.json").write_text(json.dumps({
+                "opencode.db": hashlib.sha256((opencode_backup / "opencode.db").read_bytes()).hexdigest(),
+                "exports/session.json": export_hash,
+            }), encoding="utf-8")
 
             manifest = {
                 "session_stores": {
@@ -79,7 +122,7 @@ class SessionContinuityTests(unittest.TestCase):
                             "expected_transcript_files": 1,
                         },
                         "opencode": {
-                            "project_id": "project",
+                            "project_id": "historical-project-id",
                             "project_worktree": str(workspace),
                             "backup_path": str(opencode_backup),
                             "affected_session_ids": ["session"],
@@ -94,8 +137,39 @@ class SessionContinuityTests(unittest.TestCase):
 
             payload = run_audit(manifest_path, registry_path, workspace_root=workspace)
 
+            backup_db = opencode_backup / "opencode.db"
+            backup_data = backup_db.read_bytes()
+            backup_db.write_bytes(b"not a database")
+            (opencode_backup / "SHA256.json").write_text(json.dumps({
+                "opencode.db": hashlib.sha256(backup_db.read_bytes()).hexdigest(),
+                "exports/session.json": export_hash,
+            }), encoding="utf-8")
+            damaged_backup = run_audit(manifest_path, registry_path, workspace_root=workspace)
+            backup_db.write_bytes(backup_data)
+            (opencode_backup / "SHA256.json").write_text(json.dumps({
+                "opencode.db": hashlib.sha256(backup_data).hexdigest(),
+                "exports/session.json": export_hash,
+            }), encoding="utf-8")
+            (exports / "session.json").write_text('{"changed":true}', encoding="utf-8")
+            changed_export = run_audit(manifest_path, registry_path, workspace_root=workspace)
+            (exports / "session.json").write_text("{}", encoding="utf-8")
+
+            (claude_bucket / "session.jsonl").rename(claude_bucket / "unrelated.jsonl")
+            missing_historical = run_audit(manifest_path, registry_path, workspace_root=workspace)
+            (claude_bucket / "unrelated.jsonl").rename(claude_bucket / "session.jsonl")
+            connection = sqlite3.connect(database)
+            connection.execute("update project set worktree = ?", (str(root / 'other'),))
+            connection.commit()
+            connection.close()
+            wrong_workspace = run_audit(manifest_path, registry_path, workspace_root=workspace)
+
         self.assertEqual(payload["status"], "PASS")
         self.assertEqual(payload["migrations"][0]["opencode"]["live_sessions"], 1)
+        self.assertEqual(damaged_backup["migrations"][0]["opencode"]["status"], "FAIL")
+        self.assertEqual(changed_export["migrations"][0]["opencode"]["status"], "FAIL")
+        self.assertEqual(missing_historical["migrations"][0]["claude"]["status"], "FAIL")
+        self.assertEqual(missing_historical["migrations"][0]["claude"]["live_backup_matches"], 0)
+        self.assertEqual(wrong_workspace["migrations"][0]["opencode"]["status"], "FAIL")
 
     def test_unknown_migration_is_error(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

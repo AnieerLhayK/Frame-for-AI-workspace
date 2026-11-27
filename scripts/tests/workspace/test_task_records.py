@@ -5,6 +5,7 @@ import tempfile
 import unittest
 import subprocess
 import io
+import os
 import sys
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -659,15 +660,15 @@ class TaskRecordsTests(unittest.TestCase):
             root = Path(directory)
             with patch.object(task_record_store, "RECORD_ROOT", root / "task_records"), patch.object(
                 task_ledger, "DESTINATION", root / "task_ledger"
-            ), patch.dict(
+            ), patch(
                 "os.environ",
                 {
+                    **os.environ,
                     "WORKSPACE_TASK_USAGE_JSON": (
                         '{"task_id":"TASK-20260716-001","source":"codex_host",'
                         '"input_tokens":120,"output_tokens":30,"currency_cost":0.02}'
                     )
                 },
-                clear=False,
             ):
                 record = task_records.initial_record(
                     "TASK-20260716-001",
@@ -691,10 +692,9 @@ class TaskRecordsTests(unittest.TestCase):
         self.assertEqual(result["usage"]["status"], "recorded")
 
     def test_host_usage_rejects_a_mismatched_task_id(self) -> None:
-        with patch.dict(
+        with patch(
             "os.environ",
-            {"WORKSPACE_TASK_USAGE_JSON": '{"task_id":"TASK-20260716-999","source":"host","total_tokens":1}'},
-            clear=False,
+            {**os.environ, "WORKSPACE_TASK_USAGE_JSON": '{"task_id":"TASK-20260716-999","source":"host","total_tokens":1}'},
         ):
             usage = task_records.host_usage("TASK-20260716-001")
         self.assertEqual(usage["status"], "unavailable")

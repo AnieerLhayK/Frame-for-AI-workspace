@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+import os
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -59,14 +60,14 @@ class WorkspaceLauncherTests(unittest.TestCase):
         install_launcher(self.install_dir)
         with (
             patch("scripts.workspace.workspace_launcher.os.name", "nt"),
-            patch.dict(
+            patch(
                 "scripts.workspace.workspace_launcher.os.environ",
                 {
+                    **os.environ,
                     "WORKSPACE_LAUNCHER_PATH": str(
                         self.install_dir / "workspace.cmd"
                     )
                 },
-                clear=False,
             ),
             patch("scripts.workspace.workspace_launcher.schedule_delete") as schedule,
         ):

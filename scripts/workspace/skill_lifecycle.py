@@ -230,11 +230,17 @@ def ignored_python_caches(source: Path, candidates: list[str]) -> set[str]:
     return set(result.stdout.rstrip("\0").split("\0"))
 
 
-def generated_character_exclusions(source: Path, enabled: bool) -> tuple[set[str], str | None]:
+def generated_character_exclusions(source: Path, enabled: bool, approved: object = ()) -> tuple[set[str], str | None]:
     """Prune ignored generated characters without traversing their private contents."""
     root = source / "characters"
     if not enabled:
         return set(), None
+    if not isinstance(approved, (list, tuple)) or any(
+        not isinstance(name, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name)
+        for name in approved
+    ):
+        return {"characters"}, "invalid approved generated character names"
+    approved_names = {name.casefold() for name in approved}
     try:
         try:
             info = root.lstat()
@@ -245,8 +251,17 @@ def generated_character_exclusions(source: Path, enabled: bool) -> tuple[set[str
         if not stat.S_ISDIR(info.st_mode):
             return {"characters"}, "generated character path is not a directory"
         candidates = [f"characters/{entry.name}" for entry in root.iterdir()]
+        for entry in root.iterdir():
+            if entry.name.casefold() in approved_names:
+                entry_info = entry.lstat()
+                if stat.S_ISLNK(entry_info.st_mode) or getattr(entry_info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400) or not stat.S_ISDIR(entry_info.st_mode):
+                    return set(candidates), "approved generated character must be a real directory"
         tracked = subprocess.run(
             ["git", "ls-files", "-z", "--", "characters"], cwd=source,
+            capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
+        )
+        staged = subprocess.run(
+            ["git", "ls-files", "--stage", "-z", "--", "characters"], cwd=source,
             capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
         )
         ignored = subprocess.run(
@@ -254,13 +269,27 @@ def generated_character_exclusions(source: Path, enabled: bool) -> tuple[set[str
             input="\0".join(candidates) + ("\0" if candidates else ""),
             capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
         )
-        if tracked.returncode != 0 or ignored.returncode not in (0, 1):
+        if tracked.returncode != 0 or staged.returncode != 0 or ignored.returncode not in (0, 1):
             raise ValueError("Git could not verify generated character exclusions")
         tracked_paths = [path.replace("\\", "/").casefold() for path in tracked.stdout.split("\0") if path]
+        for item in staged.stdout.split("\0"):
+            if not item:
+                continue
+            details, path = item.split("\t", 1)
+            parts = path.replace("\\", "/").casefold().split("/")
+            if len(parts) < 3 or parts[1] not in approved_names:
+                continue
+            if (details.split()[0] == "120000" or
+                    any(part in {"corpus", "raw_material", "archives", "backups", "__pycache__"} for part in parts[2:]) or
+                    Path(parts[-1]).suffix in {".pyc", ".db", ".sqlite", ".log"}):
+                return set(candidates), "approved generated character contains prohibited tracked material or links"
         ignored_paths = {path.casefold() for path in ignored.stdout.split("\0") if path}
         placeholder = "characters/.gitkeep"
-        unexpected_tracked = [path for path in tracked_paths if path != placeholder]
-        unexpected_unignored = [path for path in candidates if path.casefold() not in ignored_paths and not (path.casefold() == placeholder and placeholder in tracked_paths)]
+        unexpected_tracked = [path for path in tracked_paths if path != placeholder
+                              and not any(path.startswith(f"characters/{name}/") for name in approved_names)]
+        unexpected_unignored = [path for path in candidates if path.casefold() not in ignored_paths
+                                and path.split("/", 1)[1].casefold() not in approved_names
+                                and not (path.casefold() == placeholder and placeholder in tracked_paths)]
         if unexpected_tracked or unexpected_unignored:
             return set(candidates), "runtime artifacts or unignored entries in generated character directory"
         return set(candidates), None
@@ -279,9 +308,9 @@ def skill_source_paths(source: Path, exclusions: set[str]) -> list[Path]:
     return paths
 
 
-def enhanced_contract_findings(source: Path, metadata: dict[str, Any], *, allow_owned_reports: bool = False, allow_generated_characters: bool = False, require_contract: bool = False) -> list[str]:
+def enhanced_contract_findings(source: Path, metadata: dict[str, Any], *, allow_owned_reports: bool = False, allow_generated_characters: bool = False, approved_generated_characters: object = (), require_contract: bool = False) -> list[str]:
     findings: list[str] = []
-    exclusions, exclusion_error = generated_character_exclusions(source, allow_generated_characters)
+    exclusions, exclusion_error = generated_character_exclusions(source, allow_generated_characters, approved_generated_characters)
     if exclusion_error:
         findings.append(exclusion_error)
     source_paths = skill_source_paths(source, exclusions)
@@ -508,8 +537,13 @@ def preview_dsh_skills(manifest: dict[str, Any], catalog_path: Path = DSH_SKILL_
         if trigger not in {"automatic", "explicit", "dependency_only"}:
             raise ValueError(f"invalid DSH trigger for {skill_id}")
         seen.add(skill_id)
-        registered = manifest_skill(manifest, skill_id)
+        registered_id = item.get("registered_skill_id", skill_id)
+        if not isinstance(registered_id, str) or not SKILL_ID_PATTERN.fullmatch(registered_id):
+            raise ValueError(f"invalid registered skill id for {skill_id}")
+        registered = manifest_skill(manifest, registered_id)
         if not registered:
+            if registered_id != skill_id:
+                raise ValueError(f"registered DSH alias target not found: {registered_id}")
             character_root = "packages/character-system/engineering/generation/character-generator/characters"
             if (item.get("approved_unregistered") is not True or trigger != "explicit" or
                     item.get("source_path") != f"{character_root}/{skill_id}"):
@@ -637,7 +671,7 @@ def validate_skill(
                     findings.append("standalone skill requires frontmatter metadata")
                 allow_owned_reports = bool(registered and source_value.replace("\\", "/").startswith("packages/") and "reports" in registered.get("optional_files", []))
                 allow_generated_characters = bool(registered and source_value.replace("\\", "/").startswith("packages/") and "characters" in registered.get("optional_files", []))
-                findings.extend(enhanced_contract_findings(source, metadata, allow_owned_reports=allow_owned_reports, allow_generated_characters=allow_generated_characters, require_contract=source_path_requires_contract(source_value)))
+                findings.extend(enhanced_contract_findings(source, metadata, allow_owned_reports=allow_owned_reports, allow_generated_characters=allow_generated_characters, approved_generated_characters=registered.get("approved_generated_characters", ()) if registered else (), require_contract=source_path_requires_contract(source_value)))
         if registered:
             for relative in registered.get("required_files", []):
                 if not (source / Path(str(relative))).exists():

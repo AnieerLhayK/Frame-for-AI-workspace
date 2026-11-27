@@ -31,6 +31,7 @@
           "d:\\AI\\workspace"
         ],
         "subdirectory_bucket_found": false,
+        "availability": "backup_only",
         "backup_path": "${DATA_ROOT}/claude\\backups\\session-migrations\\character-package-20260614-213542",
         "expected_transcript_files": 5
       },

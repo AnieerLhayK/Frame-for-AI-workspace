@@ -63,7 +63,7 @@ class ResolverTests(unittest.TestCase):
     def test_routing_events_default_uses_manifest_log_directory(self) -> None:
         manifest = {"runtime_roots": {"workspace_logs": str(self.root / "external-logs")}}
         (self.root / "workspace_manifest.yaml").write_text(json.dumps(manifest), encoding="utf-8")
-        with patch.dict("os.environ", {}, clear=True), patch("scripts.workspace.resolve_task_context.WORKSPACE_ROOT", self.root):
+        with patch("scripts.workspace.runtime_logging.os.environ", {}), patch("scripts.workspace.resolve_task_context.WORKSPACE_ROOT", self.root):
             self.assertEqual(
                 routing_events_path(),
                 Path(manifest["runtime_roots"]["workspace_logs"]) / "routing_events.ndjson",

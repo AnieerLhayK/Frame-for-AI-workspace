@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +32,16 @@ def resolve_external(root: Path, value: str) -> Path:
     return path if path.is_absolute() else root / path
 
 
+def backup_hashes(backup: Path) -> dict[str, str]:
+    entries = json.loads((backup / "SHA256.json").read_text(encoding="utf-8-sig"))
+    if isinstance(entries, dict):
+        return {str(key).replace("\\", "/"): str(value).lower() for key, value in entries.items()}
+    if isinstance(entries, list):
+        return {str(entry["Path"]).replace("\\", "/"): str(entry["SHA256"]).lower()
+                for entry in entries}
+    raise ValueError("invalid backup hash manifest")
+
+
 def audit_claude(
     store: dict[str, Any],
     migration: dict[str, Any],
@@ -53,26 +65,63 @@ def audit_claude(
 
     details = migration.get("claude", {})
     backup = Path(str(details.get("backup_path", "")))
-    backup_bucket = backup / str(details.get("project_bucket", ""))
+    backup_bucket = backup / str(details.get("backup_subdir", details.get("project_bucket", "")))
     expected = int(details.get("expected_transcript_files", 0))
     backup_files = sorted(backup_bucket.glob("*.jsonl")) if backup_bucket.is_dir() else []
+    live_backup_matches = len(
+        {path.name for path in transcript_files} & {path.name for path in backup_files}
+    )
     passed = (
         project_dir.is_dir()
-        and len(transcript_files) >= expected
+        and live_backup_matches >= expected
         and parse_errors == 0
         and backup.is_dir()
         and len(backup_files) >= expected
         and (backup / "SHA256.json").is_file()
         and (backup / "migration-map.json").is_file()
     )
+    if passed:
+        try:
+            hashes = backup_hashes(backup)
+            for path in backup_files:
+                data = path.read_bytes()
+                if hashlib.sha256(data).hexdigest() != hashes.get(path.relative_to(backup).as_posix()):
+                    passed = False
+                for line in data.splitlines():
+                    json.loads(line)
+        except (OSError, ValueError, TypeError, KeyError):
+            passed = False
+    availability = str(details.get("availability", "live"))
+    if availability == "backup_only":
+        try:
+            hashes = backup_hashes(backup)
+            verified = 0
+            for path in backup_files:
+                relative = path.relative_to(backup).as_posix()
+                data = path.read_bytes()
+                if hashlib.sha256(data).hexdigest() != hashes.get(relative):
+                    continue
+                for line in data.splitlines():
+                    json.loads(line)
+                verified += 1
+            mapping = (backup / "migration-map.json").read_bytes()
+            json.loads(mapping)
+            passed = (expected > 0 and verified >= expected and
+                      hashlib.sha256(mapping).hexdigest() == hashes.get("migration-map.json"))
+        except (OSError, ValueError, TypeError, KeyError):
+            passed = False
+    elif availability != "live":
+        passed = False
     return {
         "status": "PASS" if passed else "FAIL",
+        "availability": availability,
         "project_dir": str(project_dir),
         "transcript_files": len(transcript_files),
         "parse_errors": parse_errors,
         "observed_cwds": sorted(observed_cwds),
         "backup_path": str(backup),
         "backup_transcript_files": len(backup_files),
+        "live_backup_matches": live_backup_matches,
     }
 
 
@@ -94,16 +143,23 @@ def audit_opencode(
         try:
             connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
             connection.row_factory = sqlite3.Row
-            project = connection.execute(
-                "select id, worktree from project where id = ?",
-                (project_id,),
-            ).fetchone()
-            if project is not None:
-                project_worktree = str(project["worktree"])
-            rows = connection.execute(
-                "select id, directory from session where project_id = ?",
-                (project_id,),
-            ).fetchall()
+            expected_worktree = normalize_path(str(details.get("project_worktree", "")))
+            projects = connection.execute("select id, worktree from project").fetchall()
+            matching_ids = {
+                str(project["id"])
+                for project in projects
+                if expected_worktree
+                and normalize_path(str(project["worktree"] or "")) == expected_worktree
+            }
+            if matching_ids:
+                project_worktree = str(details["project_worktree"])
+            rows = [
+                row
+                for row in connection.execute(
+                    "select id, directory, project_id from session"
+                ).fetchall()
+                if str(row["project_id"]) in matching_ids
+            ]
             live_ids = {str(row["id"]) for row in rows}
             old_paths = [
                 normalize_path(str(item.get("old", "")))
@@ -126,15 +182,31 @@ def audit_opencode(
     backup = Path(str(details.get("backup_path", "")))
     exports = backup / "exports"
     valid_exports = 0
+    try:
+        backup_checksums = backup_hashes(backup)
+    except (OSError, ValueError, TypeError, KeyError):
+        backup_checksums = {}
     for session_id in expected_ids:
         export_path = exports / f"{session_id}.json"
         try:
-            json.loads(export_path.read_text(encoding="utf-8-sig"))
-        except (OSError, json.JSONDecodeError):
+            content = export_path.read_bytes()
+            json.loads(content)
+        except (OSError, ValueError):
+            continue
+        if hashlib.sha256(content).hexdigest() != backup_checksums.get(f"exports/{session_id}.json"):
             continue
         valid_exports += 1
 
     expected_worktree = normalize_path(str(details.get("project_worktree", "")))
+    backup_integrity = False
+    try:
+        backup_db = backup / "opencode.db"
+        if hashlib.sha256(backup_db.read_bytes()).hexdigest() == backup_checksums.get("opencode.db"):
+            with closing(sqlite3.connect(f"{backup_db.resolve().as_uri()}?mode=ro", uri=True)) as snapshot:
+                backup_integrity = snapshot.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+    except (OSError, ValueError, TypeError, KeyError, sqlite3.Error):
+        backup_integrity = False
+
     passed = (
         database.is_file()
         and not error
@@ -145,6 +217,7 @@ def audit_opencode(
         and (backup / "SHA256.json").is_file()
         and (backup / "migration-map.json").is_file()
         and valid_exports == len(expected_ids)
+        and backup_integrity
     )
     return {
         "status": "PASS" if passed else "FAIL",
@@ -156,6 +229,7 @@ def audit_opencode(
         "historical_directories": historical_directories,
         "backup_path": str(backup),
         "valid_exports": valid_exports,
+        "backup_integrity": backup_integrity,
         "error": error or None,
     }
 
@@ -179,10 +253,22 @@ def audit_migration(
         )
 
     stores = manifest.get("session_stores", {})
-    claude = audit_claude(stores.get("claude", {}), migration)
-    opencode = audit_opencode(stores.get("opencode", {}), migration)
+    claude = audit_claude(stores.get("claude", {}), migration) if "claude" in migration else {
+        "status": "NOT_RECORDED", "availability": "not_recorded", "transcript_files": 0,
+        "backup_transcript_files": 0, "live_backup_matches": 0,
+    }
+    opencode = audit_opencode(stores.get("opencode", {}), migration) if "opencode" in migration else {
+        "status": "NOT_RECORDED", "live_sessions": 0,
+        "expected_sessions": 0, "valid_exports": 0,
+    }
     paths_pass = all(item["new_exists"] for item in path_checks)
-    status = "PASS" if paths_pass and claude["status"] == "PASS" and opencode["status"] == "PASS" else "FAIL"
+    store_statuses = (claude["status"], opencode["status"])
+    if not paths_pass or "FAIL" in store_statuses:
+        status = "FAIL"
+    elif "NOT_RECORDED" in store_statuses:
+        status = "WARN"
+    else:
+        status = "PASS"
     return {
         "id": migration.get("id"),
         "status": status,
@@ -214,8 +300,13 @@ def run_audit(
             "note": "Read-only audit; no session data was changed.",
         }
     results = [audit_migration(manifest, item, workspace_root) for item in migrations]
+    statuses = [item["status"] for item in results]
+    status = (
+        "FAIL" if not statuses or "FAIL" in statuses
+        else "WARN" if "WARN" in statuses else "PASS"
+    )
     return {
-        "status": "PASS" if results and all(item["status"] == "PASS" for item in results) else "FAIL",
+        "status": status,
         "workspace_root": str(workspace_root),
         "migrations": results,
         "note": "Read-only audit; no session data was changed.",
@@ -229,8 +320,9 @@ def render_text(payload: dict[str, Any]) -> None:
         claude = migration["claude"]
         opencode = migration["opencode"]
         print(
-            f"  Claude: {claude['status']} - {claude['transcript_files']} live transcripts, "
-            f"{claude['backup_transcript_files']} backed up."
+            f"  Claude: {claude['status']} ({claude['availability']}) - {claude['transcript_files']} live transcripts, "
+            f"{claude['backup_transcript_files']} backed up, "
+            f"{claude['live_backup_matches']} backup names live."
         )
         print(
             f"  OpenCode: {opencode['status']} - {opencode['live_sessions']}/"
